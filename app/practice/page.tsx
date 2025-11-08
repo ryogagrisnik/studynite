@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import QuestionCard from '@/components/QuestionCard';
 import { normalizeQuestionPayload } from '@/lib/normalizeQuestionPayload';
 import type { QuestionPayload } from '@/lib/types/question';
@@ -42,7 +42,7 @@ const GMAT_QUANT_TOPICS: { value: string; label: string }[] = [
   { value: 'Data Sufficiency — Applications', label: 'Data Sufficiency · Applications' },
 ];
 
-export default function PracticePage() {
+function PracticeClient() {
   const [exam, setExam] = useState<Exam>('GRE');
   const [section, setSection] = useState<Section>('Quant');
 
@@ -871,6 +871,14 @@ export default function PracticePage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function PracticePage() {
+  return (
+    <Suspense fallback={<div className="section">Loading…</div>}>
+      <PracticeClient />
+    </Suspense>
   );
 }
 
