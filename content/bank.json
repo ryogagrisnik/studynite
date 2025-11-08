@@ -1,0 +1,46 @@
+[
+  {
+    "id": "v-tc-001",
+    "exam": "GRE",
+    "section": "Verbal",
+    "topic": "Text Completion — Single Blank",
+    "type": "text_completion",
+    "difficulty": "medium",
+    "stem": "Upon visiting the Middle East in 1850, Gustave Flaubert was so ____ belly dancing that he wrote the dancers alone made his trip worthwhile.",
+    "choices": ["overwhelmed by", "enamored by", "taken aback by", "beseeched by", "flustered by"],
+    "answer": "enamored by"
+  },
+  {
+    "id": "v-se-001",
+    "exam": "GRE",
+    "section": "Verbal",
+    "topic": "Sentence Equivalence — Temperament",
+    "type": "sentence_equivalence",
+    "difficulty": "medium",
+    "stem": "One sibling remained preternaturally calm; the other had a markedly ____ disposition.",
+    "choices": ["genial", "phlegmatic", "equable", "choleric", "irascible", "stolid"],
+    "answer": "choleric|irascible"
+  },
+  {
+    "id": "q-np-001",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Number Properties — Factors & Divisibility",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "If n ≡ 45 (mod 60), which of the following CANNOT be a divisor of n?",
+    "choices": ["9", "15", "45", "30", "25"],
+    "answer": "30"
+  },
+  {
+    "id": "q-comb-001",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Combinatorics — Distributions & Counting",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "In how many ways can 3 identical green shirts and 3 identical red shirts be distributed among 6 children (one shirt each)?",
+    "choices": ["20","40","216","720","729"],
+    "answer": "20"
+  }
+]

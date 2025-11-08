@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+///////////////////////////
+// NextAuth core models  //
+///////////////////////////
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  stripeCustomerId     String? @unique
+  stripeSubscriptionId String? @unique
+  proPlan       String?
+  proSince      DateTime?
+  proExpiresAt  DateTime?
+
+  accounts Account[]
+  sessions Session[]
+
+  // app relations
+  attempts Attempt[]
+  misses   MissedQuestion[]
+  emailTokens EmailVerificationToken[]
+  passwordTokens PasswordResetToken[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expires])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expires])
+}
+
+///////////////////////////
+// App models            //
+///////////////////////////
+
+model Question {
+  id          String   @id @default(cuid())
+  exam        String // "GRE" | "GMAT"
+  section     String // "Quant" | "Verbal"
+  topic       String? // optional
+  stem        String
+  choices     String[] // text[]
+  answer      String
+  explanation String
+  difficulty  Int // 500/600/700
+  createdAt   DateTime @default(now())
+
+  aiExplanation String?   // ✅ cached GPT explanation
+
+  attempts        Attempt[]
+  dailyQueueItems DailyQueueItem[]
+  missedRecords   MissedQuestion[]
+}
+
+enum QuestionSource {
+  BASELINE
+  VARIANT
+}
+
+model VariantQuestion {
+  id           String   @id @default(cuid())
+  baselineId   String
+  concept      String
+  difficulty   String
+  stem         String
+  choicesJson  String
+  correctIndex Int
+  explanation  String?
+  checksum     String   @unique
+  createdAt    DateTime @default(now())
+
+  @@index([concept, createdAt])
+}
+
+model Attempt {
+  id         String   @id @default(cuid())
+  userId     String
+  questionId String
+  userAnswer String
+  isCorrect  Boolean
+  timeMs     Int
+  createdAt  DateTime @default(now())
+
+  concept    String?
+  source     QuestionSource?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@unique([userId, questionId])
+}
+
+model MissedQuestion {
+  id            String   @id @default(cuid())
+  userId        String
+  questionId    String
+  totalMisses   Int      @default(0)
+  lastMissedAt  DateTime @default(now())
+  lastServedAt  DateTime?
+  clearedAt     DateTime?
+  createdAt     DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+  @@index([userId, clearedAt, lastServedAt])
+  @@index([userId, lastMissedAt])
+}
+
+///////////////////////////
+// Quota (per user/day)  //
+///////////////////////////
+
+model QuotaLog {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date], name: "userId_date")
+}
+
+model DailyQueueItem {
+  id         String    @id @default(cuid())
+  userId     String
+  date       DateTime
+  questionId String
+  order      Int
+  servedAt   DateTime?
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, order])
+  @@index([userId, date, servedAt])
+  @@index([questionId])
+}

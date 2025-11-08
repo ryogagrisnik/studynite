@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="pricingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fff9f2" />
+      <stop offset="40%" stop-color="#ffeee0" />
+      <stop offset="70%" stop-color="#ffe6d0" />
+      <stop offset="100%" stop-color="#fff4e8" />
+    </linearGradient>
+  </defs>
+  <rect width="1440" height="900" fill="url(#pricingGradient)" />
+</svg>
