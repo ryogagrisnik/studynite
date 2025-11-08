@@ -83,14 +83,15 @@ export const authOptions: NextAuthOptions = {
     async session({ session, user }) {
       if (session.user) {
         const enriched = session.user as any;
+        const u = user as any; // access Prisma fields not on AdapterUser type
         enriched.id = user.id; // expose userId to client
-        enriched.emailVerified = user.emailVerified;
-        enriched.stripeCustomerId = user.stripeCustomerId ?? null;
-        enriched.stripeSubscriptionId = user.stripeSubscriptionId ?? null;
-        enriched.proPlan = user.proPlan ?? null;
-        enriched.proSince = user.proSince ? user.proSince.toISOString() : null;
-        enriched.proExpiresAt = user.proExpiresAt ? user.proExpiresAt.toISOString() : null;
-        enriched.isPro = !!(user.proExpiresAt && user.proExpiresAt.getTime() > Date.now());
+        enriched.emailVerified = (user as any).emailVerified;
+        enriched.stripeCustomerId = u.stripeCustomerId ?? null;
+        enriched.stripeSubscriptionId = u.stripeSubscriptionId ?? null;
+        enriched.proPlan = u.proPlan ?? null;
+        enriched.proSince = u.proSince ? new Date(u.proSince).toISOString() : null;
+        enriched.proExpiresAt = u.proExpiresAt ? new Date(u.proExpiresAt).toISOString() : null;
+        enriched.isPro = !!(u.proExpiresAt && new Date(u.proExpiresAt).getTime() > Date.now());
       }
       return session;
     },
