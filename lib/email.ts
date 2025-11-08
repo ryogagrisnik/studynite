@@ -3,6 +3,7 @@ type SendEmailOptions = {
   subject: string;
   html: string;
   text?: string;
+  replyTo?: string;
 };
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
@@ -11,7 +12,7 @@ function defaultFromAddress() {
   return process.env.EMAIL_FROM || "BlobPrep <no-reply@blobprep.com>";
 }
 
-export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
+export async function sendEmail({ to, subject, html, text, replyTo }: SendEmailOptions) {
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
@@ -25,6 +26,9 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
     subject,
     html,
     text: text ?? html.replace(/<[^>]+>/g, ""),
+    ...(replyTo || process.env.EMAIL_REPLY_TO
+      ? { reply_to: replyTo || process.env.EMAIL_REPLY_TO }
+      : {}),
   };
 
   const response = await fetch(RESEND_ENDPOINT, {

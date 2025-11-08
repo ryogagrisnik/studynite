@@ -184,13 +184,17 @@ async function ensureLatexExplanation(args: {
         const user = `ORIGINAL EXPLANATION:\n${sanitized}`;
         const repaired = await gpt({ system: sys, user, json: false, temperature: 0.1, model: process.env.EXPLAINER_MODEL || process.env.OPENAI_MODEL || 'gpt-4o-mini' });
         sanitized = sanitizeExplanation(String(repaired || ''));
-        try { await redis.set(repairKey, sanitized, { ex: 30 * 24 * 60 * 60 }); } catch {}
+        try {
+          await redis.set(repairKey, sanitized);
+          await redis.expire(repairKey, 30 * 24 * 60 * 60);
+        } catch {}
       }
     } catch {}
   }
   try {
     // Cache for 7 days
-    await redis.set(cacheKey, sanitized, { ex: 7 * 24 * 60 * 60 });
+    await redis.set(cacheKey, sanitized);
+    await redis.expire(cacheKey, 7 * 24 * 60 * 60);
   } catch {}
   return sanitized;
 }
