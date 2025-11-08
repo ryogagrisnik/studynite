@@ -186,7 +186,7 @@ async function ensureLatexExplanation(args: {
         sanitized = sanitizeExplanation(String(repaired || ''));
         try {
           await redis.set(repairKey, sanitized);
-          await redis.expire(repairKey, 30 * 24 * 60 * 60);
+          await redis.set(repairKey, sanitized); await redis.expire(repairKey, 30 * 24 * 60 * 60);
         } catch {}
       }
     } catch {}
@@ -194,7 +194,7 @@ async function ensureLatexExplanation(args: {
   try {
     // Cache for 7 days
     await redis.set(cacheKey, sanitized);
-    await redis.expire(cacheKey, 7 * 24 * 60 * 60);
+    await redis.set(cacheKey, sanitized); await redis.expire(cacheKey, 7 * 24 * 60 * 60);
   } catch {}
   return sanitized;
 }
