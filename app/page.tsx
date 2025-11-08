@@ -51,12 +51,7 @@ export default function Home() {
         <div className="hero">
           <div>
             <h1 className="split__title">Infinite GRE & GMAT questions at your fingertips.</h1>
-            <p className="split__lead">15 free questions every day. Unlimited for just <strong>$5.99/month</strong>.</p>
-            <ul className="split__bullets">
-              <li><span className="split__dot" />Targeted GRE & GMAT practice by skill</li>
-              <li><span className="split__dot" />Instant explanations with step‑by‑step solutions</li>
-              <li><span className="split__dot" />Track accuracy and time to improve speed</li>
-            </ul>
+            {/* Removed marketing subhead + bullets per request */}
             <div style={{ marginTop: 18 }}>
               <Link className="btn btn-primary btn-large" href="/practice">Get Started</Link>
             </div>
