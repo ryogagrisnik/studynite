@@ -61,8 +61,8 @@ export const redis = {
     if (client) return client.get(key);
     return mem.get(key) ?? null;
   },
-  async set(key: string, value: any){
-    if (client) return client.set(key, value);
+  async set(key: string, value: any, opts?: any){
+    if (client) return (client as any).set(key, value, opts);
     mem.set(key, value);
   },
   pipeline(){
