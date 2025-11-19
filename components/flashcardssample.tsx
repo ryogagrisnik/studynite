@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
+import { renderMathToHtml } from "@/lib/math/renderMathToHtml";
 
 type Card = {
   id: string;
@@ -151,7 +152,12 @@ export default function FlashcardsSample({ count = 4 }: { count?: number }) {
         <div className="feedback" role="status" aria-live="polite">
           <div className={`pill ${isCorrect ? "ok" : "no"}`}>{isCorrect ? "Correct" : "Incorrect"}</div>
           <div className="explainbox">
-            <p className="explain">{card.explanation}</p>
+            <p
+              className="explain"
+              dangerouslySetInnerHTML={{
+                __html: renderMathToHtml(card.explanation) ?? card.explanation,
+              }}
+            />
           </div>
           <div><button className="btn btn-primary" onClick={nextCard}>Next</button></div>
         </div>

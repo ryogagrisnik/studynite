@@ -9,6 +9,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import OpenAI from "openai";
 import { sanitizeExplanation } from "@/lib/explainer";
+import { redis } from "@/lib/redis";
 
 const Classic = z.object({
   stem: z.string(),
@@ -92,6 +93,24 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) return json({ error: "UNAUTHENTICATED" }, 401);
+
+    // Basic rate limit: max 20 requests per minute per user
+    try {
+      const uid = (session.user as any)?.id || 'anon';
+      const minuteKey = `rl:explain:${uid}:${Math.floor(Date.now() / 60000)}`;
+      const used = await redis.incr(minuteKey);
+      if (used === 1) {
+        await redis.expire(minuteKey, 70);
+      }
+      if (used > 20) {
+        const retryAfter = 60;
+        const res = json({ error: "RATE_LIMIT_EXCEEDED", retryAfter }, 429);
+        (res as any).headers?.set?.("Retry-After", String(retryAfter));
+        return res;
+      }
+    } catch {
+      // ignore redis issues; fail open
+    }
 
     const raw = await req.json().catch(() => ({}));
     const parsed = Input.safeParse(raw);

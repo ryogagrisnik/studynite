@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react';
+import { useSession, signIn } from 'next-auth/react';
 import QuestionCard from '@/components/QuestionCard';
 import { normalizeQuestionPayload } from '@/lib/normalizeQuestionPayload';
 import type { QuestionPayload } from '@/lib/types/question';
@@ -43,6 +44,7 @@ const GMAT_QUANT_TOPICS: { value: string; label: string }[] = [
 ];
 
 function PracticeClient() {
+  const { status: authStatus } = useSession();
   const [exam, setExam] = useState<Exam>('GRE');
   const [section, setSection] = useState<Section>('Quant');
 
@@ -146,6 +148,8 @@ function PracticeClient() {
       console.debug('[PracticePage] analytics track failed', e);
     }
   }
+
+  const showSaveBanner = authStatus === 'unauthenticated';
 
   const exitReviewMode = useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -560,6 +564,20 @@ function PracticeClient() {
             skills you want to sharpen.
           </p>
         </div>
+
+        {showSaveBanner && (
+          <div className="card" role="region" aria-label="Save your progress" style={{ display:'flex', justifyContent:'space-between', gap:12, alignItems:'center', flexWrap:'wrap' }}>
+            <div>
+              <strong>Save your progress</strong>
+              <div style={{ fontSize: 14, opacity: 0.8 }}>Sign in with Google or email to track attempts and review misses.</div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button className="btn btn-outline" type="button" onClick={() => signIn('google')}>Sign in with Google</button>
+              <Link href="/signin" className="btn">Sign in</Link>
+              <Link href="/signup" className="btn btn-secondary">Create account</Link>
+            </div>
+          </div>
+        )}
 
         {reviewModeActive && (
           <div className="review-banner" role="status" aria-live="polite">

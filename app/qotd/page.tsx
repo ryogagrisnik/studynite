@@ -15,8 +15,8 @@ const safeRemove = (k: string) => {
   if (hasWindow()) window.localStorage.removeItem(k);
 };
 
-/* ---------- 1-minute lock ---------- */
-const LOCK_MS = 60_000;
+/* ---------- QOTD lock window (12 hours) ---------- */
+const LOCK_MS = 12 * 60 * 60 * 1000; // 12h
 
 /* ---------- QOTD logic ---------- */
 type QuantQuestion = QuestionPayload;
@@ -81,6 +81,14 @@ export default function QotdPage() {
     try {
       if (!hasWindow()) return;
 
+      // Use server status to drive lock & issuance across devices
+      const status = await fetchStatus();
+      if (status.remainingMs && status.remainingMs > 0) {
+        setLocked(true);
+        setQ(null);
+        return;
+      }
+
       const doneStr = safeGet(LS_DONE);
       const done = doneStr ? Number(doneStr) : 0;
       const leftFromDone = done ? LOCK_MS - (Date.now() - done) : null;
@@ -97,9 +105,11 @@ export default function QotdPage() {
       }
 
       const issuedAtStr = safeGet(LS_ISSUED);
-      const issuedAt = issuedAtStr ? Number(issuedAtStr) : 0;
+      const issuedAtLocal = issuedAtStr ? Number(issuedAtStr) : 0;
+      const issuedAt = status.issuedAt ?? issuedAtLocal;
       const cached = safeGet(LS_Q);
-      if (issuedAt && Date.now() - issuedAt < 24 * 60 * 60 * 1000 && cached) {
+      // QOTD resets every 12 hours
+      if (issuedAt && Date.now() - issuedAt < 12 * 60 * 60 * 1000 && cached) {
         const cachedQuestion = normalizeQuestionPayload(JSON.parse(cached));
         setQ(cachedQuestion);
         setLocked(false);
@@ -120,6 +130,7 @@ export default function QotdPage() {
       setLocked(false);
       safeSet(LS_Q, JSON.stringify(question));
       safeSet(LS_ISSUED, String(Date.now()));
+      await markIssued();
       safeRemove(LS_DONE);
     } catch (e: any) {
       if (reqId !== reqIdRef.current) return;
@@ -134,8 +145,9 @@ export default function QotdPage() {
     load();
   }, []);
 
-  function onNextAfterAnswered() {
-    safeSet(LS_DONE, String(Date.now())); // start minute lock
+  async function onNextAfterAnswered() {
+    safeSet(LS_DONE, String(Date.now()));
+    await markLocked();
     setLocked(true);
     setQ(null);
   }
@@ -157,7 +169,7 @@ export default function QotdPage() {
         <div className="page-header">
           <h1 className="h1">Question of the Day</h1>
           <p className="page-sub">
-            Your daily GRE Quant warm-up. Tackle the question, then swing back tomorrow for a fresh challenge.
+            Your GRE Quant warm‑up. A fresh question appears every 12 hours.
           </p>
         </div>
 
@@ -318,6 +330,14 @@ function LockedState({
   secondsLeft: number;
   progressPct: number;
 }) {
+  function fmt(secs: number): string {
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  }
   return (
     <div className="locked-shell" role="status" aria-live="polite">
       <div className="locked-card">
@@ -325,10 +345,8 @@ function LockedState({
           <span className="locked-dot" />
           Locked
         </span>
-        <h2 className="locked-title">Come back tomorrow for another question.</h2>
-        <p className="locked-sub">
-          {secondsLeft > 1 ? `Unlocks in ${secondsLeft}s.` : 'Unlocking…'}
-        </p>
+        <h2 className="locked-title">New question every 12 hours.</h2>
+        <p className="locked-sub">{secondsLeft > 1 ? `Unlocks in ${fmt(secondsLeft)}.` : 'Unlocking…'}</p>
         <LoaderRing size={68} />
         <div className="locked-progress">
           <span className="locked-progress-fill" style={{ width: `${progressPct}%` }} />
@@ -453,3 +471,19 @@ function LoaderRing({ size = 72 }: { size?: number }) {
     </div>
   );
 }
+  async function fetchStatus(): Promise<{ issuedAt: number | null; lockedUntil: number | null; remainingMs: number }> {
+    try {
+      const res = await fetch('/api/qotd', { method: 'GET' });
+      if (!res.ok) return { issuedAt: null, lockedUntil: null, remainingMs: 0 };
+      const json = await res.json();
+      return { issuedAt: json?.issuedAt ?? null, lockedUntil: json?.lockedUntil ?? null, remainingMs: json?.remainingMs ?? 0 };
+    } catch {
+      return { issuedAt: null, lockedUntil: null, remainingMs: 0 };
+    }
+  }
+  async function markIssued() {
+    try { await fetch('/api/qotd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'issue' }) }); } catch {}
+  }
+  async function markLocked() {
+    try { await fetch('/api/qotd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'lock' }) }); } catch {}
+  }

@@ -9,6 +9,7 @@ import prisma from "@/lib/prisma";
 import { normalizeQuestionPayload } from "@/lib/normalizeQuestionPayload";
 import type { QuestionPayload } from "@/lib/types/question";
 import { isMissedQuestionTableMissing } from "@/lib/server/missedTableGuard";
+import { hasActiveProSession } from "@/lib/server/membership";
 
 function toQuestionPayload(question: {
   id: string;
@@ -65,6 +66,11 @@ export async function GET() {
 
   if (!userId) {
     return NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401 });
+  }
+
+  // Pro-only access: require active subscription
+  if (!hasActiveProSession(session)) {
+    return NextResponse.json({ error: "PRO_REQUIRED" }, { status: 401 });
   }
 
   try {

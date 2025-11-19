@@ -42,5 +42,841 @@
     "stem": "In how many ways can 3 identical green shirts and 3 identical red shirts be distributed among 6 children (one shirt each)?",
     "choices": ["20","40","216","720","729"],
     "answer": "20"
+  },
+  {
+    "id": "q-np-20251112-01",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Number Properties — Divisibility",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "How many integers n between 1 and 200 inclusive satisfy: n is divisible by 6 but not divisible by 4 or 9?",
+    "answer": "11"
+  },
+  {
+    "id": "q-np-20251112-02",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Number Properties — Difference of Squares",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "If x and y are integers such that x² − y² = 143, how many ordered pairs (x, y) exist?",
+    "answer": "8"
+  },
+  {
+    "id": "q-np-20251112-03",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Number Properties — Modular Arithmetic",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "A number N leaves a remainder of 3 when divided by 7 and a remainder of 5 when divided by 9. What is the least positive N?",
+    "answer": "59"
+  },
+  {
+    "id": "q-np-20251112-04",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Number Properties — GCD/LCM",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "For how many integers k between 1 and 300 is gcd(k, 48) = 2?",
+    "answer": "50"
+  },
+  {
+    "id": "q-alg-20251112-05",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Algebra — Rational Inequalities",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "Solve for all real x: (x + 3)/(x − 4) < 2.",
+    "answer": "x < 4 or x > 11"
+  },
+  {
+    "id": "q-alg-20251112-06",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Algebra — Absolute Value Equations",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "If x satisfies |3x − 7| + |x + 2| = 20, find all possible values of x.",
+    "answer": "x = -15/4, 25/4"
+  },
+  {
+    "id": "q-alg-20251112-08",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Algebra — Symmetric Sums",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "If a and b are real numbers such that a + b = 10 and ab = 12, find all values of a² + b².",
+    "answer": "76"
+  },
+  {
+    "id": "q-wp-20251112-09",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Arithmetic — Percents & Successive Changes",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "A seller increases the price of an item by 12% and later decreases it by 10%. The final price is $79.20. What was the original price?",
+    "answer": "$550/7 (≈ $78.5714)"
+  },
+  {
+    "id": "q-wp-20251112-10",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Rates — Speed/Time",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "A train travels 180 miles in 4 hours. For the first part of the trip it averaged 45 mph. For the remaining time it averaged 60 mph. How many miles were traveled at 45 mph?",
+    "answer": "180 miles"
+  },
+  {
+    "id": "q-wp-20251112-11",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Work — Pipes & Tanks",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "A container holds 300 liters. Pipe A fills it in 5 hours, Pipe B fills it in 4 hours, and Pipe C empties it in 6 hours. If all three run together for 2 hours, how many liters are in the tank?",
+    "answer": "170 liters"
+  },
+  {
+    "id": "q-wp-20251112-12",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Arithmetic — Linear Diophantine",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "A bookstore sells pens and notebooks. Pens cost $3 each. Notebooks cost $5 each. A customer bought 11 items totaling $41. How many pens were purchased?",
+    "answer": "7"
+  },
+  {
+    "id": "q-set-20251112-13",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Set Theory — Two Sets",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "In a group of 150 people, 90 like product X, 75 like product Y, and 40 like both. How many like neither?",
+    "answer": "25"
+  },
+  {
+    "id": "q-set-20251112-14",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Set Theory — Two Sets",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "If sets A and B satisfy |A ∪ B| = 85, |A| = 60, |A ∩ B| = 25, find |B|.",
+    "answer": "50"
+  },
+  {
+    "id": "q-set-20251112-15",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Set Theory — Three Sets (Inclusion–Exclusion)",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "A survey asks about liking apples, bananas, and cherries. If 40 like apples, 35 like bananas, 30 like cherries, 20 like apples & bananas, 10 like bananas & cherries, 15 like apples & cherries, and 5 like all three, how many like at least one?",
+    "answer": "65"
+  },
+  {
+    "id": "q-set-20251112-16",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Set Theory — Symmetric Difference",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "From the universal set U = {1 to 50}, let A be multiples of 4 and B be multiples of 6. How many elements are in A Δ B (symmetric difference)?",
+    "answer": "12"
+  },
+  {
+    "id": "q-stats-20251112-17",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Statistics — Average",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "Five numbers have average 18. If four of the numbers are 10, 20, 25, and 35, what is the fifth?",
+    "answer": "0"
+  },
+  {
+    "id": "q-stats-20251112-18",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Statistics — Mean Adjustment",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "A set has values whose mean is 30. If one value 54 is removed, the new mean becomes 27. How many values were originally in the set?",
+    "answer": "9"
+  },
+  {
+    "id": "q-stats-20251112-19",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Statistics — Effect on Mean/Median",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "The median of a list of 9 numbers is 15. If the largest 3 numbers are each increased by 10, what is the new mean compared to the old mean?",
+    "answer": "Increases by 10/3"
+  },
+  {
+    "id": "q-stats-20251112-20",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Statistics — Average",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "A student has test scores: 72, 78, 81, 88, x. If the average is 80, find x.",
+    "answer": "81"
+  },
+  {
+    "id": "q-rp-20251112-21",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Ratio/Percent — Mixtures",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "A mixture contains water and alcohol in ratio 7:3. If 20% of the alcohol evaporates, what is the new water:alcohol ratio?",
+    "answer": "35:12"
+  },
+  {
+    "id": "q-rp-20251112-22",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Percent — Successive Changes",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "The price of a stock drops by 30% and then rises by 40%. What percent of its original value is it worth?",
+    "answer": "98%"
+  },
+  {
+    "id": "q-rp-20251112-23",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Ratio — Linear Adjustment",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "Two numbers are in ratio 5:2. If each is increased by 12, the new ratio becomes 3:1. Find the original numbers.",
+    "answer": "-120 and -48"
+  },
+  {
+    "id": "q-rp-20251112-24",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Percent — Successive Changes",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "A quantity is increased by x% and then decreased by x%. The result is 19.36% less than the original. Find x.",
+    "answer": "44%"
+  },
+  {
+    "id": "q-rws-20251112-25",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Work — Combined Rates",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "Two workers A and B complete a job in 12 days and 18 days alone. If they work together for 4 days, what fraction of the job remains?",
+    "answer": "4/9"
+  },
+  {
+    "id": "q-rws-20251112-26",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Speed — Piecewise Time",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "A car travels 180 miles. For the first t hours it travels at 50 mph, and for the remaining 2 hours it travels at 70 mph. Find t.",
+    "answer": "0.8 hours"
+  },
+  {
+    "id": "q-rws-20251112-27",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Speed — Relative Motion",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "Two boats travel toward each other from 240 miles apart. One travels at 30 mph, the other at 50 mph. How long until they meet?",
+    "answer": "3 hours"
+  },
+  {
+    "id": "q-rws-20251112-28",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Work — Parallel Machines",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "A printer prints 45 pages per minute. A second printer is 60% as fast. If both work for 10 minutes, how many pages total?",
+    "answer": "720"
+  },
+  {
+    "id": "q-cp-20251112-29",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Counting — Permutations of Digits",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "How many 3-digit numbers have no repeated digits?",
+    "answer": "648"
+  },
+  {
+    "id": "q-cp-20251112-30",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Probability — Dice",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "Two dice are rolled. What is the probability that their sum is a prime number?",
+    "answer": "5/12"
+  },
+  {
+    "id": "q-cp-20251112-31",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Counting — Strings with Constraint",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "How many 6-letter strings can be formed using the letters A, B, C, D if each letter can repeat but no two adjacent letters are the same?",
+    "answer": "972"
+  },
+  {
+    "id": "q-cp-20251112-32",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Combinatorics — Committees with Restrictions",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "From a group of 8 people, how many committees of 3 can be formed if two specific people cannot be together?",
+    "answer": "50"
+  },
+  {
+    "id": "q-geo-20251112-33",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Geometry — Triangle Area",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "A triangle has sides 10 and 14 with included angle 40°. Find the area.",
+    "answer": "70 sin 40° (≈ 45.0)"
+  },
+  {
+    "id": "q-geo-20251112-34",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Geometry — Circles",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "A circle has circumference 20π. Find its area.",
+    "answer": "100π"
+  },
+  {
+    "id": "q-geo-20251112-35",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Geometry — Rectangles",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "A rectangle has diagonal 26 and one side of length 10. Find the perimeter.",
+    "answer": "68"
+  },
+  {
+    "id": "q-geo-20251112-36",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Geometry — Right Triangles",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "A right triangle has legs 7 and x and hypotenuse 25. Find x.",
+    "answer": "24"
+  },
+  {
+    "id": "q-coord-20251112-37",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Coordinate Geometry — Slopes",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "Find the slope of the line perpendicular to the line passing through (3, 7) and (9, −5).",
+    "answer": "1/2"
+  },
+  {
+    "id": "q-coord-20251112-38",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Coordinate Geometry — Line Equation",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "A line passes through (−2, 5) and has slope −4. Find its y-intercept.",
+    "answer": "-3"
+  },
+  {
+    "id": "q-coord-20251112-39",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Coordinate Geometry — Circles",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "A circle has equation (x − 3)² + (y + 1)² = 49. Is the point (9, 1) inside, on, or outside the circle?",
+    "answer": "Inside"
+  },
+  {
+    "id": "q-coord-20251112-40",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Coordinate Geometry — Distance",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "Find the distance between the points (4, −3) and (−8, 5).",
+    "answer": "4√13"
+  },
+  {
+    "id": "q-qc-20251112-41",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Quantitative Comparison — Radicals",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "Compare A = √63 and B = 4√3.",
+    "choices": ["Quantity A", "Quantity B", "Equal", "Cannot be determined"],
+    "answer": "Quantity A"
+  },
+  {
+    "id": "q-qc-20251112-42",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Quantitative Comparison — Rational Expressions",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "Let x > 3. Compare A = (x − 3)/(x + 3) and B = 1/2.",
+    "choices": ["Quantity A", "Quantity B", "Equal", "Cannot be determined"],
+    "answer": "Cannot be determined"
+  },
+  {
+    "id": "q-qc-20251112-43",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Quantitative Comparison — Functions",
+    "type": "quant_mc",
+    "difficulty": "medium",
+    "stem": "For 0 < p < 1: Compare A = p(1 − p) and B = 1/4.",
+    "choices": ["Quantity A", "Quantity B", "Equal", "Cannot be determined"],
+    "answer": "Cannot be determined"
+  },
+  {
+    "id": "q-qc-20251112-44",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Quantitative Comparison — Rectangles",
+    "type": "quant_mc",
+    "difficulty": "easy",
+    "stem": "A rectangle with fixed perimeter 60. Compare A = its area when the sides differ by 6 and B = 200.",
+    "choices": ["Quantity A", "Quantity B", "Equal", "Cannot be determined"],
+    "answer": "Quantity A"
+  },
+  {
+    "id": "q-hard-20251112-01",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Number Properties — LCM & Exclusions",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "Let n be a positive integer such that n is divisible by 6 and 10 but not by 9 or 25. How many integers n satisfy 1 ≤ n ≤ 900?",
+    "answer": "16"
+  },
+  {
+    "id": "q-hard-20251112-02",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Number Properties — Divisor Count",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "The integer N has exactly 8 positive divisors and is divisible by 9 but not by 27. How many possible values can N take if 1 ≤ N ≤ 1000?",
+    "answer": "0"
+  },
+  {
+    "id": "q-hard-20251112-03",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Number Properties — Egyptian Fraction",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "If a and b are positive integers and 1/a + 1/b = 1/6, how many ordered pairs (a, b) satisfy this equation?",
+    "answer": "9"
+  },
+  {
+    "id": "q-hard-20251112-04",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Number Properties — Exponent Synchronization",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "Let k be the smallest positive integer such that 7k is a perfect cube and 12k is a perfect fifth power. Find k.",
+    "answer": "2^3·3^9·7^5"
+  },
+  {
+    "id": "q-hard-20251112-05",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Algebra — Rational Inequalities",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "Solve for all real x: (x² − 7x + 10) / (x² − 4x − 12) ≤ 0.",
+    "answer": "(-2, 2] ∪ [5, 6)"
+  },
+  {
+    "id": "q-hard-20251112-06",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Algebra — Absolute Value Systems",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "If x and y are real numbers satisfying x + 2y = 5 and |2x − y| + |x + 3y| = 20, find all possible ordered pairs (x, y).",
+    "answer": "(−10/3, 25/6) and (15/2, −5/4)"
+  },
+  {
+    "id": "q-hard-20251112-07",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Algebra — Quadratic Roots",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "For which real values of t does the quadratic x² − (t − 3)x + 2t have two distinct real roots that are both positive?",
+    "answer": "t > 7 + 2√10"
+  },
+  {
+    "id": "q-hard-20251112-08",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Algebra — Radical Inequalities",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "Solve the inequality: √(3x − 2) + √(8 − x) < 5.",
+    "answer": "1 ≤ x < 71 − 30√5"
+  },
+  {
+    "id": "q-hard-20251112-09",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Word Problems & Arithmetic — Profit/Discount",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A retailer offers an 18% discount off the marked price and still earns a 25% profit on the cost. If the cost is $80, what is the marked price?",
+    "answer": "$5000/41 (≈ $121.951)"
+  },
+  {
+    "id": "q-hard-20251112-10",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Word Problems & Arithmetic — Tank",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A tank is 5/6 full. After removing 72 liters, it is 2/3 full. What is the full capacity of the tank in liters?",
+    "answer": "432"
+  },
+  {
+    "id": "q-hard-20251112-11",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Word Problems & Arithmetic — Ratio Split",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A, B, and C share a bonus. A receives 50% more than B, and C receives 20% more than A. If the total bonus is $10,560, how much does B receive?",
+    "answer": "$105600/43 (≈ $2455.81)"
+  },
+  {
+    "id": "q-hard-20251112-12",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Word Problems & Arithmetic — Digits",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A two-digit number equals 7 times the sum of its digits and is also 6 more than 4 times its units digit. Find the number.",
+    "answer": "No solution"
+  },
+  {
+    "id": "q-hard-20251112-13",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Set Theory — Inclusion–Exclusion",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "In a group of 320 people, 190 read X, 180 read Y, and 140 read Z. If 90 read both X and Y, 80 read both Y and Z, 70 read both X and Z, and 50 read all three, how many read exactly one newspaper?",
+    "answer": "180"
+  },
+  {
+    "id": "q-hard-20251112-14",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Set Theory — Three Sets",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "In a college, every student takes at least one of A, B, and C. If 150 take A, 160 take B, 120 take C, 75 take both A and B, 60 take both B and C, and 55 take both A and C. If the total number of students is 260, how many take all three courses?",
+    "answer": "20"
+  },
+  {
+    "id": "q-hard-20251112-15",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Set Theory — Symmetric Difference",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "From U = {1, 2, …, 90}, let A be multiples of 6 and B be multiples of 10. How many elements are in (A ∩ Bᶜ) ∪ (Aᶜ ∩ B)?",
+    "answer": "18"
+  },
+  {
+    "id": "q-hard-20251112-16",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Set Theory — Inclusion–Exclusion",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "Of 160 participants, 90 speak English, 85 speak Spanish, and 70 speak French. If 45 speak both English and Spanish, 40 speak both Spanish and French, 35 speak both English and French, and 20 speak all three, how many speak exactly two languages?",
+    "answer": "60"
+  },
+  {
+    "id": "q-hard-20251112-17",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Statistics & Average — Weighted Mean",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "The average of 8 numbers is 26. After adding one number, the average becomes 29. Then another number, which is 12 less than the number just added, is added and the average becomes 27. What is the last number added?",
+    "answer": "No solution (inconsistent conditions)"
+  },
+  {
+    "id": "q-hard-20251112-18",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Statistics & Average — Mean with Outlier",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A dataset has n values, all equal to 12 except one value equal to 48. The mean is 15. Find n.",
+    "answer": "12"
+  },
+  {
+    "id": "q-hard-20251112-19",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Statistics & Average — Transform Effects",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "The median of 9 distinct ordered numbers is 30. Each number greater than 30 is increased by 8 and each number less than 30 is decreased by 2. By how much does the mean change?",
+    "answer": "8/3"
+  },
+  {
+    "id": "q-hard-20251112-20",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Statistics & Average — Median/Mean Constraint",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A student’s five test scores are 76, 88, 91, x, y. The median is 88 and the mean is 86. If x ≤ y ≤ 100, what is the minimum possible value of y?",
+    "answer": "88"
+  },
+  {
+    "id": "q-hard-20251112-21",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Ratios & Percents — Ratio Adjustment",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "Two numbers are in the ratio 7:3. If each is decreased by 8, the ratio becomes 5:1. Find the original numbers.",
+    "answer": "28 and 12"
+  },
+  {
+    "id": "q-hard-20251112-22",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Ratios & Percents — Dilution",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A container holds a mixture that is 40% acid. After adding 30 liters of water, the mixture becomes 25% acid. How many liters of the original mixture were there?",
+    "answer": "50"
+  },
+  {
+    "id": "q-hard-20251112-23",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Ratios & Percents — Successive Change",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A quantity increases by 50%, then by 20%, and then decreases by 30%. Overall, by what percent has it changed from the original?",
+    "answer": "+26%"
+  },
+  {
+    "id": "q-hard-20251112-24",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Ratios & Percents — Ratio Adjustment",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "The ratio of boys to girls in a class is 4:5. After transferring 6 boys out and admitting 9 girls, the ratio becomes 3:5. How many students were originally in the class?",
+    "answer": "No integer solution"
+  },
+  {
+    "id": "q-hard-20251112-25",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Rates / Work / Speed — Combined Work",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "Machine A alone can finish a job in 12 hours, and Machines A and B together can finish it in 5 hours. If B works alone for 4 hours and then A joins, they finish in 3 more hours. How long would B alone take to finish the job?",
+    "answer": "60/7 hours (≈ 8.571)"
+  },
+  {
+    "id": "q-hard-20251112-26",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Rates / Work / Speed — Round Trip Speed",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A cyclist travels 120 miles from P to Q and 120 miles back. On the way to Q, he travels at speed v; on the return, at speed v + 8. If the total time is 9 hours, find v.",
+    "answer": "(28 + 4√109)/3"
+  },
+  {
+    "id": "q-hard-20251112-27",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Rates / Work / Speed — Pipes & Drain",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "Two pipes fill a tank. Pipe 1 alone would fill it in 10 hours; Pipe 2 alone would fill it in 15 hours. A drain empties a full tank in 12 hours. If all three are opened with an empty tank, how many hours to fill completely?",
+    "answer": "12"
+  },
+  {
+    "id": "q-hard-20251112-28",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Rates / Work / Speed — Piecewise Travel",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A car travels 360 km. For the first quarter of the distance it travels at 48 km/h, for the next 180 km it travels at 72 km/h, and for the remaining distance it travels at 54 km/h. What is the average speed for the trip?",
+    "answer": "8640/145 km/h (≈ 59.586)"
+  },
+  {
+    "id": "q-hard-20251112-29",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Counting & Probability — Permutations",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "How many 5-digit numbers can be formed using digits 0–7 with no repetition such that the number is even and greater than 50,000?",
+    "answer": "1320"
+  },
+  {
+    "id": "q-hard-20251112-30",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Counting & Probability — Committees",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A 5-person committee is formed from 7 men and 6 women. In how many ways can this be done if the committee must contain at least 3 women?",
+    "answer": "531"
+  },
+  {
+    "id": "q-hard-20251112-31",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Counting & Probability — Run Restrictions",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A fair coin is tossed 6 times. What is the probability that exactly 3 heads occur and no two heads occur consecutively?",
+    "answer": "1/5"
+  },
+  {
+    "id": "q-hard-20251112-32",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Counting & Probability — Draws/Likelihood",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A box contains 5 red, 4 blue, and 3 green balls. Three balls are drawn at random without replacement. What is the probability that the three are all the same color or exactly two are red?",
+    "answer": "17/44"
+  },
+  {
+    "id": "q-hard-20251112-33",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Geometry — Right Triangle & Inscribed Square",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "In a right triangle, the hypotenuse is 20 and one leg is 12. A square is inscribed in the triangle with one side on the hypotenuse and one vertex at the right angle. Find the area of the square.",
+    "answer": "2304/49"
+  },
+  {
+    "id": "q-hard-20251112-34",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Geometry — Equilateral & Incircle",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A circle is inscribed in an equilateral triangle of side 18. Find the area of the region inside the triangle but outside the circle.",
+    "answer": "81√3 − 27π"
+  },
+  {
+    "id": "q-hard-20251112-35",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Geometry — Isosceles Trapezoid",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "An isosceles trapezoid has bases 14 and 26 and area 240. The non-parallel sides are equal. Find the length of each non-parallel side.",
+    "answer": "6√5"
+  },
+  {
+    "id": "q-hard-20251112-36",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Coordinate Geometry — Reflection",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "The line 3x − 4y = 12 is reflected over the x-axis. What is the equation of the reflected line, and what is the distance between the two lines?",
+    "answer": "Reflected: 3x + 4y = 12; distance 0"
+  },
+  {
+    "id": "q-hard-20251112-37",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Coordinate Geometry — Completing the Square",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "A circle has equation x² + y² − 8x + 10y − 20 = 0. Find the radius and the coordinates of the center. Then determine the distance from the center to the point (2, −3).",
+    "answer": "Center (4, −5), radius √61; distance 2√2"
+  },
+  {
+    "id": "q-hard-20251112-38",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Coordinate Geometry — Triangle Area",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "Points A(2, −1), B(8, 7), and C(k, 3) are vertices of a triangle with area 12. Find all possible values of k.",
+    "answer": "k = 2 or 8"
+  },
+  {
+    "id": "q-hard-20251112-39",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Quantitative Comparison — Quadratic Interval",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "Let x be a real number such that x² − 5x + 6 > 0. Quantity A: x  Quantity B: 2",
+    "choices": ["Quantity A", "Quantity B", "Equal", "Cannot be determined"],
+    "answer": "Cannot be determined"
+  },
+  {
+    "id": "q-hard-20251112-40",
+    "exam": "GRE",
+    "section": "Quant",
+    "topic": "Quantitative Comparison — Number Theory",
+    "type": "quant_mc",
+    "difficulty": "hard",
+    "stem": "a and b are positive integers such that 2a is a multiple of 9 and 3b is a multiple of 10. Quantity A: Least possible value of a + b  Quantity B: 19",
+    "choices": ["Quantity A", "Quantity B", "Equal", "Cannot be determined"],
+    "answer": "Equal"
   }
 ]

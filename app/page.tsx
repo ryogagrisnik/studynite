@@ -52,7 +52,7 @@ export default function Home() {
           <div>
             <h1 className="split__title">Infinite GRE & GMAT questions at your fingertips.</h1>
             {/* Removed marketing subhead + bullets per request */}
-            <div style={{ marginTop: 18 }}>
+            <div style={{ marginTop: 32 }}>
               <Link className="btn btn-primary btn-large" href="/practice">Get Started</Link>
             </div>
           </div>
@@ -265,7 +265,7 @@ export default function Home() {
               <li><span className="plan__dot" />15 questions/day (GRE + GMAT)</li>
               <li><span className="plan__dot" />Timed or untimed mode</li>
               <li><span className="plan__dot" />Step-by-step solutions</li>
-              <li><span className="plan__dot" />Review queue for missed items</li>
+              <li><span className="plan__dot" />Missed question review <strong>(Pro only)</strong></li>
             </ul>
             <Link href="/practice" className="plan__cta">Start free</Link>
           </div>
@@ -283,6 +283,7 @@ export default function Home() {
             <ul className="plan__features">
               <li><span className="plan__dot" />Unlimited questions (GRE + GMAT)</li>
               <li><span className="plan__dot" />Personalized review & difficulty ramp</li>
+              <li><span className="plan__dot" />Missed question review queue</li>
               <li><span className="plan__dot" />Quick-tip speed strategies</li>
               <li><span className="plan__dot" />Priority updates and new question packs</li>
               <li><span className="plan__dot" />Cancel anytime</li>

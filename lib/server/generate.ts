@@ -32,12 +32,17 @@ export async function generateQuestionStrictJSON({
   }
 
   const fingerprint = crypto.randomBytes(6).toString("hex");
+  const explanationGuidance =
+    section === "Quant"
+      ? "In the field explainHTML, include a fully worked, step-by-step explanation. Use 3–6 short labeled steps (Step 1, Step 2, etc.). Start by restating the givens and defining any variables, then write the key formula or relationship, substitute the given numbers, simplify step by step, and finally state the numerical answer and which option is correct."
+      : "Include a fully worked explanation that justifies the correct answer.";
+
   const user = [
     `Create ONE GRE ${section} question.`,
     topic ? `Topic: ${topic}` : undefined,
     `Difficulty: ${difficulty}`,
     `This item must be novel and should not reuse wording or numbers from other items.`,
-    `Include a fully worked explanation that justifies the correct answer.`,
+    explanationGuidance,
     `Fingerprint ${fingerprint} (use internally only to ensure uniqueness).`,
     `Output JSON with keys: {section, topic, difficulty, stemHTML, options:[{id,html}], correct:[number], explainHTML, meta}`,
     examplesBlock(exemplars),

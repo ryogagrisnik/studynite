@@ -10,8 +10,8 @@ function form(body: Record<string, string>): string {
     .join('&');
 }
 
-async function stripeCreateCheckoutSession(params: Record<string,string>, secret: string) {
-  const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+async function stripeCreatePortalSession(params: Record<string,string>, secret: string) {
+  const res = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${secret}`,
@@ -21,7 +21,7 @@ async function stripeCreateCheckoutSession(params: Record<string,string>, secret
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`stripe session failed: ${text}`);
+    throw new Error(`stripe portal failed: ${text}`);
   }
   return res.json();
 }
@@ -29,29 +29,16 @@ async function stripeCreateCheckoutSession(params: Record<string,string>, secret
 export async function POST(){
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string | undefined;
-  const email = (session?.user as any)?.email as string | undefined;
   if (!userId) return NextResponse.json({ error: 'UNAUTHENTICATED' }, { status: 401 });
 
   const secret = process.env.STRIPE_SECRET_KEY;
-  const price = process.env.STRIPE_PRICE_ID_MONTHLY || process.env.STRIPE_PRICE_ID_YEARLY;
-  if (!secret || !price) return NextResponse.json({ error: 'STRIPE_NOT_CONFIGURED' }, { status: 503 });
+  if (!secret) return NextResponse.json({ error: 'STRIPE_NOT_CONFIGURED' }, { status: 503 });
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
+  if (!user?.stripeCustomerId) return NextResponse.json({ error: 'NO_CUSTOMER' }, { status: 400 });
 
   const base = getAppBaseUrl().replace(/\/$/, '');
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });
-  const stripeCustomerId = user?.stripeCustomerId || undefined;
-
-  const params: Record<string,string> = {
-    mode: 'subscription',
-    'line_items[0][price]': price,
-    'line_items[0][quantity]': '1',
-    success_url: `${base}/dashboard?upgraded=1`,
-    cancel_url: `${base}/pricing?canceled=1`,
-    client_reference_id: userId,
-    allow_promotion_codes: 'true',
-  };
-  if (stripeCustomerId) params.customer = stripeCustomerId;
-  else if (email) params.customer_email = email;
-
-  const out = await stripeCreateCheckoutSession(params, secret);
+  const out = await stripeCreatePortalSession({ customer: user.stripeCustomerId, return_url: `${base}/dashboard` }, secret);
   return NextResponse.json({ url: out.url }, { status: 200 });
 }
+

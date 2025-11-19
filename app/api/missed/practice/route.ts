@@ -11,6 +11,7 @@ import type { Prisma } from "@prisma/client";
 import type { QuestionPayload } from "@/lib/types/question";
 import { normalizeQuestionPayload } from "@/lib/normalizeQuestionPayload";
 import { isMissedQuestionTableMissing } from "@/lib/server/missedTableGuard";
+import { hasActiveProSession } from "@/lib/server/membership";
 
 const Body = z.object({
   groupKey: z.string().min(3),
@@ -106,6 +107,11 @@ export async function POST(req: Request) {
 
     if (!userId) {
       return NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401 });
+    }
+
+    // Pro-only access: require active subscription
+    if (!hasActiveProSession(session)) {
+      return NextResponse.json({ error: "PRO_REQUIRED" }, { status: 401 });
     }
 
     const parsed = Body.safeParse(await req.json().catch(() => ({})));

@@ -34,8 +34,19 @@ const providers: NextAuthOptions["providers"] = [
         throw new Error("Invalid credentials");
       }
 
+      // If the user hasn't verified via email but has an OAuth account (e.g., Google),
+      // consider them verified to allow password auth and smooth provider switching.
       if (!user.emailVerified) {
-        throw new Error("Email not verified");
+        const hasOauth = await prisma.account.findFirst({ where: { userId: user.id } });
+        if (!hasOauth) {
+          throw new Error("Email not verified");
+        }
+        // Opportunistically mark as verified for consistency across the app.
+        try {
+          await prisma.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } });
+        } catch {
+          // non-fatal
+        }
       }
 
       const valid = await verifyPassword(password, user.passwordHash);
@@ -80,6 +91,20 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
+    async signIn({ user, account }) {
+      // When signing in with Google, mark email as verified if not already.
+      if (account?.provider === "google" && user?.id) {
+        try {
+          const existing = await prisma.user.findUnique({ where: { id: user.id }, select: { emailVerified: true } });
+          if (!existing?.emailVerified) {
+            await prisma.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } });
+          }
+        } catch {
+          // ignore; do not block sign-in
+        }
+      }
+      return true;
+    },
     async session({ session, user }) {
       if (session.user) {
         const enriched = session.user as any;

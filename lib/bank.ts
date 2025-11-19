@@ -1,6 +1,7 @@
 // lib/bank.ts
 import fs from "node:fs";
 import path from "node:path";
+import { canonicalGreTopic } from "@/lib/server/quantTopic";
 
 export type BankItem = {
   id: string;
@@ -21,7 +22,15 @@ let CACHE: BankItem[] | null = null;
 function loadBank(): BankItem[] {
   if (CACHE) return CACHE;
   const raw = fs.readFileSync(BANK_PATH, "utf8");
-  CACHE = JSON.parse(raw) as BankItem[];
+  const parsed = JSON.parse(raw) as BankItem[];
+  // Normalize Quant topics to canonical labels for consistent filtering
+  CACHE = parsed.map((b) => {
+    if (b?.section === "Quant") {
+      const canon = canonicalGreTopic(b?.topic);
+      return { ...b, topic: canon ?? b.topic } as BankItem;
+    }
+    return b;
+  });
   return CACHE!;
 }
 

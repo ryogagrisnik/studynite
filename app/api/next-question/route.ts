@@ -42,6 +42,9 @@ import { redis } from "@/lib/redis";
 import { renderMathToHtml } from "@/lib/math/renderMathToHtml";
 import { normalizeLooseTex } from "@/lib/math/normalizeLooseTex";
 import { preflightFixMath } from "@/lib/math/preflight";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
+import { checkQuestionQuality } from "@/lib/quality";
+import { cleanReadableText } from "@/lib/math/cleanText";
 
 const MIN_INTERVAL_SECONDS = Math.max(
   1,
@@ -54,9 +57,20 @@ const HOURLY_LIMIT = Math.max(
 const DAILY_LIMIT = PRACTICE_LIMIT;
 
 type Diff = "easy" | "medium" | "hard";
+function parseWeights(raw?: string | null): [number, number, number] {
+  const def: [number, number, number] = [0.2, 0.55, 0.25]; // easy, medium, hard
+  if (!raw) return def;
+  const parts = raw.split(/[;,\s]+/).map((v) => Number(v)).filter((n) => Number.isFinite(n));
+  if (parts.length !== 3) return def;
+  const sum = parts.reduce((a, b) => a + b, 0) || 1;
+  return [parts[0] / sum, parts[1] / sum, parts[2] / sum] as [number, number, number];
+}
+
 function pickWeightedDifficulty(): Diff {
-  const r = randomFraction();
-  if (r < 0.25) return "medium";
+  const [we, wm, wh] = parseWeights(process.env.NEXT_QUESTION_DIFFICULTY_WEIGHTS || process.env.DIFFICULTY_WEIGHTS);
+  const r = Math.random();
+  if (r < we) return "easy";
+  if (r < we + wm) return "medium";
   return "hard";
 }
 
@@ -103,6 +117,38 @@ function asNumber(value: unknown): number | undefined {
   return undefined;
 }
 
+function isChoiceSetValid(choices: unknown, correctIndex: unknown): boolean {
+  if (!Array.isArray(choices) || choices.length < 2) return false;
+  if (!Number.isFinite(Number(correctIndex))) return false;
+  const idx = Number(correctIndex);
+  if (idx < 0 || idx >= choices.length) return false;
+  // ensure all options are non-empty strings
+  for (const c of choices) {
+    if (typeof c !== 'string' || !c.trim()) return false;
+  }
+  return true;
+}
+
+function normalizeChoiceText(value: string): string {
+  const plain = String(value || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+  return plain;
+}
+
+function hasDuplicateChoices(choices: string[]): boolean {
+  const seen = new Set<string>();
+  for (const c of choices) {
+    const n = normalizeChoiceText(c);
+    if (seen.has(n)) return true;
+    seen.add(n);
+  }
+  return false;
+}
+
 async function enforceRateLimit(userId: string) {
   const now = Date.now();
   const cooldownKey = `rl:nq:cooldown:${userId}`;
@@ -142,6 +188,11 @@ function startOfTodayUTC(): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
+function indexToLetter(i: number): string {
+  const n = Math.max(0, Math.floor(i));
+  return String.fromCharCode(65 + (n % 26));
+}
+
 async function ensureLatexExplanation(args: {
   stem: string;
   choices: string[];
@@ -149,27 +200,73 @@ async function ensureLatexExplanation(args: {
   existing?: string | null;
 }): Promise<string> {
   const { stem, choices, correctIndex, existing } = args;
-  let text = (existing || "").trim();
-  // Cache key to reuse explanations across identical items
-  const cacheKey = `exp:${questionHash(stem, choices)}:${correctIndex}`;
-  if (text.length < 40) {
-    try {
-      const cached = await redis.get(cacheKey);
-      if (typeof cached === 'string' && cached.trim().length >= 40) {
-        return cached;
-      }
-    } catch {}
+  // Always favor the standardized explainer pipeline over any legacy
+  // explanation text stored in the bank/DB. We keep a cache keyed by stem
+  // + choices so regenerated explanations are reused cheaply.
+  const ver = (process.env.EXPLANATION_CACHE_VERSION || '2').trim();
+  const cacheKey = `exp:v${ver}:${questionHash(stem, choices)}:${correctIndex}`;
+  const WORD_MIN = Math.max(60, Number(process.env.EXPLANATION_WORD_MIN || '80'));
+  const wordCount = (s: string) => (s || '').trim().split(/\s+/).filter(Boolean).length;
 
-    text = await generateExplanation({ stem, choices, correctIndex, targetWords: getExplanationTargetWords() });
+  let text = "";
+  try {
+    const cached = await redis.get(cacheKey);
+    if (typeof cached === "string" && cached.trim().length >= 40) {
+      text = cached.trim();
+    }
+  } catch {}
+
+  // If no cached explanation (or cache is clearly bad/too short), generate a
+  // fresh, step‑by‑step one using the shared explainer.
+  if (!text || wordCount(text) < WORD_MIN) {
+    text = await generateExplanation({
+      stem,
+      choices,
+      correctIndex,
+      targetWords: getExplanationTargetWords(),
+    });
   }
+
   let sanitized = sanitizeExplanation(text);
 
-  // Heuristic: detect obviously broken tokens that impair readability
-  const looksBroken = (s: string) => /(?:[^\\]rac\b|[^\\]imes\b|\\t|&lt;|\bext\{|\begin\{[^}]*$|\bend\{[^}]*$|={2,}|\bQuantity\s*[AB]\b[^\n]*=\s*$)/i.test(s);
+  // Ensure completeness unless passthrough mode is enabled
+  try {
+    const passthrough = (process.env.EXPLANATION_PASSTHROUGH || 'true').toLowerCase() === 'true';
+    if (!passthrough) {
+      const alreadyHasAnswer = /\bAnswer\s*:/i.test(sanitized);
+      if (!alreadyHasAnswer && Array.isArray(choices) && choices.length > 0) {
+        const safeIdx = Math.min(Math.max(correctIndex, 0), Math.max(0, choices.length - 1));
+        const label = indexToLetter(safeIdx);
+        const choiceText = String(choices[safeIdx] ?? '').trim();
+        const answerLine = `\n\nAnswer: ${label}. ${choiceText}`;
+        sanitized = sanitized.trimEnd() + answerLine;
+      }
+      if (!/\bCheck\s*:/i.test(sanitized)) {
+        sanitized = sanitized.trimEnd() + "\n\nCheck: Substitute or reason about units to confirm.";
+      }
+    }
+  } catch {}
 
-  if (looksBroken(sanitized)) {
+  // Heuristic: detect obviously broken tokens that impair readability
+  const looksBroken = (s: string) =>
+    /(?:[^\\]rac\b|[^\\]imes\b|\\t|&lt;|\bext\{|\begin\{[^}]*$|\bend\{[^}]*$|={2,}|\\binom(?!\s*\{)|\bThis can be expressed as\s*:\s*=)/i.test(
+      s,
+    ) ||
+    // Common partially-clipped algebra like "(7-3)/(6-" or "C = -"
+    /\(\s*\d+\s*-\s*\d+\s*\)\s*\/\s*\(\s*\d+\s*-\s*$/m.test(s) ||
+    /\bC\s*=\s*-\s*(?:$|\n|\.)/m.test(s) ||
+    // Coordinates missing a second component, e.g. "(4," or "(2, )"
+    /\(\s*\d+\s*,\s*(?:\)|and|\n|$)/m.test(s);
+
+  // Only attempt heavy repair when passthrough mode is disabled. In the new
+  // plain-text explanation flow we prefer short, readable prose over trying to
+  // salvage LaTeX fragments, which previously caused clipping like "ory=x +".
+  const repairEnabled =
+    (process.env.EXPLANATION_PASSTHROUGH || "true").toLowerCase() !== "true";
+
+  if (repairEnabled && looksBroken(sanitized)) {
     // Try a one-shot rewrite to friendly prose + block math
-    const repairKey = `exp:repair:${questionHash(sanitized, [])}`;
+    const repairKey = `exp:repair:v${ver}:${questionHash(sanitized, [])}`;
     try {
       const cached = await redis.get(repairKey);
       if (typeof cached === 'string' && cached.trim().length > 40) {
@@ -195,6 +292,15 @@ async function ensureLatexExplanation(args: {
     // Cache for 7 days
     await redis.set(cacheKey, sanitized);
     await redis.set(cacheKey, sanitized); await redis.expire(cacheKey, 7 * 24 * 60 * 60);
+  } catch {}
+  // If still too short and not in passthrough, ask model once more for a fuller write-up
+  try {
+    const passthrough = (process.env.EXPLANATION_PASSTHROUGH || 'true').toLowerCase() === 'true';
+    if (!passthrough && wordCount(sanitized) < WORD_MIN) {
+      const richer = await generateExplanation({ stem, choices, correctIndex, targetWords: Math.max(WORD_MIN + 40, 140) });
+      const cleaned = sanitizeExplanation(richer);
+      if (wordCount(cleaned) >= WORD_MIN) return cleaned;
+    }
   } catch {}
   return sanitized;
 }
@@ -316,9 +422,14 @@ function scoreToDifficulty(score: number): Diff {
   return "easy";
 }
 
+// Preference order when trying to reuse or fall back to bank questions.
+// Map desired label -> numeric difficulty scores to search, in order.
 const DIFFICULTY_PREF_MAP: Record<Diff, number[]> = {
-  easy: [700, 600, 500],
-  medium: [700, 600, 500],
+  // When user wants easy, try easy first, then medium, then hard
+  easy: [500, 600, 700],
+  // When user wants medium, try medium, then hard, then easy
+  medium: [600, 700, 500],
+  // When user wants hard, try hard, then medium, then easy
   hard: [700, 600, 500],
 };
 
@@ -329,7 +440,8 @@ function difficultyPreference(base: Diff): number[] {
 const REUSE_FRESHNESS_WINDOW_MS = 1000 * 60 * 20; // 20 minutes
 
 function hasHtmlMarkup(text: string): boolean {
-  return /<\/?[a-z][\s\S]*>/i.test(text);
+  // Detect tags even if whitespace appears after '<' (e.g., "< spanclass=...")
+  return /<\s*\/?\s*[a-z][\s\S]*>/i.test(text);
 }
 
 const INLINE_ALLOWED_WORDS = new Set([
@@ -349,8 +461,9 @@ const INLINE_ALLOWED_WORDS = new Set([
 ]);
 
 function wrapInlineMathSegments(text: string): string {
+  // Allow equations that start with variables, numbers, or LaTeX commands like \sum, \frac, etc.
   const inlineEquationRegex =
-    /(^|[\s(])(-?\s*(?:[A-Za-z](?:_{[0-9]+}|[0-9]*)?|[0-9]+(?:\.[0-9]+)?)(?:[A-Za-z0-9+\-*/^()\s]*?)\s*(?:=|<|>|≤|≥)\s*-?\s*(?:[A-Za-z](?:_{[0-9]+}|[0-9]*)?|[0-9]+(?:\.[0-9]+)?)(?:[A-Za-z0-9+\-*/^()\s]*?))(?=(?:[,.;:!?)]|\s|$))/g;
+    /(^|[\s(])(-?\s*(?:\\[A-Za-z]+(?:_{[^}]+}|\^{[^}]+})?|[A-Za-z](?:_{[0-9]+}|[0-9]*)?|[0-9]+(?:\.[0-9]+)?)(?:[A-Za-z0-9+\-*/^(){}\\\s]*?)\s*(?:=|<|>|≤|≥)\s*-?\s*(?:\\[A-Za-z]+(?:_{[^}]+}|\^{[^}]+})?|[A-Za-z](?:_{[0-9]+}|[0-9]*)?|[0-9]+(?:\.[0-9]+)?)(?:[A-Za-z0-9+\-*/^(){}\\\s]*?))(?=(?:[,.;:!?)]|\s|$))/g;
 
   return text.replace(inlineEquationRegex, (match, prefix, expr) => {
     const trimmed = expr.trim();
@@ -410,37 +523,259 @@ function decodeEntities(input: string): string {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&')
-    .replace(/&nbsp;/g, ' ');
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+function stripHtmlPreservingBreaks(value: string): string {
+  return String(value || '')
+    .replace(/<\s*br\s*\/?\s*>/gi, '\n')
+    .replace(/<\s*\/p\s*>/gi, '\n\n')
+    .replace(/<\s*\/div\s*>/gi, '\n\n')
+    .replace(/<\s*\/li\s*>/gi, '\n')
+    .replace(/<\s*h[1-6][^>]*>/gi, '\n')
+    .replace(/<\s*\/h[1-6]\s*>/gi, '\n')
+    .replace(/<[\s\S]+?>/g, ' ')
+    .replace(/\s+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+}
+
+function repairCorruptedKatex(html: string): string {
+  let s = String(html || "");
+  if (!s) return s;
+  // Decode entities again to surface any hidden markup
+  s = decodeEntities(s);
+  // Normalize unicode minus to hyphen
+  s = s.replace(/\u2212/g, '-');
+  // Common broken sequences missing '<' and '-' characters
+  s = s.replace(/spanclass=/g, '<span class=');
+  s = s.replace(/mathxmlns=/g, '<math xmlns=');
+  s = s.replace(/annotationencoding=/g, '<annotation encoding=');
+  s = s.replace(/katex−/g, 'katex-');
+  s = s.replace(/aria−hidden/g, 'aria-hidden');
+  s = s.replace(/reset−size/g, 'reset-size');
+  s = s.replace(/vlist−/g, 'vlist-');
+  // Backslashes that slipped into class names
+  s = s.replace(/m\\frac/g, 'mfrac').replace(/\\frac-line/g, 'frac-line');
+  // Undo accidental frac conversions inside the MathML xmlns
+  s = s.replace(/\\frac\s*\{org\}\s*\{1998\}/gi, 'org/1998');
+  s = s.replace(/\\frac\s*\{Math\}\s*\{MathML\}/gi, 'Math/MathML');
+  // Remove bulky/broken MathML blocks; keep HTML renderer only
+  s = s.replace(/<span class="katex">\s*<span class="katex[-−]mathml">[\s\S]*?<\/span>\s*<span class="katex[-−]html"/g, '<span class="katex"><span class="katex-html"');
+  // Replace MathJax pending spans with freshly rendered KaTeX
+  s = s.replace(/<span class="mathjax-pending"[^>]*data-mathjax="([^"]+)"[^>]*>[\s\S]*?<\/span>/g, (_m, payload) => {
+    const inner = decodeEntities(String(payload));
+    const rendered = renderMathToHtml(inner) ?? inner;
+    return rendered;
+  });
+  // Collapse stray paragraph splits that landed inside math
+  s = s.replace(/<\/p>\s*<p>/g, ' ');
+  return s;
 }
 
 function enhancePlainContent(raw: string | null | undefined): string {
   // Pre-flight math fixes first, then decode HTML entities
   const pre = preflightFixMath(String(raw ?? ""));
   const decoded = decodeEntities(pre.text);
+  // If there is HTML markup after decoding entities, prefer converting it to
+  // readable plain text unless it looks like safe, simple markup. KaTeX/MathJax
+  // fragments often leak unreadable spans; convert those to text here.
+  if (hasHtmlMarkup(decoded)) {
+    const looksMathMarkup =
+      /katex|mathjax/i.test(decoded) ||
+      /<\s*svg|<\s*math/i.test(decoded) ||
+      /<\s*span[^>]*class\s*=|<\s*span|<\s*\/\s*span/i.test(decoded);
+    if (looksMathMarkup) {
+      const stripped = stripHtmlPreservingBreaks(decoded);
+      // Continue through normalization pipeline with plain text
+      const normalized = normalizeLooseTex(stripped);
+      return normalized;
+    }
+    return decoded;
+  }
   // Normalize sloppy LaTeX, then apply friendly language, then simple math helpers
   const text = normalizeLooseTex(decoded.trim());
   if (!text) return "";
-  if (hasHtmlMarkup(text)) return raw ?? "";
   const friendly = friendlyizeLanguage(text);
-  const normalized = normalizeSimplePowers(normalizeSimpleFractions(friendly))
+  // Repair earlier replacements of LaTeX control words if they appear as prose tokens
+  const mathFixed = friendly
+    .replace(/\bsum\s*:/gi, "\\sum ")
+    .replace(/\bproduct\s*:/gi, "\\prod ");
+  // Ensure steps formatting: line breaks and spacing for readability
+  function spaceStructuredSteps(input: string): string {
+    let s = input;
+    s = s.replace(/\s+Steps:/i, '\n\nSteps:');
+    s = s.replace(/\s+Answer:/i, '\n\nAnswer:');
+    // Put each numbered item on its own paragraph
+    s = s.replace(/\s*(\d{1,2}[\)\.])\s+/g, '\n\n$1 ');
+    // Trim any extra newlines after the label
+    s = s.replace(/Steps:\s*\n+/i, 'Steps:\n\n');
+    // If the author used signposts (First/Next/Finally), convert them to numbered steps
+    let counter = 0;
+    const signpost = /\b(First|Firstly|Second|Secondly|Third|Then|Next|After that|Finally|Lastly)\b\s*[:,]?\s*/gi;
+    s = s.replace(signpost, (m) => {
+      counter += 1;
+      const n = counter;
+      return `\n\n${n}) `;
+    });
+    // If we created numbered steps but there is no explicit Steps: label, add one at the top
+    if (counter > 0 && !/\bSteps:\b/i.test(s)) {
+      s = s.replace(/^/, 'Steps:\n\n');
+    }
+    // Ensure "Plan:" starts on its own line if present
+    s = s.replace(/\s+Plan:/i, '\n\nPlan:');
+    // Ensure "Check:" starts on its own line
+    s = s.replace(/\s+Check:/i, '\n\nCheck:');
+    return s;
+  }
+  const structured = spaceStructuredSteps(mathFixed);
+  let normalized = normalizeSimplePowers(normalizeSimpleFractions(structured))
     .replace(
       /\. (Therefore|Thus|Hence|As a result|Consequently|This means|So\b)/g,
       '.\n\n$1'
     );
+
+  // Optional simple style: collapse into a single readable narrative and
+  // remove formal labels like Plan/Steps/Answer.
+  const SIMPLE_STYLE = (process.env.EXPLANATION_FORMAT || process.env.EXPLANATION_STYLE || 'simple').toLowerCase();
+  if (SIMPLE_STYLE === 'simple' || SIMPLE_STYLE === 'free') {
+    // Extract an "Answer:" line if present to append at the end.
+    let answerLine = '';
+    normalized = normalized.replace(/\bAnswer\s*:\s*([\s\S]*?)(?=\n\n|\nCheck:|$)/i, (_m, ans) => {
+      answerLine = String(ans || '').trim();
+      return '';
+    });
+    // Remove Plan:, Steps:, Check: labels and numbered step markers
+    normalized = normalized
+      .replace(/\bPlan\s*:\s*/gi, '')
+      .replace(/\bSteps\s*:\s*/gi, '')
+      .replace(/\bCheck\s*:\s*/gi, '')
+      .replace(/^[ \t]*\d{1,2}[\)\.][ \t]*/gm, '')
+      .replace(/\n{2,}/g, '\n\n');
+    // Use a friendly narrative without a fixed lead-in
+    normalized = normalized.trim();
+    if (answerLine) {
+      const suffix = answerLine.replace(/^(the\s*)?answer\s*:?\s*/i, '').trim();
+      if (suffix) normalized = normalized.replace(/\s*$/, `. Final answer: ${suffix}.`);
+    }
+  }
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  // Escape plain text but keep LaTeX math segments (\\( ... \\) or \\[ ... \\]) intact
+  function escapeOutsideMath(input: string): string {
+    let out = '';
+    let i = 0;
+    const n = input.length;
+    while (i < n) {
+      const iInline = input.indexOf('\\(', i);
+      const iDisp = input.indexOf('\\[', i);
+      let next = -1;
+      let kind: '(' | '[' | null = null;
+      if (iInline !== -1 && (iDisp === -1 || iInline < iDisp)) { next = iInline; kind = '('; }
+      else if (iDisp !== -1) { next = iDisp; kind = '['; }
+      if (next === -1) {
+        out += escapeHtml(input.slice(i));
+        break;
+      }
+      // escape outside
+      out += escapeHtml(input.slice(i, next));
+      // copy math segment unchanged
+      const close = kind === '(' ? '\\)' : '\\]';
+      const j = input.indexOf(close, next + 2);
+      if (j === -1) {
+        // no closing; just append rest
+        out += input.slice(next);
+        break;
+      }
+      // Remove any stray HTML tags that leaked inside the math segment
+      const mathPayload = input.slice(next, j + 2).replace(/<[^>]+>/g, '');
+      out += mathPayload;
+      i = j + 2;
+    }
+    return out;
+  }
+
   const paragraphs = normalized
     .split(/\n{2,}/g)
-    .map((segment) => segment.replace(/\s*\n\s*/g, " ").trim())
+    .map((segment) => segment.replace(/\s*\n\s*/g, ' ').trim())
     .filter(Boolean)
     .map((segment) => {
       const withMath = wrapInlineMathSegments(segment);
-      const withStrong = withMath.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-      return `<p>${withStrong}</p>`;
+      const withStrong = withMath.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      const safe = escapeOutsideMath(withStrong);
+      return `<p>${safe}</p>`;
     });
   return paragraphs.join("");
 }
 
 function stripHtml(input: string): string {
   return input.replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ").replace(/\s+/g, " ").trim();
+}
+
+function toParagraphsFromText(input: string): string {
+  const raw0 = String(input || '').replace(/\r\n?/g, '\n');
+  // Remove renderer artifact tokens that sometimes leak into plain text
+  function purgeRendererNoise(s: string): string {
+    let t = s;
+    // Normalize unicode minus to hyphen
+    t = t.replace(/\u2212/g, '-');
+    // Drop common KaTeX/MathJax artifact tokens when they appear as plaintext
+    t = t.replace(/\b(?:spanclass|katex(?:−|-)?html|mathjax-pending|vlist(?:-t| -r| -s)?|pstrut|sizing(?:reset)?|mtight|mord|mspace|msupsub|mopen(?:nulldelimiter)?|mclose(?:nulldelimiter)?|base|strut|aria(?:−|-)?hidden)\b[^\n]*/gi, ' ');
+    // Remove leaked attribute dumps
+    t = t.replace(/data-mathjax\s*=\s*"[^"]*"/gi, ' ');
+    t = t.replace(/data-mathjax\s*=\s*'[^']*'/gi, ' ');
+    t = t.replace(/aria-hidden\s*=\s*"[^"]*"/gi, ' ');
+    // Remove weird lexer remains like mt2 + invisible char + "> or similar
+    t = t.replace(/[A-Za-z0-9_-]{1,8}[\u200B\u200C\u200D]?\"?>/g, ' ');
+    // Remove any lingering angle-bracket chunks that are not part of LaTeX
+    t = t.replace(/<[\s\S]*?>/g, ' ');
+    // Collapse odd quotes introduced by attribute dumps
+    t = t.replace(/&quot;|"|&#39;/g, ' ');
+    // Clean repeated dashes and stray punctuation noise
+    t = t.replace(/\s{2,}/g, ' ').replace(/\s*\n\s*/g, '\n');
+    return t;
+  }
+  const raw = purgeRendererNoise(raw0).trim();
+  if (!raw) return '';
+  const parts = raw.split(/\n{2,}/g).map(s => s.trim()).filter(Boolean);
+
+  // Escape HTML outside math segments so any leftover '<' is shown literally,
+  // while math remains in LaTeX delimiters for client-side rendering.
+  function escapeHtml(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function escapeOutsideMath(input: string): string {
+    let out = '';
+    let i = 0;
+    const n = input.length;
+    while (i < n) {
+      const iInline = input.indexOf('\\(', i);
+      const iDisp = input.indexOf('\\[', i);
+      let next = -1;
+      let kind: '(' | '[' | null = null;
+      if (iInline !== -1 && (iDisp === -1 || iInline < iDisp)) { next = iInline; kind = '('; }
+      else if (iDisp !== -1) { next = iDisp; kind = '['; }
+      if (next === -1) { out += escapeHtml(input.slice(i)); break; }
+      out += escapeHtml(input.slice(i, next));
+      const close = kind === '(' ? '\\)' : '\\]';
+      const j = input.indexOf(close, next + 2);
+      if (j === -1) { out += escapeHtml(input.slice(next)); break; }
+      const mathPayload = input.slice(next, j + 2).replace(/<[^>]+>/g, '');
+      out += mathPayload;
+      i = j + 2;
+    }
+    return out;
+  }
+
+  return parts.map(s => `<p>${escapeOutsideMath(s)}</p>`).join('');
 }
 
 function extractQuantitiesFromStem(stemRaw: string): { A?: string; B?: string } {
@@ -524,10 +859,16 @@ function toClientShape(q: {
   }
 
   const stemHTMLRaw = enhancePlainContent(stem);
-  const explanationHTMLRaw = enhancePlainContent(explanation);
   const stemHTML = renderMathToHtml(stemHTMLRaw) ?? stemHTMLRaw;
-  const explanationHTML =
-    renderMathToHtml(explanationHTMLRaw) ?? explanationHTMLRaw;
+  // For explanations, favor plain, readable text. Do not run the heavy
+  // math/markup normalizer that can clip tokens; instead, strip any residual
+  // HTML noise and build simple paragraphs from the cleaned text.
+  const explanationPlain = cleanReadableText(
+    hasHtmlMarkup(explanation)
+      ? stripHtmlPreservingBreaks(explanation)
+      : explanation,
+  );
+  const explanationHTML = toParagraphsFromText(explanationPlain);
   const quantityAHTMLRaw =
     finalKind === "qc" && finalQuantityA
       ? enhancePlainContent(finalQuantityA) || finalQuantityA
@@ -545,22 +886,46 @@ function toClientShape(q: {
       ? renderMathToHtml(quantityBHTMLRaw) ?? quantityBHTMLRaw
       : null;
 
+  // Sanitize HTML fields to reduce XSS risk
   const modern = {
     id: q.id,
     exam: q.exam,
     section: q.section,
     stem,
-    stemHTML,
+    stemHTML: sanitizeHtml(repairCorruptedKatex(stemHTML))!,
     choices: safeChoices,
     correctIndex,
     explanation,
-    explainHTML: explanationHTML,
+    explainHTML: sanitizeHtml(explanationHTML)!,
     difficulty: q.difficulty,
     badge: q.badge,
     kind: finalKind,
-    quantityA: finalKind === "qc" ? (quantityAHTML ?? finalQuantityA ?? null) : null,
-    quantityB: finalKind === "qc" ? (quantityBHTML ?? finalQuantityB ?? null) : null,
+    quantityA: finalKind === "qc" ? (quantityAHTML ? sanitizeHtml(quantityAHTML)! : finalQuantityA ?? null) : null,
+    quantityB: finalKind === "qc" ? (quantityBHTML ? sanitizeHtml(quantityBHTML)! : finalQuantityB ?? null) : null,
   };
+
+  // Attach quality evaluation and adjust difficulty label if our heuristic disagrees strongly
+  try {
+    const report = checkQuestionQuality({
+      id: modern.id,
+      exam: modern.exam,
+      section: modern.section as any,
+      stem: modern.stem,
+      stemHTML: modern.stemHTML || modern.stem,
+      choices: modern.choices ?? [],
+      correctIndex: modern.correctIndex,
+      explanation: modern.explanation,
+      explainHTML: modern.explainHTML,
+      difficulty: modern.difficulty as any,
+      kind: modern.kind as any,
+      quantityA: modern.quantityA ?? undefined,
+      quantityB: modern.quantityB ?? undefined,
+    });
+    (modern as any).quality = report;
+    if (report.adjusted && report.predictedDifficulty) {
+      modern.difficulty = report.predictedDifficulty;
+    }
+  } catch {}
 
   // legacy aliases
   const legacy = {
@@ -659,10 +1024,7 @@ export async function POST(req: Request) {
     const topicAliasKey = topicNormalizedRaw.toLowerCase().replace(/[^a-z]/g, "");
     const verbalAlias = section === "Verbal" ? VERBAL_TOPIC_ALIAS[topicAliasKey] : undefined;
 
-    const effectiveDifficulty: Diff =
-      requestedDifficulty && requestedDifficulty !== "medium"
-        ? requestedDifficulty
-        : pickWeightedDifficulty();
+    const effectiveDifficulty: Diff = requestedDifficulty ?? pickWeightedDifficulty();
 
     const rate = await enforceRateLimit(userIdSafe);
     if (!rate.ok) {
@@ -735,13 +1097,40 @@ export async function POST(req: Request) {
 
       const reuseFiltered = reuseCandidates
         .filter((candidate) =>
-          validVerbalCategory(
+          validQuantCategory(
+            "GRE",
             typeof candidate.topic === "string" ? candidate.topic : undefined
           )
         )
         .filter((candidate) => {
           const hash = questionHash(candidate.stem, candidate.choices ?? []);
           return !avoidHashes.includes(hash);
+        })
+        .filter((candidate) => {
+          // Drop obviously broken items before reuse (e.g., clipped stems).
+          try {
+            const qc = checkQuestionQuality({
+              id: candidate.id,
+              exam: "GRE",
+              section: "Quant",
+              stem: candidate.stem,
+              stemHTML: candidate.stem,
+              choices: candidate.choices ?? [],
+              correctIndex: Math.max(
+                0,
+                (candidate.choices ?? []).findIndex((choice) => choice === candidate.answer)
+              ),
+              explanation: candidate.explanation ?? "",
+              explainHTML: candidate.explanation ?? "",
+              difficulty: scoreToDifficulty(candidate.difficulty ?? difficultyPreferences[0] ?? 700),
+              kind: "mcq",
+              quantityA: null,
+              quantityB: null,
+            });
+            return qc.ok;
+          } catch {
+            return false;
+          }
         });
       const freshnessCutoff = new Date(Date.now() - REUSE_FRESHNESS_WINDOW_MS);
       const prioritizedPools = difficultyPreferences
@@ -761,12 +1150,19 @@ export async function POST(req: Request) {
           choices.findIndex((choice) => choice === picked.answer)
         );
         const actualDifficulty = scoreToDifficulty(picked.difficulty ?? difficultyPreferences[0] ?? 700);
+        // Rebuild a clean explanation (avoid leaking old MathJax/KaTeX markup)
+        const ensured = await ensureLatexExplanation({
+          stem: picked.stem,
+          choices,
+          correctIndex: correctIndex >= 0 ? correctIndex : 0,
+          existing: picked.explanation ?? "",
+        });
         const { modern } = toClientShape({
           id: picked.id,
           stem: picked.stem,
           choices,
           correctIndex: correctIndex >= 0 ? correctIndex : 0,
-          explanation: picked.explanation ?? "",
+          explanation: ensured,
           exam: "GRE",
           section: "Quant",
           difficulty: actualDifficulty,
@@ -787,13 +1183,24 @@ export async function POST(req: Request) {
       let generated: any;
 
       try {
+        const recentStems = attemptedQs.map((q) => q.stem).filter(Boolean).slice(0, 5);
         const batch = await generateGreQuantBatch({
           topic: wantTopic,
           difficulty: effectiveDifficulty,
           avoidHashes,
+          avoidStems: recentStems,
           batchSize: 3,
         });
         generated = batch[0];
+        if (
+          !isChoiceSetValid(generated.choices, generated.correctIndex) ||
+          hasDuplicateChoices(generated.choices)
+        ) {
+          throw new Error('INVALID_GENERATED_CHOICES');
+        }
+        if (wantTopic && typeof generated.concept === 'string' && generated.concept !== wantTopic) {
+          throw new Error('TOPIC_DRIFT');
+        }
       } catch {
         const basePoolRaw =
           GRE_QUESTIONS.filter((q) => {
@@ -827,17 +1234,33 @@ export async function POST(req: Request) {
           fallbackSource = [pickRandomGreQuant(wantTopic)];
         }
 
-        const chosen = randomFromArray(fallbackSource);
-        const b = chosen;
+        let chosen: typeof GRE_QUESTIONS[number] | null = null;
+        // Try to find a valid candidate without duplicate choices
+        for (let attempt = 0; attempt < Math.min(6, fallbackSource.length); attempt++) {
+          const candidate = randomFromArray(fallbackSource);
+          if (
+            Array.isArray(candidate.choices) &&
+            isChoiceSetValid(candidate.choices, candidate.correctIndex) &&
+            !hasDuplicateChoices(candidate.choices)
+          ) {
+            chosen = candidate;
+            break;
+          }
+        }
+        chosen = chosen || randomFromArray(fallbackSource);
+        const b = chosen as any;
+        let safeCorrect = Number.isFinite(Number(b.correctIndex)) ? (Number(b.correctIndex) | 0) : 0;
+        if (!Array.isArray(b.choices) || b.choices.length < 2) b.choices = ["Option 1", "Option 2"];
+        if (safeCorrect < 0 || safeCorrect >= b.choices.length) safeCorrect = 0;
         generated = {
           concept: b.concept,
           difficulty: b.difficulty,
           kind: (b as any).kind ?? "mcq",
           quantityA: (b as any).quantityA ?? null,
           quantityB: (b as any).quantityB ?? null,
-          stem: b.stem,
+          stem: String(b.stem || ""),
           choices: b.choices,
-          correctIndex: b.correctIndex,
+          correctIndex: safeCorrect,
           explanation: b.explanation || "See solution.",
           badge: b.badge,
         };
@@ -852,23 +1275,133 @@ export async function POST(req: Request) {
       const enhancedStemRaw = enhancePlainContent(generated.stem);
       const enhancedExplanationRaw = enhancePlainContent(ensuredExplanation);
       const enhancedStem = renderMathToHtml(enhancedStemRaw) ?? enhancedStemRaw;
-      const enhancedExplanation =
-        renderMathToHtml(enhancedExplanationRaw) ?? enhancedExplanationRaw;
+      // Defer explanation math rendering to the client to avoid corrupted HTML blocks
+      const enhancedExplanation = enhancedExplanationRaw;
       const generatedDifficulty = (() => {
         const raw = typeof generated.difficulty === "string" ? generated.difficulty.toLowerCase() : "";
         if (raw === "easy" || raw === "medium" || raw === "hard") return raw as Diff;
         return effectiveDifficulty;
       })();
 
+      // Heuristic difficulty gate: if model under-shoots difficulty, retry once with stem diversity
+      const desiredRank = (d: Diff) => (d === "easy" ? 1 : d === "medium" ? 2 : 3);
+      const predictedReportTry1 = (() => {
+        try {
+          return checkQuestionQuality({
+            id: "temp",
+            exam: "GRE",
+            section: "Quant",
+            stem: enhancedStem,
+            stemHTML: enhancedStem,
+            choices: generated.choices,
+            correctIndex: generated.correctIndex,
+            explanation: enhancedExplanation,
+            explainHTML: enhancedExplanation,
+            difficulty: generatedDifficulty,
+            kind: (generated.kind as any) ?? "mcq",
+            quantityA: (generated.quantityA as any) ?? undefined,
+            quantityB: (generated.quantityB as any) ?? undefined,
+          });
+        } catch {
+          return null as any;
+        }
+      })();
+      if (
+        predictedReportTry1 &&
+        desiredRank(predictedReportTry1.predictedDifficulty as Diff) < desiredRank(effectiveDifficulty)
+      ) {
+        try {
+          const avoidStems = [generated.stem].concat(attemptedQs.map((q) => q.stem).filter(Boolean).slice(0, 4));
+          const retryBatch = await generateGreQuantBatch({
+            topic: wantTopic,
+            difficulty: effectiveDifficulty,
+            avoidHashes,
+            avoidStems,
+            batchSize: 2,
+          });
+          const retry = retryBatch[0];
+          const retryEnsured = await ensureLatexExplanation({
+            stem: retry.stem,
+            choices: retry.choices,
+            correctIndex: retry.correctIndex,
+            existing: retry.explanation,
+          });
+          const retryStem = renderMathToHtml(enhancePlainContent(retry.stem)) ?? retry.stem;
+          const retryExp = renderMathToHtml(enhancePlainContent(retryEnsured)) ?? retryEnsured;
+          const retryDiff = (() => {
+            const raw = typeof retry.difficulty === "string" ? retry.difficulty.toLowerCase() : "";
+            if (raw === "easy" || raw === "medium" || raw === "hard") return raw as Diff;
+            return effectiveDifficulty;
+          })();
+          const rep2 = checkQuestionQuality({
+            id: "temp2",
+            exam: "GRE",
+            section: "Quant",
+            stem: retryStem,
+            stemHTML: retryStem,
+            choices: retry.choices,
+            correctIndex: retry.correctIndex,
+            explanation: retryExp,
+            explainHTML: retryExp,
+            difficulty: retryDiff,
+            kind: (retry as any).kind ?? "mcq",
+            quantityA: (retry as any).quantityA ?? undefined,
+            quantityB: (retry as any).quantityB ?? undefined,
+          });
+          if (desiredRank(rep2.predictedDifficulty as Diff) >= desiredRank(effectiveDifficulty)) {
+            // Replace with retry content
+            generated = retry;
+            (generated as any).__enhancedStem = retryStem;
+            (generated as any).__enhancedExplanation = retryExp;
+          }
+        } catch {}
+      }
+
+      // If a retry produced stronger content, use it here
+      const enhancedStemFinal = (generated as any).__enhancedStem ?? enhancedStem;
+      const enhancedExplanationFinal = (generated as any).__enhancedExplanation ?? enhancedExplanation;
+      const safeStem = sanitizeHtml(enhancedStemFinal)!;
+      const safeExplanation = sanitizeHtml(enhancedExplanationFinal)!;
+      // For Quantitative Comparison items, persist the quantities inline in the
+      // stored stem so that future reuses (which only know about `stem` and
+      // choices) can recover Quantity A / Quantity B via parsing.
+      let stemForStorage = safeStem;
+      const isQcConcept =
+        typeof generated.concept === "string" &&
+        generated.concept.toLowerCase().includes("quantitative comparison");
+      const hasExplicitQuantities =
+        typeof (generated as any).quantityA === "string" ||
+        typeof (generated as any).quantityB === "string";
+      if (
+        isQcConcept &&
+        hasExplicitQuantities &&
+        !/Quantity\s*A[:\-]/i.test(safeStem) &&
+        !/Quantity\s*B[:\-]/i.test(safeStem)
+      ) {
+        const qaText =
+          typeof (generated as any).quantityA === "string"
+            ? (generated as any).quantityA.trim()
+            : "";
+        const qbText =
+          typeof (generated as any).quantityB === "string"
+            ? (generated as any).quantityB.trim()
+            : "";
+        const lines: string[] = [];
+        if (qaText) lines.push(`Quantity A: ${qaText}`);
+        if (qbText) lines.push(`Quantity B: ${qbText}`);
+        if (lines.length) {
+          stemForStorage = `${safeStem}\n\n${lines.join("\n")}`;
+        }
+      }
       const stored = await prisma.question.create({
         data: {
           exam: "GRE",
           section: "Quant",
           topic: generated.concept,
-          stem: enhancedStem,
+          stem: stemForStorage,
           choices: generated.choices,
           answer: generated.choices[generated.correctIndex] ?? "",
-          explanation: enhancedExplanation,
+          explanation: safeExplanation,
           difficulty: difficultyToScore(generatedDifficulty),
         },
         select: { id: true },
@@ -876,10 +1409,10 @@ export async function POST(req: Request) {
 
       const { modern } = toClientShape({
         id: stored.id,
-        stem: enhancedStem,
+        stem: safeStem,
         choices: generated.choices,
         correctIndex: generated.correctIndex,
-        explanation: enhancedExplanation,
+        explanation: safeExplanation,
         exam: "GRE",
         section: "Quant",
         difficulty: generatedDifficulty,
@@ -900,6 +1433,7 @@ export async function POST(req: Request) {
     if (exam === "GMAT" && section === "Quant") {
       const wantTopic = resolvedTopic?.kind === "Quant" ? resolvedTopic.value : undefined;
       const difficultyLabels = difficultyPreference(effectiveDifficulty).map(scoreToDifficulty);
+      const recentStems = attemptedQs.map((q) => q.stem).filter(Boolean).slice(0, 5);
 
       const basePoolRaw =
         GMAT_QUESTIONS.filter((q) => {
@@ -934,11 +1468,18 @@ export async function POST(req: Request) {
       }
 
       const chosen = randomFromArray(selectionPool);
+      if (!isChoiceSetValid(chosen.choices, chosen.correctIndex)) {
+        // Clamp index if out of bounds as a last resort
+        const idx = Math.min(Math.max(Number(chosen.correctIndex) | 0, 0), Math.max(0, chosen.choices.length - 1));
+        (chosen as any).correctIndex = idx;
+      }
       const ensuredExplanation = await ensureLatexExplanation({
         stem: chosen.stem,
         choices: chosen.choices,
         correctIndex: chosen.correctIndex,
-        existing: chosen.explanation,
+        // Force regeneration so GMAT Quant explanations follow the same
+        // standardized step‑by‑step system as GRE math.
+        existing: "",
       });
       const enhancedStemRaw = enhancePlainContent(chosen.stem);
       const enhancedExplanationRaw = enhancePlainContent(ensuredExplanation);
@@ -950,15 +1491,17 @@ export async function POST(req: Request) {
           ? chosen.difficulty
           : effectiveDifficulty;
 
+      const safeStem2 = sanitizeHtml(enhancedStem)!;
+      const safeExplanation2 = sanitizeHtml(enhancedExplanation)!;
       const stored = await prisma.question.create({
         data: {
           exam: "GMAT",
           section: "Quant",
           topic: chosen.concept,
-          stem: enhancedStem,
+          stem: safeStem2,
           choices: chosen.choices,
           answer: chosen.choices[chosen.correctIndex] ?? "",
-          explanation: enhancedExplanation,
+          explanation: safeExplanation2,
           difficulty: difficultyToScore(generatedDifficulty),
         },
         select: { id: true },
@@ -966,10 +1509,10 @@ export async function POST(req: Request) {
 
       const { modern } = toClientShape({
         id: stored.id,
-        stem: enhancedStem,
+        stem: safeStem2,
         choices: chosen.choices,
         correctIndex: chosen.correctIndex,
-        explanation: enhancedExplanation,
+        explanation: safeExplanation2,
         exam: "GMAT",
         section: "Quant",
         difficulty: generatedDifficulty,
@@ -1061,12 +1604,19 @@ export async function POST(req: Request) {
         const actualDifficulty = scoreToDifficulty(
           picked.difficulty ?? difficultyPreferences[0] ?? 700
         );
+        // Ensure clean explanation for reused items (avoid stale markup)
+        const ensured = await ensureLatexExplanation({
+          stem: picked.stem,
+          choices,
+          correctIndex: correctIndex >= 0 ? correctIndex : 0,
+          existing: picked.explanation ?? "",
+        });
         const { modern } = toClientShape({
           id: picked.id,
           stem: picked.stem,
           choices,
           correctIndex: correctIndex >= 0 ? correctIndex : 0,
-          explanation: picked.explanation ?? "",
+          explanation: ensured,
           exam: "GRE",
           section: "Verbal",
           difficulty: actualDifficulty,
@@ -1085,11 +1635,20 @@ export async function POST(req: Request) {
         const reused = await reuseVerbalQuestion("Text Completion");
         if (reused) return reused;
 
+        const recentStems = attemptedQs.map((q) => q.stem).filter(Boolean).slice(0, 5);
         const batch = await generateGreTextCompletion({
           difficulty: effectiveDifficulty,
           avoidHashes,
+          avoidStems: recentStems,
         });
         const generated: any = batch[0];
+        if (
+          !isChoiceSetValid(generated.choices, generated.correctIndex) ||
+          hasDuplicateChoices(generated.choices)
+        ) {
+          const idx = Math.min(Math.max(Number(generated.correctIndex) | 0, 0), Math.max(0, generated.choices.length - 1));
+          generated.correctIndex = idx;
+        }
 
         const ensuredExplanation = await ensureLatexExplanation({
           stem: generated.stem,
@@ -1100,23 +1659,46 @@ export async function POST(req: Request) {
         const enhancedStemRaw = enhancePlainContent(generated.stem);
         const enhancedExplanationRaw = enhancePlainContent(ensuredExplanation);
         const enhancedStem = renderMathToHtml(enhancedStemRaw) ?? enhancedStemRaw;
-        const enhancedExplanation =
-          renderMathToHtml(enhancedExplanationRaw) ?? enhancedExplanationRaw;
+        const enhancedExplanation = enhancedExplanationRaw;
         const generatedDifficulty = (() => {
           const raw = typeof generated.difficulty === "string" ? generated.difficulty.toLowerCase() : "";
           if (raw === "easy" || raw === "medium" || raw === "hard") return raw as Diff;
           return effectiveDifficulty;
         })();
 
+        // Difficulty gate for Verbal (Text Completion)
+        let finalStemTC = enhancedStem;
+        let finalExplainTC = enhancedExplanation;
+        try {
+          const rep = checkQuestionQuality({
+            id: 'tmp-tc', exam: 'GRE', section: 'Verbal',
+            stem: enhancedStem, stemHTML: enhancedStem,
+            choices: generated.choices, correctIndex: generated.correctIndex,
+            explanation: enhancedExplanation, explainHTML: enhancedExplanation,
+            difficulty: generatedDifficulty, kind: 'mcq'
+          });
+          const rank = (d: Diff) => d === 'easy' ? 1 : d === 'medium' ? 2 : 3;
+          if (rank(rep.predictedDifficulty as Diff) < rank(effectiveDifficulty)) {
+            const retryBatch = await generateGreTextCompletion({ difficulty: effectiveDifficulty, avoidHashes, avoidStems: recentStems });
+            const retry = retryBatch[0];
+            const retryEns = await ensureLatexExplanation({ stem: retry.stem, choices: retry.choices, correctIndex: retry.correctIndex, existing: retry.explanation });
+            finalStemTC = renderMathToHtml(enhancePlainContent(retry.stem)) ?? retry.stem;
+            finalExplainTC = renderMathToHtml(enhancePlainContent(retryEns)) ?? retryEns;
+            generated.choices = retry.choices; generated.correctIndex = retry.correctIndex; generated.difficulty = retry.difficulty;
+          }
+        } catch {}
+
+        const safeStem3 = sanitizeHtml(finalStemTC)!;
+        const safeExplanation3 = sanitizeHtml(finalExplainTC)!;
         const stored = await prisma.question.create({
           data: {
             exam: "GRE",
             section: "Verbal",
             topic: "Text Completion",
-            stem: enhancedStem,
+            stem: safeStem3,
             choices: generated.choices,
             answer: generated.choices[generated.correctIndex] ?? "",
-            explanation: enhancedExplanation,
+            explanation: safeExplanation3,
             difficulty: difficultyToScore(generatedDifficulty),
           },
           select: { id: true },
@@ -1124,10 +1706,10 @@ export async function POST(req: Request) {
 
         const { modern } = toClientShape({
           id: stored.id,
-          stem: enhancedStem,
+          stem: safeStem3,
           choices: generated.choices,
           correctIndex: generated.correctIndex,
-          explanation: enhancedExplanation,
+          explanation: safeExplanation3,
           exam: "GRE",
           section: "Verbal",
           difficulty: generatedDifficulty,
@@ -1146,11 +1728,20 @@ export async function POST(req: Request) {
         const reused = await reuseVerbalQuestion("Sentence Equivalence");
         if (reused) return reused;
 
+        const recentStems2 = attemptedQs.map((q) => q.stem).filter(Boolean).slice(0, 5);
         const batch = await generateGreSentenceEquivalence({
           difficulty: effectiveDifficulty,
           avoidHashes,
+          avoidStems: recentStems2,
         });
         const generated: any = batch[0];
+        if (
+          !isChoiceSetValid(generated.choices, generated.correctIndex) ||
+          hasDuplicateChoices(generated.choices)
+        ) {
+          const idx = Math.min(Math.max(Number(generated.correctIndex) | 0, 0), Math.max(0, generated.choices.length - 1));
+          generated.correctIndex = idx;
+        }
 
         const ensuredExplanation = await ensureLatexExplanation({
           stem: generated.stem,
@@ -1158,23 +1749,45 @@ export async function POST(req: Request) {
           correctIndex: generated.correctIndex,
           existing: generated.explanation,
         });
-        const enhancedStem = enhancePlainContent(generated.stem);
-        const enhancedExplanation = enhancePlainContent(ensuredExplanation);
+        let enhancedStemSE = enhancePlainContent(generated.stem);
+        let enhancedExplanationSE = enhancePlainContent(ensuredExplanation);
         const generatedDifficulty = (() => {
           const raw = typeof generated.difficulty === "string" ? generated.difficulty.toLowerCase() : "";
           if (raw === "easy" || raw === "medium" || raw === "hard") return raw as Diff;
           return effectiveDifficulty;
         })();
 
+        // Difficulty gate for Verbal (Sentence Equivalence)
+        try {
+          const rep = checkQuestionQuality({
+            id: 'tmp-se', exam: 'GRE', section: 'Verbal',
+            stem: enhancedStemSE, stemHTML: enhancedStemSE,
+            choices: generated.choices, correctIndex: generated.correctIndex,
+            explanation: enhancedExplanationSE, explainHTML: enhancedExplanationSE,
+            difficulty: generatedDifficulty, kind: 'mcq'
+          });
+          const rank = (d: Diff) => d === 'easy' ? 1 : d === 'medium' ? 2 : 3;
+          if (rank(rep.predictedDifficulty as Diff) < rank(effectiveDifficulty)) {
+            const retryBatch = await generateGreSentenceEquivalence({ difficulty: effectiveDifficulty, avoidHashes, avoidStems: recentStems2 });
+            const retry = retryBatch[0];
+            const retryEns = await ensureLatexExplanation({ stem: retry.stem, choices: retry.choices, correctIndex: retry.correctIndex, existing: retry.explanation });
+            enhancedStemSE = enhancePlainContent(retry.stem);
+            enhancedExplanationSE = enhancePlainContent(retryEns);
+            generated.choices = retry.choices; generated.correctIndex = retry.correctIndex; generated.difficulty = retry.difficulty;
+          }
+        } catch {}
+
+        const safeStem4 = sanitizeHtml(enhancedStemSE)!;
+        const safeExplanation4 = sanitizeHtml(enhancedExplanationSE)!;
         const stored = await prisma.question.create({
           data: {
             exam: "GRE",
             section: "Verbal",
             topic: "Sentence Equivalence",
-            stem: enhancedStem,
+            stem: safeStem4,
             choices: generated.choices,
             answer: generated.choices[generated.correctIndex] ?? "",
-            explanation: enhancedExplanation,
+            explanation: safeExplanation4,
             difficulty: difficultyToScore(generatedDifficulty),
           },
           select: { id: true },
@@ -1182,10 +1795,10 @@ export async function POST(req: Request) {
 
         const { modern } = toClientShape({
           id: stored.id,
-          stem: enhancedStem,
+          stem: safeStem4,
           choices: generated.choices,
           correctIndex: generated.correctIndex,
-          explanation: enhancedExplanation,
+          explanation: safeExplanation4,
           exam: "GRE",
           section: "Verbal",
           difficulty: generatedDifficulty,
@@ -1203,13 +1816,22 @@ export async function POST(req: Request) {
       const reuseRc = await reuseVerbalQuestion(category);
       if (reuseRc) return reuseRc;
 
+      const recentStems3 = attemptedQs.map((q) => q.stem).filter(Boolean).slice(0, 5);
       const batch = await generateGreRcBatch({
         category,
         difficulty: effectiveDifficulty,
         avoidHashes,
+        avoidStems: recentStems3,
         withPassage: true,
       });
       const generated: any = batch[0];
+      if (
+        !isChoiceSetValid(generated.choices, generated.correctIndex) ||
+        hasDuplicateChoices(generated.choices)
+      ) {
+        const idx = Math.min(Math.max(Number(generated.correctIndex) | 0, 0), Math.max(0, generated.choices.length - 1));
+        generated.correctIndex = idx;
+      }
 
       const rawPassage =
         typeof generated.passage === "string" ? generated.passage.trim() : "";
@@ -1223,23 +1845,48 @@ export async function POST(req: Request) {
         correctIndex: generated.correctIndex,
         existing: generated.explanation,
       });
-      const enhancedStem = enhancePlainContent(combinedStem);
-      const enhancedExplanation = enhancePlainContent(ensuredExplanation);
+      let enhancedStemRC = enhancePlainContent(combinedStem);
+      let enhancedExplanationRC = enhancePlainContent(ensuredExplanation);
       const generatedDifficulty = (() => {
         const raw = typeof generated.difficulty === "string" ? generated.difficulty.toLowerCase() : "";
         if (raw === "easy" || raw === "medium" || raw === "hard") return raw as Diff;
         return effectiveDifficulty;
       })();
 
+      // Difficulty gate for Verbal (RC)
+      try {
+        const rep = checkQuestionQuality({
+          id: 'tmp-rc', exam: 'GRE', section: 'Verbal',
+          stem: enhancedStemRC, stemHTML: enhancedStemRC,
+          choices: generated.choices, correctIndex: generated.correctIndex,
+          explanation: enhancedExplanationRC, explainHTML: enhancedExplanationRC,
+          difficulty: generatedDifficulty, kind: 'mcq'
+        });
+        const rank = (d: Diff) => d === 'easy' ? 1 : d === 'medium' ? 2 : 3;
+        if (rank(rep.predictedDifficulty as Diff) < rank(effectiveDifficulty)) {
+          const retryBatch = await generateGreRcBatch({ category, difficulty: effectiveDifficulty, avoidHashes, avoidStems: recentStems3, withPassage: true });
+          const retry = retryBatch[0];
+          const retryCombinedStem = (typeof retry.passage === 'string' && retry.passage.trim())
+            ? `Passage:\n${retry.passage.trim()}\n\nQuestion:\n${retry.stem}`
+            : retry.stem;
+          const retryEns = await ensureLatexExplanation({ stem: retryCombinedStem, choices: retry.choices, correctIndex: retry.correctIndex, existing: retry.explanation });
+          enhancedStemRC = enhancePlainContent(retryCombinedStem);
+          enhancedExplanationRC = enhancePlainContent(retryEns);
+          generated.choices = retry.choices; generated.correctIndex = retry.correctIndex; generated.difficulty = retry.difficulty; generated.concept = retry.concept;
+        }
+      } catch {}
+
+      const safeStem5 = sanitizeHtml(enhancedStemRC)!;
+      const safeExplanation5 = sanitizeHtml(enhancedExplanationRC)!;
       const stored = await prisma.question.create({
         data: {
           exam: "GRE",
           section: "Verbal",
-          topic: generated.concept,
-          stem: enhancedStem,
+          topic: category ?? generated.concept,
+          stem: safeStem5,
           choices: generated.choices,
           answer: generated.choices[generated.correctIndex] ?? "",
-          explanation: enhancedExplanation,
+          explanation: safeExplanation5,
           difficulty: difficultyToScore(generatedDifficulty),
         } as any,
         select: { id: true },
@@ -1247,10 +1894,10 @@ export async function POST(req: Request) {
 
       const { modern } = toClientShape({
         id: stored.id,
-        stem: enhancedStem,
+        stem: safeStem5,
         choices: generated.choices,
         correctIndex: generated.correctIndex,
-        explanation: enhancedExplanation,
+        explanation: safeExplanation5,
         exam: "GRE",
         section: "Verbal",
         difficulty: generatedDifficulty,
@@ -1274,7 +1921,7 @@ export async function POST(req: Request) {
       exam,
       section,
       topic: resolvedTopic?.value,
-      difficulty: requestedDifficulty || "medium",
+      difficulty: effectiveDifficulty,
       target: PRACTICE_LIMIT,
     });
 
@@ -1304,6 +1951,33 @@ export async function POST(req: Request) {
             examForValidation,
             typeof q.topic === "string" ? q.topic : undefined
           );
+        }
+        // Global quality gate: avoid serving obviously broken questions
+        try {
+          const correctIndex = Math.max(
+            0,
+            (q.choices ?? []).findIndex((choice) => choice === q.answer)
+          );
+          const difficultyLabel: Diff =
+            q.difficulty === 700 ? "hard" : q.difficulty === 600 ? "medium" : "easy";
+          const report = checkQuestionQuality({
+            id: q.id,
+            exam: q.exam as "GRE" | "GMAT",
+            section: q.section as "Quant" | "Verbal",
+            stem: q.stem,
+            stemHTML: q.stem,
+            choices: q.choices ?? [],
+            correctIndex: correctIndex,
+            explanation: q.explanation ?? "",
+            explainHTML: q.explanation ?? "",
+            difficulty: difficultyLabel,
+            kind: undefined,
+            quantityA: null,
+            quantityB: null,
+          });
+          if (!report.ok) return true;
+        } catch {
+          return true;
         }
         return false;
       };

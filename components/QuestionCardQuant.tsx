@@ -17,6 +17,8 @@ type Props = {
   onAttemptLogged?: (event: AttemptLogEvent) => void;
 };
 
+const ALWAYS_SHOW_EXPLANATIONS = (process.env.NEXT_PUBLIC_ALWAYS_SHOW_EXPLANATIONS || '').toLowerCase() === 'true';
+
 function wrapLatex(latex: string, display = false): string {
   const trimmed = latex.trim();
   if (!trimmed) return '';
@@ -38,7 +40,7 @@ function sanitizeLooseMath(raw: string): string {
   let text = raw.trim();
   if (!text) return text;
 
-const replacements: Array<[RegExp, string | ((...groups: string[]) => string)]> = [
+  const replacements: Array<[RegExp, string | ((...groups: string[]) => string)]> = [
     [/\brac\s*\{/gi, '\\frac{'],
     [/\\+frac/g, '\\frac'],
     [/\\+sqrt/g, '\\sqrt'],
@@ -85,6 +87,9 @@ function ensureMathMarkup(raw?: string | null, display = false): string | undefi
   if (!raw) return undefined;
   const trimmed = raw.trim();
   if (!trimmed) return undefined;
+  // If the string already contains HTML tags, return it as-is and let the
+  // server-side sanitization + KaTeX rendering handle it. Client-side math
+  // normalization here should only touch plain-text/LaTeX fragments.
   if (trimmed.includes('<')) return trimmed;
   let candidate: string | undefined;
   if (trimmed.startsWith('\\(') || trimmed.startsWith('\\[')) {
@@ -225,7 +230,7 @@ export default function QuestionCardQuant({ q, onContinue, onAttemptLogged }: Pr
       setSelected(nextSelected);
       const isCorrect = correctSet.has(idx);
       setStatus(isCorrect ? 'correct' : 'incorrect');
-      setShowExplanation(false);
+      setShowExplanation(!isCorrect || ALWAYS_SHOW_EXPLANATIONS);
       return;
     }
 
@@ -244,7 +249,7 @@ export default function QuestionCardQuant({ q, onContinue, onAttemptLogged }: Pr
       selected.length === correctSet.size &&
       selected.every((idx) => correctSet.has(idx));
     setStatus(userCorrect ? 'correct' : 'incorrect');
-    setShowExplanation(false);
+    setShowExplanation(!userCorrect || ALWAYS_SHOW_EXPLANATIONS);
   }
 
   function handleContinue() {

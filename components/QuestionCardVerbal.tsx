@@ -14,6 +14,8 @@ type Props = {
   onContinue?: () => void;
   onAttemptLogged?: (event: AttemptLogEvent) => void;
 };
+
+const ALWAYS_SHOW_EXPLANATIONS = (process.env.NEXT_PUBLIC_ALWAYS_SHOW_EXPLANATIONS || '').toLowerCase() === 'true';
 type Status = 'idle' | 'correct' | 'incorrect';
 
 function wrapLatex(latex: string, display = false): string {
@@ -141,7 +143,7 @@ export default function QuestionCardVerbal({ q, onContinue, onAttemptLogged }: P
       ? selected.length === correctSet.size && selected.every((idx) => correctSet.has(idx))
       : correctSet.has(selected[0]);
     setStatus(userCorrect ? 'correct' : 'incorrect');
-    if (!userCorrect) setShowExplanation(false);
+    setShowExplanation(!userCorrect || ALWAYS_SHOW_EXPLANATIONS);
   }
 
   function handleContinue() {

@@ -2,6 +2,7 @@ import { QuestionPayload, ensureQuestionPayload } from "@/lib/types/question";
 import { renderMathToHtml } from "@/lib/math/renderMathToHtml";
 import { normalizeLooseTex } from "@/lib/math/normalizeLooseTex";
 import { cleanReadableText } from "@/lib/math/cleanText";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 function isLikelyHtml(value: string): boolean {
   return /<\/?[a-z][\s\S]*>/i.test(value);
@@ -68,6 +69,59 @@ function stripHtmlPreservingBreaks(value: string): string {
     .replace(/<\s*\/li\s*>/gi, "\n")
     .replace(/<li[^>]*>/gi, "\n• ")
     .replace(/<[^>]+>/g, "");
+}
+
+function tryParseNumber(val?: string): number | null {
+  if (!val) return null;
+  const s = val.replace(/[,\s]/g, "").trim();
+  const frac = s.match(/^(-?\d+)\/(\d+)$/);
+  if (frac) {
+    const num = parseFloat(frac[1]!);
+    const den = parseFloat(frac[2]!);
+    if (den !== 0) return num / den;
+  }
+  const num = Number(s.replace(/[^0-9+\-.eE]/g, ""));
+  return Number.isFinite(num) ? num : null;
+}
+
+function buildOptionsFromAnswer(ansRaw: unknown): { options: { id: string|number; html: string }[]; correct: number } | null {
+  if (ansRaw == null) return null;
+  const ans = String(ansRaw).trim();
+  if (!ans) return null;
+  const qcChoices = ["Quantity A", "Quantity B", "Equal", "Cannot be determined"];
+  const normalized = ans.toLowerCase().replace(/\s+/g, " ");
+  const qcIndex = qcChoices.findIndex((c) => c.toLowerCase() === normalized);
+  if (qcIndex >= 0) {
+    return {
+      options: qcChoices.map((c, i) => ({ id: i, html: c })),
+      correct: qcIndex,
+    };
+  }
+  if (/no\s+solution|impossible|none/i.test(ans)) {
+    const opts = ["No solution", "Exactly one solution", "Infinitely many", "Cannot be determined"];
+    return { options: opts.map((t, i) => ({ id: i, html: t })), correct: 0 };
+  }
+  const val = tryParseNumber(ans);
+  const seen = new Set<string>();
+  const opts: string[] = [];
+  const add = (s: string) => { const k = s.toLowerCase(); if (!seen.has(k)) { seen.add(k); opts.push(s); } };
+  add(ans);
+  if (val != null) {
+    const deltas = [0.05, -0.08, 0.12, -0.15, 0.2];
+    for (const d of deltas) {
+      const v = val * (1 + d);
+      const fmt = Math.abs(v) >= 10 ? v.toFixed(1) : v.toPrecision(3);
+      add(fmt.replace(/\.0$/, ""));
+      if (opts.length >= 4) break;
+    }
+  } else {
+    add("None of the above");
+    add("Cannot be determined");
+    add("Insufficient information");
+  }
+  while (opts.length < 4) add(String(opts.length + 1));
+  const correct = opts.findIndex((t) => t === ans);
+  return { options: opts.map((t, i) => ({ id: i, html: t })), correct: correct >= 0 ? correct : 0 };
 }
 
 function formatInlineText(rawLine: string): string {
@@ -279,10 +333,18 @@ export function normalizeQuestionPayload(rawIn: any): QuestionPayload {
     });
 
     if (!Array.isArray(options) || options.length < 2) {
-      options = [
-        { id: 0, html: "Option A" },
-        { id: 1, html: "Option B" },
-      ];
+      // Try to synthesize choices from a single canonical answer if provided
+      const fromAnswer = buildOptionsFromAnswer(root.answer ?? (metaSource as any)?.answer ?? (rawIn as any)?.answer);
+      if (fromAnswer) {
+        options = fromAnswer.options as any;
+        // Will set correct below if possible; fallback to index 0 otherwise
+        (root as any).__synthCorrect = fromAnswer.correct;
+      } else {
+        options = [
+          { id: 0, html: "Option A" },
+          { id: 1, html: "Option B" },
+        ];
+      }
     }
     options = options.map((op) => {
       const htmlSource = typeof op.html === "string" ? op.html : undefined;
@@ -313,7 +375,8 @@ export function normalizeQuestionPayload(rawIn: any): QuestionPayload {
     }
 
     if (!Array.isArray(correct) || correct.length === 0) {
-      correct = [0];
+      const synth = (root as any)?.__synthCorrect;
+      correct = [Number.isFinite(synth) ? Number(synth) : 0];
     }
 
     const normalizedCorrect = asArray<number>(correct)
@@ -370,19 +433,28 @@ export function normalizeQuestionPayload(rawIn: any): QuestionPayload {
       rawIn?.uuid ??
       `generated-${Math.random().toString(36).slice(2)}`;
 
-    const stemHTMLNormalized = stemHTML ? normalizeLooseTex(stemHTML) : undefined;
-    const explainHTMLNormalized = explainHTML ? normalizeLooseTex(explainHTML) : undefined;
-    const quantityANormalized = isQuant && quantityA ? normalizeLooseTex(quantityA) : quantityA ?? null;
-    const quantityBNormalized = isQuant && quantityB ? normalizeLooseTex(quantityB) : quantityB ?? null;
+    const stemHTMLNormalized = stemHTML ? (isLikelyHtml(stemHTML) ? stemHTML : normalizeLooseTex(stemHTML)) : undefined;
+    const explainHTMLNormalized = explainHTML ? (isLikelyHtml(explainHTML) ? explainHTML : normalizeLooseTex(explainHTML)) : undefined;
+    const quantityANormalized = isQuant && quantityA ? (isLikelyHtml(quantityA) ? quantityA : normalizeLooseTex(quantityA)) : quantityA ?? null;
+    const quantityBNormalized = isQuant && quantityB ? (isLikelyHtml(quantityB) ? quantityB : normalizeLooseTex(quantityB)) : quantityB ?? null;
 
     const finalStemHTML =
       stemHTMLNormalized != null
         ? renderMathToHtml(stemHTMLNormalized) ?? stemHTMLNormalized
         : undefined;
-    const finalExplainHTML =
-      explainHTMLNormalized != null
-        ? renderMathToHtml(explainHTMLNormalized) ?? explainHTMLNormalized
-        : undefined;
+    let finalExplainHTML: string | undefined;
+    if (explainHTMLNormalized != null) {
+      // If the explanation still contains KaTeX/MathJax renderer markup or any
+      // obvious HTML/span artifacts (including encoded tags), treat it as
+      // polluted and rebuild a clean version from plain text instead of
+      // trusting the existing tags.
+      if (/\b(katex|mathjax|spanclass)\b/i.test(explainHTMLNormalized) || /<\/?span\b/i.test(explainHTMLNormalized) || /&lt;\/?span\b/i.test(explainHTMLNormalized)) {
+        const stripped = stripHtmlPreservingBreaks(explainHTMLNormalized);
+        finalExplainHTML = formatPlainTextToHtml(cleanReadableText(stripped)) ?? stripped;
+      } else {
+        finalExplainHTML = renderMathToHtml(explainHTMLNormalized) ?? explainHTMLNormalized;
+      }
+    }
     const finalQuantityA =
       isQuant && quantityANormalized != null
         ? renderMathToHtml(quantityANormalized) ?? quantityANormalized
@@ -392,6 +464,23 @@ export function normalizeQuestionPayload(rawIn: any): QuestionPayload {
         ? renderMathToHtml(quantityBNormalized) ?? quantityBNormalized
         : quantityBNormalized;
 
+    const safeStemHTML = finalStemHTML != null ? sanitizeHtml(finalStemHTML)! : undefined;
+    let safeExplainHTML = finalExplainHTML != null ? sanitizeHtml(finalExplainHTML)! : undefined;
+    // Final safety net: if any renderer markup slipped through after sanitizing,
+    // strip tags and fall back to simple paragraph text so learners never see
+    // raw KaTeX/MathJax HTML.
+    if (
+      safeExplainHTML &&
+      (/\b(katex|mathjax|spanclass)\b/i.test(safeExplainHTML) ||
+        /<\/?span\b/i.test(safeExplainHTML) ||
+        /&lt;\/?span\b/i.test(safeExplainHTML))
+    ) {
+      const stripped = stripHtmlPreservingBreaks(safeExplainHTML);
+      safeExplainHTML = formatPlainTextToHtml(cleanReadableText(stripped)) ?? stripped;
+    }
+    const safeQuantityA = finalQuantityA != null ? sanitizeHtml(String(finalQuantityA))! : null;
+    const safeQuantityB = finalQuantityB != null ? sanitizeHtml(String(finalQuantityB))! : null;
+
     const payload = ensureQuestionPayload({
       id,
       exam: "GRE" as const,
@@ -399,15 +488,15 @@ export function normalizeQuestionPayload(rawIn: any): QuestionPayload {
       mode,
       topic,
       difficulty,
-      stemHTML: finalStemHTML,
+      stemHTML: safeStemHTML,
       stemLatex,
       kind: inferredKind,
-      quantityA: isQuant ? finalQuantityA : null,
-      quantityB: isQuant ? finalQuantityB : null,
+      quantityA: isQuant ? safeQuantityA : null,
+      quantityB: isQuant ? safeQuantityB : null,
       badge: badge || undefined,
       options,
       correct: normalizedCorrect.length ? normalizedCorrect : [0],
-      explainHTML: finalExplainHTML,
+      explainHTML: safeExplainHTML,
       meta: source || tags ? { source, tags } : undefined,
     });
 

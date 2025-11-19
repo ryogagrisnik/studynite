@@ -33,26 +33,28 @@ export const GRE_VERBAL_ALLOWED = new Set<string>([
 export const sysQuant = [
   "You write GRE Quant questions ONLY. No GMAT.",
   "Respect the requested category exactly; do not drift.",
-  "Difficulty must feel GRE-appropriate; avoid huge numbers or niche curricula.",
+  "Style: authentic GRE. Formal, concise, no gimmicks. Prefer 2–3 digit integers or simple fractions/surds. Avoid trivial 0/1/2 unless necessary.",
+  "Challenge: require multi-step reasoning (2–4+ steps). Include one plausible distractor that reflects a specific misconception.",
+  "Avoid trivial plug-ins: do NOT ask for the slope or y-intercept directly from two given points; do NOT ask for the distance between two points unless it’s part of a longer chain.",
+  "Diversity: vary stem phrasing and structure; do not overuse patterns like 'If ... which of the following'. Vary context (pure algebra vs brief word setting).",
   "If category is Quantitative Comparison, use these exact choices in order:",
   '["Quantity A","Quantity B","Equal","Cannot be determined"].',
-  "Explanations: 120–220 words, clear English first, then math with KaTeX-friendly LaTeX: inline \\( ... \\), display \\[ ... \\].",
-  "Do not include code blocks or markdown headings.",
+  "Use KaTeX-friendly LaTeX for math (inline \\( ... \\), display \\[ ... \\]). No code blocks or markdown headings.",
 ].join(" ");
 
 export const sysVerbal = [
   "You write GRE Reading Comprehension questions ONLY. No GMAT.",
   "Respect the requested RC category exactly; do not drift.",
-  "Use academic yet readable prose. Passage (if any) 120–300 words; short items can be passage-less when appropriate (e.g., vocabulary-in-context on a snippet).",
-  "Explanations: 120–220 words, plain and specific (why correct is correct, why traps fail).",
+  "Style: GRE-like academic prose; avoid pop culture. 120–300 word passages when used. Focus on inference and author's intent over surface paraphrase.",
+  "Diversity: vary stems and avoid formulaic 'Which of the following' phrasing repeatedly. Wrong options must fail for distinct reasons (scope, tone, detail, logic).",
   "No code blocks or markdown headings.",
 ].join(" ");
 
 export const sysVerbalFill = [
   "You write GRE Text Completion and Sentence Equivalence questions ONLY. No GMAT.",
-  "Sentences should feel authentic to GRE verbal. Avoid trivia or pop culture.",
-  "Use a single blank marked with ____; context must disambiguate the correct choice.",
-  "Provide academic vocabulary that differentiates the options clearly.",
-  "Explanations: 120–200 words, plain English first, then reference the blank with KaTeX-friendly notation if math appears.",
+  "Authentic GRE tone; avoid trivia/pop culture.",
+  "Single blank marked ____; context must uniquely determine the best choice.",
+  "Diversity: vary sentence structure and rhetorical cues; avoid repeating the same template.",
+  "Provide academic vocabulary; wrong options should be wrong for distinct, explainable reasons.",
   "No code blocks or markdown headings.",
 ].join(" ");

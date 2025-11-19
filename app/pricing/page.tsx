@@ -10,6 +10,11 @@ const comparisonRows = [
     traditional: 'Static sets',
   },
   {
+    label: 'Memory redo of wrong questions',
+    blobprep: 'Pro feature',
+    traditional: 'Not available',
+  },
+  {
     label: 'Instant KaTeX explanations',
     blobprep: 'Included',
     traditional: 'Limited / text-only',
@@ -34,6 +39,7 @@ const comparisonRows = [
 const planFeatures = [
   'Unlimited GRE + GMAT practice',
   'Topic and difficulty targeting',
+  'Memory review: automatic redo of wrong questions (Pro)',
   'Accuracy dashboards & streak tracking',
   'Early access to new drills & flashcards',
 ];
@@ -51,6 +57,10 @@ const sellingPoints = [
     title: 'Trusted explanations',
     copy: 'Clean KaTeX walk-throughs help you understand the “why” without wading through walls of text.',
   },
+  {
+    title: 'Memory review of mistakes',
+    copy: 'Pro unlocks a redo queue that resurfaces questions you missed so the concepts stick.',
+  },
 ];
 
 export default function Pricing() {
@@ -66,6 +76,9 @@ export default function Pricing() {
           <p>
             Join thousands of learners drilling smarter with BlobPrep. One clean prompt at a time,
             with explanations that actually teach.
+          </p>
+          <p style={{ marginTop: 4, fontSize: 14, color: 'rgba(47, 17, 4, 0.7)'}}>
+            Note: Missed question review is a Pro feature and unlocks with your subscription.
           </p>
         </div>
 

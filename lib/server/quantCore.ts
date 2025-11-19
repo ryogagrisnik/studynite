@@ -81,6 +81,38 @@ export async function getNextQuantCore(input: NextQuestionRequest): Promise<any>
       }
     }
 
+    // Try to create a fresh variant (adds variety; optional when API key present)
+    try {
+      if (process.env.OPENAI_API_KEY) {
+        const { ensureVariant } = await import("@/lib/gptVariant");
+        const concept = String(enriched.topic ?? wantedTopic ?? enriched.concept ?? "Quant");
+        const difficulty = String((enriched as any).difficulty ?? "medium");
+        const v = await ensureVariant({
+          baselineId: String(enriched.id ?? "bank"),
+          concept,
+          difficulty,
+          seedNote: "Change numbers 10–20% and rephrase slightly.",
+          maxNewPerBaseline: 6,
+        });
+        if (v) {
+          // Shape like a bank MCQ
+          const choices = JSON.parse(String((v as any).choicesJson ?? "[]"));
+          return {
+            id: `${enriched.id}-variant-${(v as any).id ?? "x"}`,
+            section: "Quant",
+            topic: concept,
+            difficulty,
+            stem: String((v as any).stem ?? ""),
+            choices: Array.isArray(choices) ? choices : [],
+            correctIndex: Number((v as any).correctIndex ?? 0) | 0,
+            explanation: String((v as any).explanation ?? ""),
+          };
+        }
+      }
+    } catch {
+      // ignore variant errors; fall back to enriched
+    }
+
     return enriched;
   }
 

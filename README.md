@@ -14,6 +14,22 @@ npx prisma generate
 npx prisma migrate dev --name init
 npm run dev
 
+## Enable billing (Stripe)
+- Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRICE_ID_MONTHLY` (and/or `STRIPE_PRICE_ID_YEARLY`).
+- Add a Stripe webhook endpoint pointing to `/api/stripe/webhook` with events:
+  - `checkout.session.completed`, `customer.subscription.created|updated|deleted`.
+- Use `POST /api/checkout` to get a Checkout URL.
+- Use `POST /api/billing/portal` for a customer billing portal URL.
+
+## Required environment
+- Postgres: `DATABASE_URL`
+- Redis (Upstash or compatible): `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
+- NextAuth: `NEXTAUTH_SECRET`, `NEXTAUTH_URL` (prod only)
+- App base URL: `APP_URL` and `NEXT_PUBLIC_APP_URL`
+- Optional: `OPENAI_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `RESEND_API_KEY`
+- Optional (explanations): `EXPLANATION_TARGET_WORDS`, `EXPLANATION_WORD_MIN`, `EXPLANATION_WORD_MAX`
+- Optional (dev): `UNLIMITED_EMAILS` for unlimited practice bypass
+
 ## Where to plug OpenAI or more topics
 lib/generator.ts — replace parametric templates with your model calls (e.g., gpt-4o-mini)
 Validate → upsert → enqueue to the proper queue key
@@ -23,3 +39,20 @@ Validate → upsert → enqueue to the proper queue key
 - Seen sets TTL = 21 days
 - Quota before serve
 - Pipeline ready for batch ops (lib/redis.ts)
+
+## Production hardening done here
+- Server-side HTML sanitization for stems/explanations before serving
+- Rate limit on `/api/explain`
+- Sitemap at `/sitemap.xml` and robots referencing it
+- Example envs for NextAuth/Google included
+- Added `lint`, `typecheck`, and `test` scripts
+- Stripe checkout + webhook endpoints added (no extra dependency; REST API usage)
+- Daily queue prefill implemented (`lib/queue.ts`)
+
+## CI
+GitHub Actions (`.github/workflows/ci.yml`) runs install → typecheck → lint → test → build on pushes and PRs.
+
+Consider next steps:
+- Stripe checkout + webhook to set `proExpiresAt`
+- Real queue prefill in `lib/queue.ts` (currently no-op)
+- Enable TypeScript/ESLint error enforcement in `next.config.js`
