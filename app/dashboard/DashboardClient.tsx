@@ -112,6 +112,7 @@ export default function DashboardClient({ data }: DashboardClientProps) {
   const [exporting, setExporting] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [resending, setResending] = useState(false);
+  const [openingPortal, setOpeningPortal] = useState(false);
   const [resendStatus, setResendStatus] = useState<MessageState>(null);
   const [activeKey, setActiveKey] = useState(data.sections[0]?.key ?? "GRE::Quant");
   const activeSection = data.sections.find(s => s.key === activeKey) ?? data.sections[0] ?? null;
@@ -243,6 +244,27 @@ export default function DashboardClient({ data }: DashboardClientProps) {
       setActionMessage({ type: "error", text: "Could not reset your progress. Try again." });
     } finally {
       setResetting(false);
+    }
+  }
+
+  async function handleBillingPortal() {
+    if (openingPortal) return;
+    setOpeningPortal(true);
+    setActionMessage(null);
+    try {
+      const response = await fetch("/api/billing/portal", { method: "POST" });
+      if (!response.ok) throw new Error("PORTAL_FAILED");
+      const data = await response.json();
+      if (!data?.url) throw new Error("PORTAL_URL_MISSING");
+      window.location.href = data.url as string;
+    } catch (error) {
+      console.error(error);
+      setActionMessage({
+        type: "error",
+        text: "Could not open billing portal. Try again in a moment.",
+      });
+    } finally {
+      setOpeningPortal(false);
     }
   }
 
@@ -497,6 +519,16 @@ export default function DashboardClient({ data }: DashboardClientProps) {
           >
             {resetting ? "Clearing…" : "Reset progress"}
           </button>
+          {data.unlimited && (
+            <button
+              className="btn btn-primary"
+              type="button"
+              onClick={handleBillingPortal}
+              disabled={openingPortal}
+            >
+              {openingPortal ? "Opening billing…" : "Manage subscription"}
+            </button>
+          )}
         </div>
         {actionMessage && (
           <div
