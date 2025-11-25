@@ -26,7 +26,7 @@ async function stripeCreateCheckoutSession(params: Record<string,string>, secret
   return res.json();
 }
 
-export async function POST(){
+export async function POST(req: Request){
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string | undefined;
   const email = (session?.user as any)?.email as string | undefined;
@@ -53,5 +53,16 @@ export async function POST(){
   else if (email) params.customer_email = email;
 
   const out = await stripeCreateCheckoutSession(params, secret);
-  return NextResponse.json({ url: out.url }, { status: 200 });
+
+  const acceptHeader = req.headers.get('accept')?.toLowerCase() ?? '';
+  const contentType = req.headers.get('content-type')?.toLowerCase() ?? '';
+  const wantsJSON =
+    contentType.includes('application/json') ||
+    acceptHeader === 'application/json' ||
+    acceptHeader.startsWith('application/json,');
+
+  if (wantsJSON) {
+    return NextResponse.json({ url: out.url }, { status: 200 });
+  }
+  return NextResponse.redirect(out.url, { status: 303 });
 }
