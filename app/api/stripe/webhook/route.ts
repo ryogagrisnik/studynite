@@ -26,6 +26,22 @@ async function verifyStripeSignature(raw: string, header: string | null, secret:
   }
 }
 
+async function fetchStripeSubscription(id: string, secret: string) {
+  if (!secret) return null;
+  const res = await fetch(`https://api.stripe.com/v1/subscriptions/${id}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${secret}`,
+    },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    console.error('[stripe webhook] failed to fetch subscription', id, text);
+    return null;
+  }
+  return res.json();
+}
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +65,22 @@ export async function POST(req: Request) {
         const customer = session.customer as string | undefined;
         const subscription = session.subscription as string | undefined;
         if (userId && customer) {
-          await prisma.user.update({ where: { id: userId }, data: { stripeCustomerId: customer, stripeSubscriptionId: subscription ?? null } });
+            const updateData: Record<string, any> = {
+              stripeCustomerId: customer,
+              stripeSubscriptionId: subscription ?? null,
+            };
+            const secretKey = process.env.STRIPE_SECRET_KEY;
+            if (subscription && secretKey) {
+              const sub = await fetchStripeSubscription(subscription, secretKey);
+              if (sub) {
+                const currentPeriodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
+                const canceled = sub.status === 'canceled' || sub.cancel_at_period_end === true;
+                updateData.proPlan = (sub.items?.data?.[0]?.plan?.nickname as string | undefined) ?? null;
+                updateData.proSince = sub.current_period_start ? new Date(sub.current_period_start * 1000) : undefined;
+                updateData.proExpiresAt = canceled ? currentPeriodEnd : (currentPeriodEnd ?? null);
+              }
+            }
+            await prisma.user.update({ where: { id: userId }, data: updateData });
         }
         break;
       }
@@ -86,4 +117,3 @@ export async function POST(req: Request) {
   }
   return NextResponse.json({ received: true }, { status: 200 });
 }
-
