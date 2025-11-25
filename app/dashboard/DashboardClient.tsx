@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import type { DashboardData, HistoryPoint, SectionKey, SectionStat, TopicStat } from "./types";
 
 type DashboardClientProps = {
@@ -108,12 +109,14 @@ const progressThumbBase: CSSProperties = {
 
 export default function DashboardClient({ data }: DashboardClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [actionMessage, setActionMessage] = useState<MessageState>(null);
   const [exporting, setExporting] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [resending, setResending] = useState(false);
   const [openingPortal, setOpeningPortal] = useState(false);
   const [resendStatus, setResendStatus] = useState<MessageState>(null);
+  const [activating, setActivating] = useState(false);
   const [activeKey, setActiveKey] = useState(data.sections[0]?.key ?? "GRE::Quant");
   const activeSection = data.sections.find(s => s.key === activeKey) ?? data.sections[0] ?? null;
 
@@ -133,6 +136,7 @@ export default function DashboardClient({ data }: DashboardClientProps) {
     ? data.historyBySection[activeSection.key as SectionKey] ?? []
     : data.history;
   const activeStreak = activeSection ? computeStreak(activeHistory) : data.streak;
+  const showUnlimited = data.unlimited || activating;
 
   const streakGoal = Math.max(activeStreak.longest || 1, 1);
   const streakProgress = activeStreak.current
@@ -268,6 +272,46 @@ export default function DashboardClient({ data }: DashboardClientProps) {
     }
   }
 
+  // After returning from Stripe (?upgraded=1), poll quota to refresh session and show Pro state.
+  // This avoids asking users to sign out/in after checkout.
+  React.useEffect(() => {
+    const upgraded = searchParams.get("upgraded");
+    if (!upgraded) return;
+    if (data.unlimited) return;
+    let cancelled = false;
+    setActivating(true);
+
+    async function poll() {
+      for (let i = 0; i < 6; i++) {
+        if (cancelled) return;
+        try {
+          const res = await fetch("/api/quota", { cache: "no-store" });
+          if (!res.ok) throw new Error("poll_failed");
+          const meta = await res.json();
+          if (meta?.isUnlimited) {
+            setActionMessage({ type: "success", text: "Pro activated!" });
+            router.refresh();
+            return;
+          }
+        } catch (err) {
+          console.error(err);
+        }
+        await new Promise(r => setTimeout(r, 1500));
+      }
+      if (!cancelled) {
+        setActionMessage({
+          type: "error",
+          text: "We’re still activating your Pro—please refresh or sign back in.",
+        });
+      }
+      setActivating(false);
+    }
+    poll();
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams, data.unlimited, router]);
+
   return (
     <div className="section" style={{ paddingTop: 48 }}>
       <h1 style={{ marginBottom: 12 }}>Dashboard</h1>
@@ -363,14 +407,14 @@ export default function DashboardClient({ data }: DashboardClientProps) {
         </div>
 
         <div className="card" style={{ flex: "1 1 240px", minWidth: 220 }}>
-          {data.unlimited ? (
+          {showUnlimited ? (
             <>
               <div style={{ fontSize: 28, fontWeight: 800, color: "#F77F00" }}>
-                Unlimited
+                {activating ? "Activating…" : "Unlimited"}
               </div>
               <div>Remaining Free</div>
               <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6 }}>
-                Practice without a daily cap.
+                {activating ? "Checking your new plan…" : "Practice without a daily cap."}
               </div>
             </>
           ) : (
