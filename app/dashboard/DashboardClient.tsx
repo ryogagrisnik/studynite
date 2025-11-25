@@ -1,5 +1,6 @@
 'use client';
 
+import React from "react";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
