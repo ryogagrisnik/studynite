@@ -57,5 +57,5 @@ export async function POST() {
     },
   });
 
-  return NextResponse.json({ user: updated });
+  return NextResponse.json({ user: updated, subscription: sub });
 }
