@@ -42,6 +42,22 @@ async function fetchStripeSubscription(id: string, secret: string) {
   return res.json();
 }
 
+async function fetchStripeCustomer(id: string, secret: string) {
+  if (!secret) return null;
+  const res = await fetch(`https://api.stripe.com/v1/customers/${id}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${secret}`,
+    },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    console.error('[stripe webhook] failed to fetch customer', id, text);
+    return null;
+  }
+  return res.json();
+}
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -65,22 +81,22 @@ export async function POST(req: Request) {
         const customer = session.customer as string | undefined;
         const subscription = session.subscription as string | undefined;
         if (userId && customer) {
-            const updateData: Record<string, any> = {
-              stripeCustomerId: customer,
-              stripeSubscriptionId: subscription ?? null,
-            };
-            const secretKey = process.env.STRIPE_SECRET_KEY;
-            if (subscription && secretKey) {
-              const sub = await fetchStripeSubscription(subscription, secretKey);
-              if (sub) {
-                const currentPeriodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
-                const canceled = sub.status === 'canceled' || sub.cancel_at_period_end === true;
-                updateData.proPlan = (sub.items?.data?.[0]?.plan?.nickname as string | undefined) ?? null;
-                updateData.proSince = sub.current_period_start ? new Date(sub.current_period_start * 1000) : undefined;
-                updateData.proExpiresAt = canceled ? currentPeriodEnd : (currentPeriodEnd ?? null);
-              }
+          const updateData: Record<string, any> = {
+            stripeCustomerId: customer,
+            stripeSubscriptionId: subscription ?? null,
+          };
+          const secretKey = process.env.STRIPE_SECRET_KEY;
+          if (subscription && secretKey) {
+            const sub = await fetchStripeSubscription(subscription, secretKey);
+            if (sub) {
+              const currentPeriodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
+              const canceled = sub.status === 'canceled' || sub.cancel_at_period_end === true;
+              updateData.proPlan = (sub.items?.data?.[0]?.plan?.nickname as string | undefined) ?? null;
+              updateData.proSince = sub.current_period_start ? new Date(sub.current_period_start * 1000) : undefined;
+              updateData.proExpiresAt = canceled ? currentPeriodEnd : (currentPeriodEnd ?? null);
             }
-            await prisma.user.update({ where: { id: userId }, data: updateData });
+          }
+          await prisma.user.update({ where: { id: userId }, data: updateData });
         }
         break;
       }
@@ -91,7 +107,30 @@ export async function POST(req: Request) {
         const customer = sub.customer as string | undefined;
         if (customer) {
           // Find user by customer and update pro window
-          const user = await prisma.user.findFirst({ where: { stripeCustomerId: customer }, select: { id: true } });
+          let user = await prisma.user.findFirst({ where: { stripeCustomerId: customer }, select: { id: true, email: true } });
+
+          // If we don't have a user for this customer yet, try matching by email
+          if (!user) {
+            const secretKey = process.env.STRIPE_SECRET_KEY;
+            if (secretKey) {
+              const customerObj = await fetchStripeCustomer(customer, secretKey);
+              const email = (customerObj?.email as string | undefined)?.toLowerCase();
+              if (email) {
+                const matched = await prisma.user.findFirst({
+                  where: { email },
+                  select: { id: true, email: true },
+                });
+                if (matched) {
+                  user = matched;
+                  await prisma.user.update({
+                    where: { id: matched.id },
+                    data: { stripeCustomerId: customer },
+                  });
+                }
+              }
+            }
+          }
+
           if (user) {
             const currentPeriodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
             const canceled = sub.status === 'canceled' || sub.cancel_at_period_end === true;
