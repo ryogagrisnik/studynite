@@ -57,5 +57,25 @@ export async function POST() {
     },
   });
 
-  return NextResponse.json({ user: updated, subscription: sub });
+  return NextResponse.json({
+    user: updated,
+    subscription: {
+      id: sub.id,
+      status: sub.status,
+      current_period_start: sub.current_period_start,
+      current_period_end: sub.current_period_end,
+      cancel_at_period_end: sub.cancel_at_period_end,
+      canceled_at: sub.canceled_at,
+      trial_start: sub.trial_start,
+      trial_end: sub.trial_end,
+      items: Array.isArray(sub.items?.data)
+        ? sub.items.data.map((item: any) => ({
+            id: item.id,
+            price: item.price?.id,
+            nickname: item.plan?.nickname,
+            product: item.price?.product,
+          }))
+        : [],
+    },
+  });
 }
