@@ -35,7 +35,11 @@ export async function POST() {
   const sub = await fetchSubscription(user.stripeSubscriptionId, secret);
   if (!sub) return NextResponse.json({ error: "SUB_FETCH_FAILED" }, { status: 502 });
 
-  const currentPeriodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
+  const now = new Date();
+  const currentPeriodStart = sub.current_period_start ? new Date(sub.current_period_start * 1000) : now;
+  const currentPeriodEnd = sub.current_period_end
+    ? new Date(sub.current_period_end * 1000)
+    : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // fallback: +30 days
   const canceled = sub.status === "canceled" || sub.cancel_at_period_end === true;
 
   const updated = await prisma.user.update({
@@ -43,8 +47,11 @@ export async function POST() {
     data: {
       stripeSubscriptionId: sub.id,
       stripeCustomerId: sub.customer as string | undefined,
-      proPlan: (sub.items?.data?.[0]?.plan?.nickname as string | undefined) ?? null,
-      proSince: sub.current_period_start ? new Date(sub.current_period_start * 1000) : undefined,
+      proPlan:
+        (sub.items?.data?.[0]?.plan?.nickname as string | undefined) ??
+        (sub.items?.data?.[0]?.price?.id as string | undefined) ??
+        null,
+      proSince: currentPeriodStart,
       proExpiresAt: canceled ? currentPeriodEnd : currentPeriodEnd ?? null,
     },
     select: {
