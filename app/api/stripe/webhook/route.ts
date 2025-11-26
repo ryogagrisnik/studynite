@@ -89,11 +89,18 @@ export async function POST(req: Request) {
           if (subscription && secretKey) {
             const sub = await fetchStripeSubscription(subscription, secretKey);
             if (sub) {
-              const currentPeriodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
+              const now = new Date();
+              const currentPeriodStart = sub.current_period_start ? new Date(sub.current_period_start * 1000) : now;
+              const currentPeriodEnd = sub.current_period_end
+                ? new Date(sub.current_period_end * 1000)
+                : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
               const canceled = sub.status === 'canceled' || sub.cancel_at_period_end === true;
-              updateData.proPlan = (sub.items?.data?.[0]?.plan?.nickname as string | undefined) ?? null;
-              updateData.proSince = sub.current_period_start ? new Date(sub.current_period_start * 1000) : undefined;
-              updateData.proExpiresAt = canceled ? currentPeriodEnd : (currentPeriodEnd ?? null);
+              updateData.proPlan =
+                (sub.items?.data?.[0]?.plan?.nickname as string | undefined) ||
+                (sub.items?.data?.[0]?.price?.id as string | undefined) ||
+                null;
+              updateData.proSince = currentPeriodStart;
+              updateData.proExpiresAt = canceled ? currentPeriodEnd : currentPeriodEnd ?? null;
             }
           }
           await prisma.user.update({ where: { id: userId }, data: updateData });
@@ -132,14 +139,21 @@ export async function POST(req: Request) {
           }
 
           if (user) {
-            const currentPeriodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
+            const now = new Date();
+            const currentPeriodStart = sub.current_period_start ? new Date(sub.current_period_start * 1000) : now;
+            const currentPeriodEnd = sub.current_period_end
+              ? new Date(sub.current_period_end * 1000)
+              : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
             const canceled = sub.status === 'canceled' || sub.cancel_at_period_end === true;
             await prisma.user.update({
               where: { id: user.id },
               data: {
                 stripeSubscriptionId: sub.id,
-                proPlan: (sub.items?.data?.[0]?.plan?.nickname as string | undefined) ?? null,
-                proSince: sub.current_period_start ? new Date(sub.current_period_start * 1000) : undefined,
+                proPlan:
+                  (sub.items?.data?.[0]?.plan?.nickname as string | undefined) ||
+                  (sub.items?.data?.[0]?.price?.id as string | undefined) ||
+                  null,
+                proSince: currentPeriodStart,
                 proExpiresAt: canceled ? currentPeriodEnd : (currentPeriodEnd ?? null),
               },
             });
