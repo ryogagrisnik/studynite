@@ -5,6 +5,7 @@ import Link from "next/link";
 import Providers from "./providers";
 import Script from "next/script";
 import AuthNav from "../components/AuthNav";
+import Image from "next/image";
 
 export const metadata = {
   title: "BlobPrep",
@@ -43,10 +44,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* NAVBAR */}
           <div className="nav">
             <div className="container nav-inner">
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <img src="/assets/logo.png" alt="BlobPrep" style={{ height: 36 }} />
-                <strong>BlobPrep</strong>
-              </div>
+              <Link href="/" aria-label="BlobPrep home" className="nav-logo">
+                <Image
+                  src="/assets/logo.png"
+                  alt="BlobPrep"
+                  width={140}
+                  height={68}
+                  priority
+                />
+              </Link>
               <div className="nav-links" style={{ display: "flex", gap: 16, alignItems: "center" }}>
                 <Link href="/">Home</Link>
                 <Link href="/practice">Practice</Link>

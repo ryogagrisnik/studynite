@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx tests/**/*.test.ts",
+    "test": "tsx tests/*.test.ts",
     "prisma:gen": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
     "seed": "tsx scripts/seed.ts",

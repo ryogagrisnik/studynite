@@ -409,8 +409,8 @@ function PracticeClient() {
     }
 
     const requestMeta: PracticeEventMeta = {
-      exam: 'GRE' as const,
-      section: (isVerbal ? 'Verbal' : 'Quant') as Section,
+      exam,
+      section,
       mode: requestMode,
       topic: requestMode === 'topic' ? requestTopic ?? null : null,
       groupKey: null,

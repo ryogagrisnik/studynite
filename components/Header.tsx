@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
 
 export default function Header() {
@@ -9,7 +10,15 @@ export default function Header() {
   return (
     <header className="site-header">
       <div className="inner">
-        <Link href="/" className="logo">BlobPrep</Link>
+        <Link href="/" className="logo" aria-label="BlobPrep home">
+          <Image
+            src="/assets/logo.png"
+            alt="BlobPrep logo"
+            width={120}
+            height={64}
+            priority
+          />
+        </Link>
 
         <nav className="nav">
           <Link href="/practice">Practice</Link>
@@ -39,7 +48,8 @@ export default function Header() {
           margin: 0 auto; padding: 12px 24px;
           display: flex; align-items: center; justify-content: space-between; gap: 16px;
         }
-        .logo { font-weight: 800; color: var(--brown, #4A2E1C); text-decoration: none; }
+        .logo { display: inline-flex; align-items: center; }
+        .logo :global(img) { height: 56px; width: auto; object-fit: contain; }
         .nav { display: flex; align-items: center; gap: 16px; }
         .nav a { color: var(--brown, #4A2E1C); text-decoration: none; }
         .auth { display: flex; align-items: center; gap: 10px; }

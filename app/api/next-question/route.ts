@@ -1538,7 +1538,9 @@ export async function POST(req: Request) {
       if (verbalAlias === "Text Completion" || verbalAlias === "Sentence Equivalence") {
         category = verbalAlias;
       }
-      if (category === "Reading Comprehension") {
+      const wantsReadingComprehension =
+        category === "Reading Comprehension" || verbalAlias === "Reading Comprehension";
+      if (wantsReadingComprehension) {
         category = undefined;
       }
 
@@ -1546,16 +1548,21 @@ export async function POST(req: Request) {
       const isTextCompletion = category === "Text Completion";
       const isSentenceEquivalence = category === "Sentence Equivalence";
 
-      async function reuseVerbalQuestion(topicFilter?: string) {
+      async function reuseVerbalQuestion(topicFilter?: string, opts?: { rcOnly?: boolean }) {
         const baseWhere: Prisma.QuestionWhereInput = {
           exam: "GRE",
           section: "Verbal",
           difficulty: { in: difficultyPreferences },
-          ...(topicFilter ? { topic: topicFilter } : {}),
           ...(attemptedIds.length
             ? { id: { notIn: attemptedIds.slice(0, 400) } }
             : {}),
         };
+
+        if (topicFilter) {
+          baseWhere.topic = topicFilter;
+        } else if (opts?.rcOnly) {
+          baseWhere.topic = { in: [...GRE_RC_CATEGORIES, "Reading Comprehension"] };
+        }
 
         const candidates = await prisma.question.findMany({
           where: baseWhere,
@@ -1813,7 +1820,7 @@ export async function POST(req: Request) {
         return respondWithQuestion(modern);
       }
 
-      const reuseRc = await reuseVerbalQuestion(category);
+      const reuseRc = await reuseVerbalQuestion(category, { rcOnly: wantsReadingComprehension });
       if (reuseRc) return reuseRc;
 
       const recentStems3 = attemptedQs.map((q) => q.stem).filter(Boolean).slice(0, 5);

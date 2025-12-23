@@ -5,7 +5,7 @@
 - Random question generator (cheap parametric) for GRE/GMAT Quant + basic Verbal
 - Redis caching queues (IDs only), 21-day seen TTL, 25/day quota
 - Neon stores question payloads; Redis stores IDs to keep costs low
-- Upgrade buttons intact; Stripe backend stubbed (501) until you add keys
+- Upgrade buttons intact; Stripe backend returns `STRIPE_NOT_CONFIGURED` until keys are set, then runs live
 
 ## Run
 cp .env.local.example .env.local  # paste your NEW rotated keys
@@ -20,6 +20,14 @@ npm run dev
   - `checkout.session.completed`, `customer.subscription.created|updated|deleted`.
 - Use `POST /api/checkout` to get a Checkout URL.
 - Use `POST /api/billing/portal` for a customer billing portal URL.
+
+## Membership flow (Stripe → access)
+- Checkout (`/api/checkout`) requires an authenticated user and a configured price; it creates a Stripe subscription checkout session.
+- Webhook (`/api/stripe/webhook`) handles `checkout.session.completed` and `customer.subscription.*` events and updates `User` with `stripeCustomerId`, `stripeSubscriptionId`, `proPlan`, `proSince`, and `proExpiresAt`.
+- When Stripe reports a cancel or `cancel_at_period_end`, `proExpiresAt` is set to that period end. After that timestamp passes, the user automatically reverts to free.
+- Access checks use `lib/server/membership.ts`:
+  - `hasActiveProSession` returns true if `isPro` is set or `proExpiresAt` is in the future.
+  - `hasUnlimitedAccess` returns true for active Pro or (in non-prod) emails listed in `UNLIMITED_EMAILS`.
 
 ## Required environment
 - Postgres: `DATABASE_URL`
