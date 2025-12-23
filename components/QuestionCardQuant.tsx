@@ -281,6 +281,7 @@ export default function QuestionCardQuant({ q, onContinue, onAttemptLogged }: Pr
   const headerLabelParts = [q.exam ?? 'GRE', q.section ?? 'Quant'].filter(Boolean);
   const headerLabel = headerLabelParts.join(' · ');
   const cardTitle = topicDisplay || badgeTopic || headerLabel;
+  const conceptLabel = topicDisplay || badgeTopic || 'Concept';
   const showHeaderLabel =
     Boolean(headerLabel) &&
     headerLabel.toLowerCase() !== cardTitle.toLowerCase();
@@ -345,8 +346,11 @@ export default function QuestionCardQuant({ q, onContinue, onAttemptLogged }: Pr
         <div className="card-section card-section--header">
           <div className="card-header">
             <div className="card-meta">
-              {showHeaderLabel && <span className="card-topic">{headerLabel}</span>}
               <h2 className="card-title">{cardTitle}</h2>
+              <div className="card-tags">
+                <span className="concept-pill">{conceptLabel}</span>
+                {showHeaderLabel && <span className="card-topic">{headerLabel}</span>}
+              </div>
             </div>
             {difficultyDisplay && (
               <span className={difficultyTone}>
@@ -529,6 +533,24 @@ export default function QuestionCardQuant({ q, onContinue, onAttemptLogged }: Pr
           display: flex;
           flex-direction: column;
           gap: 6px;
+        }
+        .card-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          align-items: center;
+        }
+        .concept-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          border-radius: 999px;
+          background: #fff4e6;
+          color: #9a3412;
+          font-weight: 700;
+          font-size: 12px;
+          border: 1px solid rgba(249, 177, 84, 0.4);
         }
         .card-topic {
           display: inline-block;

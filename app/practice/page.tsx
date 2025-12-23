@@ -95,6 +95,10 @@ function PracticeClient() {
     () => (exam === 'GMAT' ? GMAT_QUANT_TOPICS : GRE_QUANT_TOPICS),
     [exam]
   );
+  const quantTopicLabel = useMemo(
+    () => quantTopics.find((topic) => topic.value === qTopic)?.label ?? qTopic,
+    [quantTopics, qTopic]
+  );
 
   useEffect(() => {
     if (exam === 'GMAT' && section === 'Verbal') {
@@ -554,6 +558,31 @@ function PracticeClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reviewModeActive, exam, section, vMode, concept, qMode, qTopic]);
 
+  const activeModeLabel = useMemo(() => {
+    if (reviewModeActive) return 'Review queue';
+    if (isVerbal) {
+      if (vMode === 'concept') {
+        const conceptLabel = concept === 'SE' ? 'Sentence Equivalence' : concept === 'RC' ? 'Reading Comprehension' : 'Text Completion';
+        return `Verbal · ${conceptLabel}`;
+      }
+      return 'Verbal · Random mix';
+    }
+    if (qMode === 'topic') {
+      return `${exam} Quant · ${quantTopicLabel}`;
+    }
+    return `${exam} Quant · Random mix`;
+  }, [reviewModeActive, isVerbal, vMode, concept, qMode, quantTopicLabel, exam]);
+
+  const loadingLabel = reviewModeActive
+    ? 'Fetching a missed question from your review queue…'
+    : `Fetching a ${activeModeLabel} question…`;
+
+  const quotaHelper = quotaUnlimited
+    ? 'Unlimited practice is unlocked today.'
+    : nextUnlockAt
+    ? `Resets daily; next unlock ${timeUntil(nextUnlockAt)}.`
+    : 'Resets daily; short cooldown applies between pulls.';
+
   return (
     <div className="page-shell">
       <div className="page">
@@ -684,6 +713,7 @@ function PracticeClient() {
                 />
               </div>
             </div>
+            <div className="progress-note" role="note">{quotaHelper}</div>
           </div>
         </div>
 
@@ -699,7 +729,7 @@ function PracticeClient() {
             />
           ) : (
             <>
-              {loading && <LoadingSkeleton />}
+              {loading && <LoadingSkeleton label={loadingLabel} />}
 
               {!loading && err && (
                 <ErrorState
@@ -719,20 +749,17 @@ function PracticeClient() {
                   <EmptyState
                     onRetry={() => load({ bypassCooldown: true })}
                     modeLabel={
-                      isVerbal
-                        ? vMode === 'concept'
-                          ? `concept: ${concept ?? 'TC'}`
-                          : 'random verbal'
-                        : qMode === 'topic'
-                        ? `topic: ${qTopic}`
-                        : 'random quant'
+                      activeModeLabel
                     }
                   />
                 )
               )}
 
               {!loading && !err && !empty && payload && (
-                <QuestionCard payload={payload} onContinue={() => load()} />
+                <QuestionCard
+                  payload={payload}
+                  onContinue={() => load()}
+                />
               )}
             </>
           )}
@@ -877,6 +904,13 @@ function PracticeClient() {
         .progress-value { font-weight:700; font-size:12px; }
         .progress-track { position:relative; height:5px; background:rgba(249,115,22,0.16); border-radius:999px; overflow:hidden; }
         .progress-fill { position:absolute; inset:0; background:#f97316; border-radius:999px; transition:width 0.3s ease; }
+        .progress-note {
+          font-size: 12px;
+          color: rgba(67, 20, 7, 0.75);
+          max-width: 200px;
+          line-height: 1.4;
+          margin-top: 2px;
+        }
         @media (max-width: 720px) {
           .controls {
             justify-content:flex-start;
@@ -1055,7 +1089,7 @@ function SelectChip<T extends string>({
   );
 }
 
-function LoadingSkeleton() {
+function LoadingSkeleton({ label }: { label?: string }) {
   return (
     <div className="loading-shell" role="status" aria-busy="true" aria-live="polite">
       <div className="spinner" aria-hidden>
@@ -1063,7 +1097,7 @@ function LoadingSkeleton() {
           <span key={i} style={{ transform: `rotate(${i * 30}deg) translate(18px)`, animationDelay: `${i * 0.08}s` }} />
         ))}
       </div>
-      <p className="loading-text">We’re building your next question…</p>
+      <p className="loading-text">{label || 'We’re building your next question…'}</p>
       <style jsx>{`
         .loading-shell {
           display:grid; place-items:center; gap:10px; padding:28px 0 20px;
@@ -1092,6 +1126,7 @@ function ErrorState({
     <div className="state state--error" role="alert">
       <strong>{message}</strong>
       {detail && <span className="state__detail">{detail}</span>}
+      <span className="state__hint">Try again, or switch exam/concept if this keeps happening.</span>
       <button type="button" onClick={onRetry} className="state__action">
         Try again
       </button>
@@ -1117,6 +1152,10 @@ function ErrorState({
           font-size: 14px;
           opacity: 0.8;
           word-break: break-word;
+        }
+        .state__hint {
+          font-size: 13px;
+          opacity: 0.8;
         }
         .state__action {
           align-self: flex-start;
@@ -1459,6 +1498,7 @@ function EmptyState({
       <span className="state__detail">
         We couldn’t find a question for your current selection ({modeLabel}). Try again or switch filters for a new batch.
       </span>
+      <span className="state__hint">Tip: pick another concept or toggle exams/sections to keep practicing.</span>
       <button type="button" onClick={onRetry} className="state__action">
         Refresh
       </button>
@@ -1483,6 +1523,10 @@ function EmptyState({
         .state__detail {
           font-size: 14px;
           opacity: 0.85;
+        }
+        .state__hint {
+          font-size: 13px;
+          opacity: 0.78;
         }
         .state__action {
           align-self: flex-start;

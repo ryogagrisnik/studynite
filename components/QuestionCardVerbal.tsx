@@ -156,6 +156,7 @@ export default function QuestionCardVerbal({ q, onContinue, onAttemptLogged }: P
   const headerLabelParts = [q.exam ?? 'GRE', q.section ?? 'Verbal'].filter(Boolean);
   const headerLabel = headerLabelParts.join(' · ');
   const cardTitle = topicDisplay || badgeTopic || headerLabel;
+  const conceptLabel = topicDisplay || badgeTopic || 'Concept';
   const showHeaderLabel =
     Boolean(headerLabel) &&
     headerLabel.toLowerCase() !== cardTitle.toLowerCase();
@@ -246,8 +247,11 @@ export default function QuestionCardVerbal({ q, onContinue, onAttemptLogged }: P
       <div ref={cardRef} className="question-card-body">
         <div className="card-head">
           <div className="card-meta">
-            {showHeaderLabel && <span className="card-sub">{headerLabel}</span>}
             <h2 className="card-title">{cardTitle}</h2>
+            <div className="card-tags">
+              <span className="concept-pill">{conceptLabel}</span>
+              {showHeaderLabel && <span className="card-sub">{headerLabel}</span>}
+            </div>
           </div>
           {difficultyLabel && (
             <span className={`diff diff-${difficultyLabel}`}>
@@ -366,6 +370,25 @@ export default function QuestionCardVerbal({ q, onContinue, onAttemptLogged }: P
           align-items: center;
           flex-wrap: wrap;
           gap: 12px;
+        }
+        .card-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          align-items: center;
+          margin-top: 4px;
+        }
+        .concept-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          border-radius: 999px;
+          background: #ede9fe;
+          color: #5b21b6;
+          font-weight: 700;
+          font-size: 12px;
+          border: 1px solid rgba(124, 58, 237, 0.32);
         }
         .card-sub {
           display: inline-block;
