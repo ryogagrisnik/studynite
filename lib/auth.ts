@@ -4,8 +4,56 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { z } from "zod";
+import { env } from "./env";
 import prisma from "./prisma";
 import { verifyPassword } from "./password";
+import { rateLimit } from "./rateLimit";
+
+export async function verifyCredentials(
+  emailInput: string,
+  password: string,
+  options: { skipRateLimit?: boolean } = {}
+) {
+  const email = emailInput.toLowerCase();
+  if (!options.skipRateLimit) {
+    const loginMax = Math.max(1, Number(env.RATE_LIMIT_LOGIN_MAX ?? "8"));
+    const rate = await rateLimit(`auth:login:${email}`, { max: loginMax, windowMs: 60_000 });
+    if (!rate.ok) {
+      throw new Error("Too many login attempts. Try again soon.");
+    }
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user || !user.passwordHash) {
+    throw new Error("Invalid credentials");
+  }
+
+  if (!user.emailVerified) {
+    const hasOauth = await prisma.account.findFirst({ where: { userId: user.id } });
+    if (!hasOauth) {
+      throw new Error("Email not verified");
+    }
+    try {
+      await prisma.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } });
+    } catch {
+      // non-fatal
+    }
+  }
+
+  const valid = await verifyPassword(password, user.passwordHash);
+  if (!valid) {
+    throw new Error("Invalid credentials");
+  }
+
+  return {
+    id: user.id,
+    email: user.email!,
+    name: user.name ?? undefined,
+  };
+}
 
 const providers: NextAuthOptions["providers"] = [
   CredentialsProvider({
@@ -25,40 +73,7 @@ const providers: NextAuthOptions["providers"] = [
         throw new Error("Invalid credentials");
       }
 
-      const { email, password } = parsed.data;
-      const user = await prisma.user.findUnique({
-        where: { email },
-      });
-
-      if (!user || !user.passwordHash) {
-        throw new Error("Invalid credentials");
-      }
-
-      // If the user hasn't verified via email but has an OAuth account (e.g., Google),
-      // consider them verified to allow password auth and smooth provider switching.
-      if (!user.emailVerified) {
-        const hasOauth = await prisma.account.findFirst({ where: { userId: user.id } });
-        if (!hasOauth) {
-          throw new Error("Email not verified");
-        }
-        // Opportunistically mark as verified for consistency across the app.
-        try {
-          await prisma.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } });
-        } catch {
-          // non-fatal
-        }
-      }
-
-      const valid = await verifyPassword(password, user.passwordHash);
-      if (!valid) {
-        throw new Error("Invalid credentials");
-      }
-
-      return {
-        id: user.id,
-        email: user.email!,
-        name: user.name ?? undefined,
-      };
+      return verifyCredentials(parsed.data.email, parsed.data.password);
     },
   }),
 ];

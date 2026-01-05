@@ -1,4 +1,4 @@
-type SendEmailOptions = {
+export type SendEmailOptions = {
   to: string;
   subject: string;
   html: string;
@@ -9,7 +9,7 @@ type SendEmailOptions = {
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
 function defaultFromAddress() {
-  return process.env.EMAIL_FROM || "BlobPrep <no-reply@blobprep.com>";
+  return process.env.EMAIL_FROM || "StudyNite <no-reply@studynite.app>";
 }
 
 export async function sendEmail({ to, subject, html, text, replyTo }: SendEmailOptions) {

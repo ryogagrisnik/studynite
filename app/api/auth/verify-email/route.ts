@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+
+import { withApi } from "@/lib/api";
 import prisma from "@/lib/prisma";
 import { consumeEmailVerificationToken } from "@/lib/tokens";
 
@@ -7,7 +9,7 @@ const schema = z.object({
   token: z.string().min(1),
 });
 
-export async function POST(request: Request) {
+export const POST = withApi(async (request: Request) => {
   const payload = await request.json().catch(() => null);
   const parsed = schema.safeParse(payload);
   if (!parsed.success) {
@@ -27,4 +29,4 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json({ success: true });
-}
+});

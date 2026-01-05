@@ -76,8 +76,14 @@ export function cleanReadableText(raw: string): string {
   text = text.replace(/\bimes\b/gi, "×");
   text = text.replace(/\bdiv\b/gi, "÷");
 
+  // Re-insert missing spaces after punctuation/numbers to improve readability
+  text = text.replace(/([.,;:!?])([A-Za-z0-9])/g, "$1 $2");
+  text = text.replace(/([0-9])([A-Za-z])/g, "$1 $2");
+  text = text.replace(/([A-Za-z])([0-9])/g, "$1 $2");
+
   text = collapseDuplicateSubstrings(text);
   text = dedupeSentences(text);
+  text = text.replace(/\s{2,}/g, " ");
 
   return text.trim();
 }

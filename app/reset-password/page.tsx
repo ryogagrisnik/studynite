@@ -42,7 +42,7 @@ function ResetPasswordClient() {
     const body = await response.json().catch(() => ({}));
 
     if (response.ok) {
-      setMessage({ type: "success", text: "Password updated! Redirecting you to sign in…" });
+      setMessage({ type: "success", text: "Password updated! Redirecting you to sign in..." });
       setTimeout(() => router.push("/signin"), 1800);
     } else {
       setMessage({ type: "error", text: body.error || "This reset link expired. Request a new one." });
@@ -52,51 +52,49 @@ function ResetPasswordClient() {
   }
 
   return (
-    <div className="section" style={{ display: "grid", placeItems: "center" }}>
-      <div className="card" style={{ maxWidth: 420, width: "100%", display: "grid", gap: 18 }}>
+    <div className="page">
+      <div className="card stack" style={{ maxWidth: 460, margin: "0 auto" }}>
         <div>
-          <h1 style={{ marginBottom: 6 }}>Choose a new password</h1>
-          <p style={{ margin: 0 }}>Keep it at least 8 characters for security.</p>
+          <h1 className="page-title">Choose a new password</h1>
+          <p className="page-sub">Keep it at least 8 characters for security.</p>
         </div>
-        {message && (
+        {message ? (
           <div
+            className="card"
             style={{
-              padding: "10px 12px",
-              borderRadius: 12,
-              background: message.type === "success" ? "#ECFDF3" : "#FEF2F2",
-              color: message.type === "success" ? "#027A48" : "#B42318",
-              fontSize: 14,
+              borderColor: message.type === "success" ? "#86EFAC" : "#FCA5A5",
+              color: message.type === "success" ? "#166534" : "#991B1B",
             }}
           >
             {message.text}
           </div>
-        )}
-        <form onSubmit={handleSubmit} style={{ display: "grid", gap: 12 }}>
+        ) : null}
+        <form onSubmit={handleSubmit} className="stack">
           <input
+            className="input"
             placeholder="New password"
             type="password"
             value={password}
-            onChange={event => setPassword(event.target.value)}
+            onChange={(event) => setPassword(event.target.value)}
             required
             minLength={8}
             disabled={tokenMissing}
-            style={{ padding: 12, border: "2px solid #FCEBD7", borderRadius: 12 }}
           />
           <input
+            className="input"
             placeholder="Confirm new password"
             type="password"
             value={confirm}
-            onChange={event => setConfirm(event.target.value)}
+            onChange={(event) => setConfirm(event.target.value)}
             required
             minLength={8}
             disabled={tokenMissing}
-            style={{ padding: 12, border: "2px solid #FCEBD7", borderRadius: 12 }}
           />
           <button className="btn btn-primary" type="submit" disabled={pending || tokenMissing}>
             {pending ? "Updating..." : "Update password"}
           </button>
         </form>
-        <p style={{ fontSize: 14, margin: 0, textAlign: "center" }}>
+        <p className="muted" style={{ textAlign: "center" }}>
           Need a new link? <Link href="/forgot-password">Request reset</Link>
         </p>
       </div>
@@ -106,7 +104,7 @@ function ResetPasswordClient() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="section">Loading…</div>}>
+    <Suspense fallback={<div className="page">Loading...</div>}>
       <ResetPasswordClient />
     </Suspense>
   );

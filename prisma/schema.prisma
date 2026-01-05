@@ -7,31 +7,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-///////////////////////////
-// NextAuth core models  //
-///////////////////////////
-
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String?
-  stripeCustomerId     String? @unique
-  stripeSubscriptionId String? @unique
-  proPlan       String?
-  proSince      DateTime?
-  proExpiresAt  DateTime?
-
-  accounts Account[]
-  sessions Session[]
-
-  // app relations
-  attempts Attempt[]
-  misses   MissedQuestion[]
-  emailTokens EmailVerificationToken[]
-  passwordTokens PasswordResetToken[]
+  id                   String                   @id @default(cuid())
+  email                String?                  @unique
+  emailVerified        DateTime?
+  image                String?
+  name                 String?
+  passwordHash         String?
+  proExpiresAt         DateTime?
+  proPlan              String?
+  proSince             DateTime?
+  stripeCustomerId     String?                  @unique
+  stripeSubscriptionId String?                  @unique
+  avatarId             String?
+  accounts             Account[]
+  attempts             Attempt[]
+  emailTokens          EmailVerificationToken[]
+  misses               MissedQuestion[]
+  hostedParties        Party[]                  @relation("HostedParties")
+  partyPlayers         PartyPlayer[]
+  passwordTokens       PasswordResetToken[]
+  sessions             Session[]
+  studyAttempts        StudyAttempt[]
+  studyDecks           StudyDeck[]
 }
 
 model Account {
@@ -40,15 +38,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -58,8 +55,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -76,8 +72,7 @@ model EmailVerificationToken {
   token     String   @unique
   expires   DateTime
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expires])
@@ -89,39 +84,27 @@ model PasswordResetToken {
   token     String   @unique
   expires   DateTime
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expires])
 }
 
-///////////////////////////
-// App models            //
-///////////////////////////
-
 model Question {
-  id          String   @id @default(cuid())
-  exam        String // "GRE" | "GMAT"
-  section     String // "Quant" | "Verbal"
-  topic       String? // optional
-  stem        String
-  choices     String[] // text[]
-  answer      String
-  explanation String
-  difficulty  Int // 500/600/700
-  createdAt   DateTime @default(now())
-
-  aiExplanation String?   // ✅ cached GPT explanation
-
+  id              String           @id @default(cuid())
+  exam            String
+  section         String
+  topic           String?
+  createdAt       DateTime         @default(now())
+  answer          String
+  choices         String[]
+  explanation     String
+  stem            String
+  difficulty      Int
+  aiExplanation   String?
   attempts        Attempt[]
   dailyQueueItems DailyQueueItem[]
   missedRecords   MissedQuestion[]
-}
-
-enum QuestionSource {
-  BASELINE
-  VARIANT
 }
 
 model VariantQuestion {
@@ -140,45 +123,38 @@ model VariantQuestion {
 }
 
 model Attempt {
-  id         String   @id @default(cuid())
+  id         String          @id @default(cuid())
   userId     String
   questionId String
-  userAnswer String
-  isCorrect  Boolean
   timeMs     Int
-  createdAt  DateTime @default(now())
-
+  createdAt  DateTime        @default(now())
+  isCorrect  Boolean
+  userAnswer String
   concept    String?
   source     QuestionSource?
+  question   Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-  @@index([userId, createdAt])
   @@unique([userId, questionId])
+  @@index([userId, createdAt])
 }
 
 model MissedQuestion {
-  id            String   @id @default(cuid())
-  userId        String
-  questionId    String
-  totalMisses   Int      @default(0)
-  lastMissedAt  DateTime @default(now())
-  lastServedAt  DateTime?
-  clearedAt     DateTime?
-  createdAt     DateTime @default(now())
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  userId       String
+  questionId   String
+  totalMisses  Int       @default(0)
+  lastMissedAt DateTime  @default(now())
+  lastServedAt DateTime?
+  clearedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  question     Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, questionId])
   @@index([userId, clearedAt, lastServedAt])
   @@index([userId, lastMissedAt])
 }
-
-///////////////////////////
-// Quota (per user/day)  //
-///////////////////////////
 
 model QuotaLog {
   id        String   @id @default(cuid())
@@ -197,10 +173,170 @@ model DailyQueueItem {
   questionId String
   order      Int
   servedAt   DateTime?
-
-  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  question   Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date, order])
   @@index([userId, date, servedAt])
   @@index([questionId])
+}
+
+model StudyDeck {
+  id                String           @id @default(cuid())
+  userId            String
+  title             String
+  description       String?
+  shareId           String           @unique
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  sourceText        String?
+  regenerateCount   Int              @default(0)
+  lastRegeneratedAt DateTime?
+  shareEditId       String?          @unique
+  shareExpiresAt    DateTime?
+  parties           Party[]
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcards        StudyFlashcard[]
+  questions         StudyQuestion[]
+}
+
+model StudyQuestion {
+  id           String            @id @default(cuid())
+  deckId       String
+  order        Int
+  prompt       String
+  choices      String[]
+  correctIndex Int
+  explanation  String?
+  createdAt    DateTime          @default(now())
+  submissions  PartySubmission[]
+  attempts     StudyAttempt[]
+  deck         StudyDeck         @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@unique([deckId, order])
+  @@index([deckId, order])
+}
+
+model StudyFlashcard {
+  id          String                     @id @default(cuid())
+  deckId      String
+  order       Int
+  front       String
+  back        String
+  createdAt   DateTime                   @default(now())
+  submissions PartyFlashcardSubmission[]
+  deck        StudyDeck                  @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@unique([deckId, order])
+  @@index([deckId, order])
+}
+
+model StudyAttempt {
+  id         String        @id @default(cuid())
+  userId     String
+  questionId String
+  isCorrect  Boolean
+  createdAt  DateTime      @default(now())
+  question   StudyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Party {
+  id                   String                     @id @default(cuid())
+  deckId               String
+  joinCode             String                     @unique
+  status               PartyStatus                @default(LOBBY)
+  currentQuestionIndex Int                        @default(0)
+  questionStartedAt    DateTime?
+  hostUserId           String?
+  hostPlayerId         String?
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  endedAt              DateTime?
+  expiresAt            DateTime
+  answerRevealedAt     DateTime?
+  isPublic             Boolean                    @default(false)
+  joinLocked           Boolean                    @default(false)
+  mode                 PartyMode                  @default(QUIZ)
+  pauseStartedAt       DateTime?
+  pausedMs             Int                        @default(0)
+  questionDurationSec  Int                        @default(25)
+  deck                 StudyDeck                  @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  hostUser             User?                      @relation("HostedParties", fields: [hostUserId], references: [id])
+  flashcardSubmissions PartyFlashcardSubmission[]
+  players              PartyPlayer[]
+  submissions          PartySubmission[]
+
+  @@index([deckId, createdAt])
+}
+
+model PartyPlayer {
+  id                   String                     @id @default(cuid())
+  partyId              String
+  name                 String
+  score                Int                        @default(0)
+  playerToken          String                     @unique
+  joinedAt             DateTime                   @default(now())
+  lastSeenAt           DateTime                   @default(now())
+  leftAt               DateTime?
+  avatarId             String?
+  bonusScore           Int                        @default(0)
+  kickedAt             DateTime?
+  userId               String?
+  flashcardSubmissions PartyFlashcardSubmission[]
+  party                Party                      @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  user                 User?                      @relation(fields: [userId], references: [id])
+  submissions          PartySubmission[]
+
+  @@index([partyId, joinedAt])
+}
+
+model PartySubmission {
+  id            String        @id @default(cuid())
+  partyId       String
+  partyPlayerId String
+  questionId    String
+  answerIndex   Int
+  isCorrect     Boolean
+  createdAt     DateTime      @default(now())
+  timeMs        Int?
+  party         Party         @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  player        PartyPlayer   @relation(fields: [partyPlayerId], references: [id], onDelete: Cascade)
+  question      StudyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([partyPlayerId, questionId])
+  @@index([partyId, questionId])
+}
+
+model PartyFlashcardSubmission {
+  id            String         @id @default(cuid())
+  partyId       String
+  partyPlayerId String
+  flashcardId   String
+  knewIt        Boolean
+  timeMs        Int?
+  createdAt     DateTime       @default(now())
+  flashcard     StudyFlashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+  party         Party          @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  player        PartyPlayer    @relation(fields: [partyPlayerId], references: [id], onDelete: Cascade)
+
+  @@unique([partyPlayerId, flashcardId])
+  @@index([partyId, flashcardId])
+}
+
+enum QuestionSource {
+  BASELINE
+  VARIANT
+}
+
+enum PartyStatus {
+  LOBBY
+  ACTIVE
+  COMPLETE
+}
+
+enum PartyMode {
+  QUIZ
+  FLASHCARDS
 }

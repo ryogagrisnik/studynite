@@ -1,16 +1,31 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
-import { createPasswordResetToken } from "@/lib/tokens";
-import { sendEmail } from "@/lib/email";
-import { getAppBaseUrl } from "@/lib/urls";
+
+import { withApi } from "@/lib/api";
 import { passwordResetTemplate } from "@/lib/emailTemplates";
+import { sendEmailWithRetry } from "@/lib/jobs";
+import prisma from "@/lib/prisma";
+import { rateLimit } from "@/lib/rateLimit";
+import { getRequestIp } from "@/lib/request";
+import { createPasswordResetToken } from "@/lib/tokens";
+import { getAppBaseUrl } from "@/lib/urls";
+import { env } from "@/lib/env";
 
 const schema = z.object({
   email: z.string().email(),
 });
 
-export async function POST(request: Request) {
+export const POST = withApi(async (request: Request) => {
+  const ip = getRequestIp(request);
+  const resetMax = Math.max(1, Number(env.RATE_LIMIT_LOGIN_MAX ?? "6"));
+  const limit = await rateLimit(`auth:reset:${ip}`, { max: resetMax, windowMs: 60_000 });
+  if (!limit.ok) {
+    const retryAfter = Math.max(1, Math.ceil((limit.resetAt - Date.now()) / 1000));
+    const res = NextResponse.json({ error: "RATE_LIMITED", retryAfter }, { status: 429 });
+    res.headers.set("Retry-After", String(retryAfter));
+    return res;
+  }
+
   const payload = await request.json().catch(() => null);
   const parsed = schema.safeParse(payload);
   if (!parsed.success) {
@@ -28,9 +43,9 @@ export async function POST(request: Request) {
     const resetUrl = `${getAppBaseUrl()}/reset-password?token=${token}`;
 
     try {
-      await sendEmail({
+      await sendEmailWithRetry({
         to: email,
-        subject: "Reset your BlobPrep password",
+        subject: "Reset your StudyNite password",
         html: passwordResetTemplate(resetUrl),
       });
     } catch (error) {
@@ -39,4 +54,4 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ success: true });
-}
+});

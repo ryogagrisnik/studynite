@@ -1,10 +1,22 @@
 import { NextResponse } from "next/server";
+import { validateEnv } from "@/lib/env";
 import prisma from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 
 export async function GET() {
   const started = Date.now();
   const out: any = { ok: true, time: new Date().toISOString(), uptime: process.uptime() };
+  const envStatus = validateEnv();
+  out.env = {
+    ok: envStatus.ok,
+    issues: envStatus.issues.map((issue) => ({
+      level: issue.level,
+      message: issue.message,
+    })),
+  };
+  if (!envStatus.ok) {
+    out.ok = false;
+  }
   // DB ping
   try {
     const t0 = Date.now();

@@ -11,7 +11,7 @@ function VerifyEmailClient() {
   const searchParams = useSearchParams();
   const token = searchParams?.get("token");
   const [state, setState] = useState<State>("pending");
-  const [message, setMessage] = useState("Verifying your email…");
+  const [message, setMessage] = useState("Verifying your email...");
 
   useEffect(() => {
     if (!token) {
@@ -47,12 +47,12 @@ function VerifyEmailClient() {
   }, [router, token]);
 
   return (
-    <div className="section" style={{ display: "grid", placeItems: "center" }}>
-      <div className="card" style={{ maxWidth: 420, padding: 32, textAlign: "center" }}>
-        <h1 style={{ marginBottom: 12 }}>Verify email</h1>
-        <p style={{ fontSize: 16, margin: 0 }}>{message}</p>
-        {state === "error" && (
-          <div style={{ marginTop: 20, display: "grid", gap: 10 }}>
+    <div className="page">
+      <div className="card stack" style={{ maxWidth: 460, margin: "0 auto", textAlign: "center" }}>
+        <h1 className="page-title">Verify email</h1>
+        <p className="page-sub">{message}</p>
+        {state === "error" ? (
+          <div className="stack" style={{ marginTop: 12 }}>
             <Link href="/signin" className="btn btn-outline">
               Back to sign in
             </Link>
@@ -60,10 +60,12 @@ function VerifyEmailClient() {
               Resend verification
             </Link>
           </div>
-        )}
-        {state === "success" && (
-          <p style={{ fontSize: 14, marginTop: 24 }}>Redirecting you to sign in…</p>
-        )}
+        ) : null}
+        {state === "success" ? (
+          <p className="muted" style={{ marginTop: 12 }}>
+            Redirecting you to sign in...
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -71,7 +73,7 @@ function VerifyEmailClient() {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={<div className="section">Loading…</div>}>
+    <Suspense fallback={<div className="page">Loading...</div>}>
       <VerifyEmailClient />
     </Suspense>
   );

@@ -18,6 +18,7 @@ const WORD_MAX = Math.max(WORD_MIN + 40, Number(process.env.EXPLANATION_WORD_MAX
 // Default to passthrough mode so explanations are treated as plain text and
 // not rewritten into LaTeX-heavy markup unless explicitly disabled.
 const PASSTHROUGH = (process.env.EXPLANATION_PASSTHROUGH || 'true').toLowerCase() === 'true';
+const FORCE_PLAIN_STEPS = (process.env.EXPLANATION_FORCE_PLAIN_STEPS || 'true').toLowerCase() === 'true';
 
 export function getExplanationTargetWords(): number {
   const n = Number(process.env.EXPLANATION_TARGET_WORDS || '230');
@@ -205,5 +206,38 @@ export async function generateExplanation(input: z.infer<typeof ExplainerInput>)
     model: process.env.EXPLAINER_MODEL || process.env.OPENAI_MODEL || 'gpt-4o-mini',
   });
 
-  return reply;
+  if (!FORCE_PLAIN_STEPS) return reply;
+
+  // Enforce a readable, line-separated step format even if the model replied densely.
+  const lines = reply
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const normalized = lines.map((line, idx) => {
+    // Normalize existing step labels
+    const stepMatch = line.match(/^Step\s*0?(\d+)[):.\-]?\s*/i);
+    if (stepMatch) {
+      const n = stepMatch[1] || String(idx + 1);
+      const rest = line.slice(stepMatch[0].length).trim();
+      return `Step ${n}: ${rest}`;
+    }
+    // Normalize explicit answer lines
+    const answerMatch = line.match(/^Answer\s*[:\-]?\s*/i);
+    if (answerMatch) {
+      const rest = line.slice(answerMatch[0].length).trim();
+      return `Answer: ${rest}`;
+    }
+    // If this is the last line and it looks like an answer, label it
+    if (
+      idx === lines.length - 1 &&
+      /\b(answer|choice|option|quantity)\b/i.test(line)
+    ) {
+      return line.startsWith('Answer:') ? line : `Answer: ${line}`;
+    }
+    // Otherwise, ensure a step label
+    return `Step ${Math.min(idx + 1, 6)}: ${line}`;
+  });
+
+  return normalized.join("\n");
 }

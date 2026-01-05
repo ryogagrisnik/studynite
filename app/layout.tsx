@@ -5,11 +5,30 @@ import Link from "next/link";
 import Providers from "./providers";
 import Script from "next/script";
 import AuthNav from "../components/AuthNav";
-import Image from "next/image";
+import PrizePromoModal from "../components/PrizePromoModal";
+import CosmeticSync from "../components/CosmeticSync";
+import { Press_Start_2P, Space_Grotesk } from "next/font/google";
+import { validateEnv } from "@/lib/env";
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const pressStart = Press_Start_2P({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: "400",
+  display: "swap",
+});
+
+validateEnv();
+
 
 export const metadata = {
-  title: "BlobPrep",
-  description: "Infinite GRE & GMAT questions",
+  title: "StudyNite",
+  description: "Studying, but multiplayer.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -39,27 +58,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </>
         ) : null}
       </head>
-      <body style={{ ["--maxw" as any]: "1440px" }}>
+      <body
+        className={`${spaceGrotesk.variable} ${pressStart.variable}`}
+        style={{ ["--maxw" as any]: "1280px" }}
+      >
         <Providers>
           {/* NAVBAR */}
           <div className="nav">
             <div className="container nav-inner">
-              <Link href="/" aria-label="BlobPrep home" className="nav-logo">
-                <Image
-                  src="/assets/logo.png"
-                  alt="BlobPrep"
-                  width={140}
-                  height={68}
-                  priority
-                />
+              <Link href="/" aria-label="StudyNite home" className="nav-logo">
+                <span className="nav-wordmark">StudyNite</span>
               </Link>
               <div className="nav-links" style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                <Link href="/">Home</Link>
-                <Link href="/practice">Practice</Link>
-                <Link href="/pricing">Pricing</Link>
-                <Link href="/qotd">QOTD</Link>
-                <Link href="/missed">Missed</Link>
                 <Link href="/dashboard">Dashboard</Link>
+                <Link href="/decks/new">Forge Quiz</Link>
+                <Link href="/party/join">Join Party</Link>
+                <Link href="/how-it-works">Quest Log</Link>
+                <Link href="/pricing">Pricing</Link>
+                <Link href="/achievements">Guild Achievements</Link>
+                <Link className="btn btn-primary" href="/decks/new">Begin Quest</Link>
 
                 {/* Sign In / Sign Out */}
                 <AuthNav />
@@ -71,6 +88,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main>
             <div className="container">{children}</div>
           </main>
+          <PrizePromoModal />
+          <CosmeticSync />
 
           {/* FOOTER */}
           <div className="footer">
@@ -84,12 +103,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               }}
             >
               <div>
-                <strong>BlobPrep</strong> © 2025
+                <strong>StudyNite</strong> © 2025
               </div>
               <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                <Link href="/practice">Practice</Link>
-                <Link href="/pricing">Pricing</Link>
                 <Link href="/dashboard">Dashboard</Link>
+                <Link href="/achievements">Guild Achievements</Link>
+                <Link href="/how-it-works">How it works</Link>
+                <Link href="/pricing">Pricing</Link>
                 <Link href="/privacy">Privacy</Link>
                 <Link href="/terms">Terms</Link>
               </div>

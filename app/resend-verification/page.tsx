@@ -35,39 +35,37 @@ export default function ResendVerificationPage() {
   }
 
   return (
-    <div className="section" style={{ display: "grid", placeItems: "center" }}>
-      <div className="card" style={{ maxWidth: 420, width: "100%", display: "grid", gap: 18 }}>
+    <div className="page">
+      <div className="card stack" style={{ maxWidth: 460, margin: "0 auto" }}>
         <div>
-          <h1 style={{ marginBottom: 6 }}>Resend verification link</h1>
-          <p style={{ margin: 0 }}>Enter the email you used for BlobPrep and we’ll resend a link.</p>
+          <h1 className="page-title">Resend verification link</h1>
+          <p className="page-sub">Enter the email you used for StudyNite and we’ll resend a link.</p>
         </div>
-        {message && (
+        {message ? (
           <div
+            className="card"
             style={{
-              padding: "10px 12px",
-              borderRadius: 12,
-              background: message.type === "success" ? "#ECFDF3" : "#FEF2F2",
-              color: message.type === "success" ? "#027A48" : "#B42318",
-              fontSize: 14,
+              borderColor: message.type === "success" ? "#86EFAC" : "#FCA5A5",
+              color: message.type === "success" ? "#166534" : "#991B1B",
             }}
           >
             {message.text}
           </div>
-        )}
-        <form onSubmit={handleSubmit} style={{ display: "grid", gap: 12 }}>
+        ) : null}
+        <form onSubmit={handleSubmit} className="stack">
           <input
+            className="input"
             placeholder="Email"
             type="email"
             value={email}
-            onChange={event => setEmail(event.target.value)}
+            onChange={(event) => setEmail(event.target.value)}
             required
-            style={{ padding: 12, border: "2px solid #FCEBD7", borderRadius: 12 }}
           />
           <button className="btn btn-primary" type="submit" disabled={pending}>
             {pending ? "Sending..." : "Send link"}
           </button>
         </form>
-        <p style={{ fontSize: 14, margin: 0, textAlign: "center" }}>
+        <p className="muted" style={{ textAlign: "center" }}>
           Already verified? <Link href="/signin">Back to sign in</Link>
         </p>
       </div>

@@ -304,6 +304,204 @@ Because \(3 < 4\), Quantity B is greater.`,
       "1 lemuw = 5 schillings = 40 rubels; 6 lemuws = 240 rubels.",
   },
 
+  // ====== Word Problems & Arithmetic — Charity dinner donation ======
+  {
+    concept: "Word Problems & Arithmetic",
+    kind: "mcq",
+    stem:
+      "Attendees at a charity dinner each gave at least $85. If $6,450 was collected, what is the maximum number of attendees?",
+    choices: ["73","74","75","76","77"],
+    correctIndex: 2,
+    rationale:
+      "Max attendees → use minimum donation: 6,450 / 85 = 75.882… ⇒ at most 75. Options near 75; seed guides integer floor logic.",
+  },
+
+  // ====== Word Problems & Arithmetic — Laundry loads and timing ======
+  {
+    concept: "Word Problems & Arithmetic",
+    kind: "mcq",
+    stem:
+      "Washer: 35 min per load; unload 2 min + reload 4 min between loads. Starts 12:30 PM. By 6:35 PM, how many loads washed and unloaded?",
+    choices: ["8","9","10","14","15"],
+    correctIndex: 1,
+    rationale:
+      "Cycle = 35 + 6 = 41 min except last skip reload. Total window 6h05 = 365 min. Count full cycles.",
+  },
+
+  // ====== Word Problems & Arithmetic — Ticket sales with bonus ======
+  {
+    concept: "Word Problems & Arithmetic",
+    kind: "mcq",
+    stem:
+      "Arnaldo earns $11 per ticket plus $2 bonus for each ticket beyond 100. If paid $2,400 total, how many tickets did he sell?",
+    choices: ["120","160","180","200","250"],
+    correctIndex: 3,
+    rationale:
+      "Revenue = 11n + 2(n−100) = 13n − 200 = 2,400 ⇒ n = 200. (Seed emphasizes piecewise/bonus pay.)",
+  },
+
+  // ====== Word Problems & Arithmetic — Profit threshold ======
+  {
+    concept: "Word Problems & Arithmetic",
+    kind: "mcq",
+    stem:
+      "Factory monthly cost: fixed $11,000 + $300 per bike. Retail price $700. Minimum bikes to make a profit?",
+    choices: ["26","27","28","29","30"],
+    correctIndex: 2,
+    rationale:
+      "Profit when revenue > cost: 700b > 11,000 + 300b ⇒ 400b > 11,000 ⇒ b > 27.5 ⇒ need 28. (Seed teaches inequality threshold.)",
+  },
+
+  // ====== Word Problems & Arithmetic — Class fees vs minutes ======
+  {
+    concept: "Word Problems & Arithmetic",
+    kind: "mcq",
+    stem:
+      "Yoga classes are 45 minutes at $12 each. Minutes spent = dollars paid + 132. How many classes did Randolph attend?",
+    choices: ["3","4","5","6","8"],
+    correctIndex: 1,
+    rationale:
+      "Let c classes: minutes 45c, dollars 12c. Equation 45c = 12c + 132 ⇒ 33c = 132 ⇒ c = 4. (Seed teaches unit alignment.)",
+  },
+
+  // ====== Word Problems & Arithmetic — Device storage percents ======
+  {
+    concept: "Word Problems & Arithmetic",
+    kind: "mcq",
+    stem:
+      "64 GB device is 3/4 full. Delete 25% of stored data, then add 20 GB. Resulting data is what percent of capacity?",
+    choices: ["62.5%","70%","75%","87.5%","95%"],
+    correctIndex: 3,
+    rationale:
+      "Start 48 GB, delete 12 GB ⇒ 36 GB, add 20 ⇒ 56 GB ⇒ 56/64 = 87.5%.",
+  },
+
+  // ====== Word Problems & Arithmetic — Aspect ratio perimeter ======
+  {
+    concept: "Word Problems & Arithmetic",
+    kind: "mcq",
+    stem:
+      "Monitor aspect ratio 16:9 with perimeter 100 inches. How wide is it?",
+    choices: ["18","25","32","36","64"],
+    correctIndex: 2,
+    rationale:
+      "Let width=16k, height=9k ⇒ perimeter 2(16k+9k)=50k=100 ⇒ k=2 ⇒ width=32.",
+  },
+
+  // ====== Word Problems & Arithmetic — Population doubling time ======
+  {
+    concept: "Word Problems & Arithmetic",
+    kind: "mcq",
+    stem:
+      "Population grows +1 billion every 13 years from 7 billion. Approx years to double to 14 billion?",
+    choices: ["26","52","91","104","169"],
+    correctIndex: 2,
+    rationale:
+      "Needs +7 billion at +1B per 13 years ⇒ 7×13 = 91 years. (Linear-rate approximation.)",
+  },
+
+  // ====== Word Problems & Arithmetic — Yield comparison ======
+  {
+    concept: "Word Problems & Arithmetic",
+    kind: "mcq",
+    stem:
+      "70 acres split between navy (27 bushels/acre) and pinto (36 bushels/acre). If total pinto bushels = 2× navy bushels, how many pinto acres?",
+    choices: ["28","30","35","40","42"],
+    correctIndex: 4,
+    rationale:
+      "Let x acres pinto, 70−x navy. 36x = 2·27(70−x) ⇒ 90x = 3,780 ⇒ x = 42.",
+  },
+
+  // ====== Word Problems & Arithmetic — Cookie batch mix ======
+  {
+    concept: "Word Problems & Arithmetic",
+    kind: "mcq",
+    stem:
+      "Cookies made in batches: choc chip in 7s, peanut butter in 6s. Exactly 95 cookies total. Minimum choc chip cookies?",
+    choices: ["7","14","21","28","35"],
+    correctIndex: 4,
+    rationale:
+      "Find nonnegative integers 7a + 6b = 95; modulo 6 ⇒ a ≡ 5 (mod 6), smallest a=5 ⇒ 35 chocolate chip cookies.",
+  },
+
+  // ====== Algebra — additional baselines ======
+  {
+    concept: "Algebra",
+    kind: "mcq",
+    stem:
+      "If $x + y = 10$ and $x^3 + y^3 = 550$, what is $xy$?",
+    choices: ["7", "10", "13", "15", "18"],
+    correctIndex: 3,
+    rationale:
+      "Use $(x+y)^3 = x^3 + y^3 + 3xy(x+y)$ to solve for $xy = 15.$",
+  },
+  {
+    concept: "Algebra",
+    kind: "mcq",
+    stem:
+      "If $2^{2x} − 10\\cdot 2^x + 16 = 0$, what is the sum of all real solutions?",
+    choices: ["2", "3", "4", "5", "6"],
+    correctIndex: 2,
+    rationale:
+      "Let $t=2^x$, solve quadratic to get $x=1,3$; sum $=4.$",
+  },
+  {
+    concept: "Algebra",
+    kind: "mcq",
+    stem:
+      "If $(x^2 + ax + 4)(x^2 + bx + 4)=0$ has exactly two distinct real roots, what is $ab$?",
+    choices: ["−16", "−8", "0", "8", "16"],
+    correctIndex: 0,
+    rationale:
+      "Take double roots at −2 and 2 via $a=4, b=−4$ to get $ab=-16.$",
+  },
+  {
+    concept: "Algebra",
+    kind: "mcq",
+    stem:
+      "If $\\sqrt{x} + \\sqrt[3]{x} = 4$, how many real solutions are there?",
+    choices: ["0", "1", "2", "3", "4"],
+    correctIndex: 1,
+    rationale:
+      "For $x\\ge0$ the function is increasing; it crosses 4 once.",
+  },
+
+  // ====== Rates / Work / Speed — Joint work ======
+  {
+    concept: "Rates / Work / Speed",
+    kind: "mcq",
+    stem:
+      "Wendy builds a birdhouse in 15 hours; Miguel in 10 hours. Working together at constant rates, how long for one birdhouse?",
+    choices: ["5","6","7","8","9"],
+    correctIndex: 1,
+    rationale:
+      "Rate sum = 1/15 + 1/10 = 1/6 ⇒ 6 hours.",
+  },
+
+  // ====== Rates / Work / Speed — Distance/time conversion ======
+  {
+    concept: "Rates / Work / Speed",
+    kind: "mcq",
+    stem:
+      "A turtle travels 1/30 mile in 5 minutes. What is its speed in miles per hour?",
+    choices: ["0.02","0.166","0.4","0.6","2.5"],
+    correctIndex: 2,
+    rationale:
+      "1/30 ÷ 5 min = 1/150 mile/min ⇒ ×60 = 0.4 mph.",
+  },
+
+  // ====== Rates / Work / Speed — Mixed machine rates ======
+  {
+    concept: "Rates / Work / Speed",
+    kind: "mcq",
+    stem:
+      "Standard machine: 1 gallon per 4 minutes. Deluxe: twice that rate. Together, time to fill 135 gallons?",
+    choices: ["1","1.5","2","2.5","3"],
+    correctIndex: 4,
+    rationale:
+      "Rates 0.25 + 0.5 = 0.75 gal/min ⇒ time 135/0.75 = 180 min = 3 hours.",
+  },
+
   // ====== Stats / discrete scores & averages (QC flavor) ======
   {
     concept: "Quantitative Comparison",

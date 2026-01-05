@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
+
+import { withApi } from "@/lib/api";
 import { hashPassword } from "@/lib/password";
+import prisma from "@/lib/prisma";
 import { consumePasswordResetToken } from "@/lib/tokens";
 
 const schema = z.object({
@@ -9,7 +11,7 @@ const schema = z.object({
   password: z.string().min(8).max(128),
 });
 
-export async function POST(request: Request) {
+export const POST = withApi(async (request: Request) => {
   const payload = await request.json().catch(() => null);
   const parsed = schema.safeParse(payload);
   if (!parsed.success) {
@@ -29,4 +31,4 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json({ success: true });
-}
+});

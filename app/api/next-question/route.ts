@@ -39,6 +39,8 @@ import { gpt } from "@/lib/openai";
 import { GRE_QUANT_CATEGORIES, GMAT_QUANT_CATEGORIES, validQuantCategory } from "@/lib/validator/quant";
 import { GRE_RC_CATEGORIES, validVerbalCategory } from "@/lib/validator/verbal";
 import { redis } from "@/lib/redis";
+import { rateLimit } from "@/lib/rateLimit";
+import { getRequestIp } from "@/lib/request";
 import { renderMathToHtml } from "@/lib/math/renderMathToHtml";
 import { normalizeLooseTex } from "@/lib/math/normalizeLooseTex";
 import { preflightFixMath } from "@/lib/math/preflight";
@@ -55,6 +57,10 @@ const HOURLY_LIMIT = Math.max(
   Number(process.env.NEXT_QUESTION_HOURLY_LIMIT ?? (IS_DEV_ENV ? "90" : "40"))
 );
 const DAILY_LIMIT = PRACTICE_LIMIT;
+const IP_RATE_LIMIT = Math.max(
+  10,
+  Number(process.env.NEXT_QUESTION_IP_LIMIT ?? (IS_DEV_ENV ? "120" : "60"))
+);
 
 type Diff = "easy" | "medium" | "hard";
 function parseWeights(raw?: string | null): [number, number, number] {
@@ -577,17 +583,23 @@ function repairCorruptedKatex(html: string): string {
 }
 
 function enhancePlainContent(raw: string | null | undefined): string {
+  // Neutralize currency dollar signs so KaTeX doesn’t treat them as math delimiters.
+  const currencySafe = String(raw ?? "").replace(
+    /\$(\s*\d[\d,]*(?:\.\d+)?)/g,
+    (_m, amt) => `USD ${amt.trim()}`
+  );
   // Pre-flight math fixes first, then decode HTML entities
-  const pre = preflightFixMath(String(raw ?? ""));
+  const pre = preflightFixMath(currencySafe);
   const decoded = decodeEntities(pre.text);
   // If there is HTML markup after decoding entities, prefer converting it to
   // readable plain text unless it looks like safe, simple markup. KaTeX/MathJax
   // fragments often leak unreadable spans; convert those to text here.
-  if (hasHtmlMarkup(decoded)) {
+  if (hasHtmlMarkup(decoded) || /spanclass\s*=/i.test(decoded)) {
     const looksMathMarkup =
       /katex|mathjax/i.test(decoded) ||
       /<\s*svg|<\s*math/i.test(decoded) ||
-      /<\s*span[^>]*class\s*=|<\s*span|<\s*\/\s*span/i.test(decoded);
+      /<\s*span[^>]*class\s*=|<\s*span|<\s*\/\s*span/i.test(decoded) ||
+      /spanclass\s*=/i.test(decoded);
     if (looksMathMarkup) {
       const stripped = stripHtmlPreservingBreaks(decoded);
       // Continue through normalization pipeline with plain text
@@ -714,6 +726,15 @@ function enhancePlainContent(raw: string | null | undefined): string {
       return `<p>${safe}</p>`;
     });
   return paragraphs.join("");
+}
+
+function looksLikeQcChoices(choices?: string[]): boolean {
+  if (!Array.isArray(choices)) return false;
+  const canon = ["Quantity A", "Quantity B", "Equal", "Cannot be determined"];
+  return choices.length === 4 && choices.every((c, i) => String(c ?? "").trim() === canon[i]);
+}
+function isQcConcept(topic?: string | null): boolean {
+  return typeof topic === "string" && /^quantitative comparison$/i.test(topic);
 }
 
 function stripHtml(input: string): string {
@@ -952,10 +973,42 @@ function responseWithQuestion(questionModern: ReturnType<typeof toClientShape>["
   };
 }
 
+async function bankFallback(params: {
+  exam: "GRE" | "GMAT";
+  section: "Quant" | "Verbal";
+  topic?: string;
+  respond: (q: ReturnType<typeof toClientShape>["modern"]) => Promise<NextResponse>;
+}) {
+  if (params.section !== "Quant") {
+    throw new Error("BANK_FALLBACK_UNAVAILABLE");
+  }
+  const fromBank =
+    params.exam === "GRE"
+      ? pickRandomGreQuant(params.topic)
+      : pickRandomGmatQuant(params.topic);
+
+  const { modern } = toClientShape({
+    id: fromBank.id,
+    stem: fromBank.stem,
+    choices: fromBank.choices,
+    correctIndex: fromBank.correctIndex,
+    explanation: fromBank.explanation ?? "See solution.",
+    exam: params.exam,
+    section: "Quant",
+    difficulty: fromBank.difficulty,
+    badge: fromBank.badge ?? `${params.exam} – Quant (${fromBank.concept})`,
+    kind: (fromBank as any).kind,
+    quantityA: (fromBank as any).quantityA,
+    quantityB: (fromBank as any).quantityB,
+  });
+  return params.respond(modern);
+}
+
 // ───────────────────────────────
 // MAIN ROUTE HANDLER
 // ───────────────────────────────
 export async function POST(req: Request) {
+  let requestBody: any = null;
   try {
     // 0) Auth or anonymous allowance
     const session = await getServerSession(authOptions);
@@ -991,9 +1044,22 @@ export async function POST(req: Request) {
 
     // 1) Input validation
     const body = await req.json().catch(() => ({}));
+    requestBody = body;
     const parsed = Input.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: "INVALID_INPUT", issues: parsed.error.issues }, { status: 400 });
+    }
+
+    const ip = getRequestIp(req);
+    const ipRate = await rateLimit(`nq:ip:${ip}`, { max: IP_RATE_LIMIT, windowMs: 60_000 });
+    if (!ipRate.ok) {
+      const retryAfter = Math.max(1, Math.ceil((ipRate.resetAt - Date.now()) / 1000));
+      const res = NextResponse.json(
+        { error: "RATE_LIMIT_EXCEEDED", retryAfter },
+        { status: 429 }
+      );
+      res.headers.set("Retry-After", String(retryAfter));
+      return res;
     }
 
     const {
@@ -1070,38 +1136,46 @@ export async function POST(req: Request) {
     // ───────────────────────────────
     if (exam === "GRE" && section === "Quant") {
       const wantTopic = resolvedTopic?.kind === "Quant" ? resolvedTopic.value : undefined;
-      const difficultyPreferences = difficultyPreference(effectiveDifficulty);
-      const reuseCandidates = await prisma.question.findMany({
-        where: {
-          exam: "GRE",
-          section: "Quant",
-          difficulty: { in: difficultyPreferences },
-          ...(wantTopic ? { topic: wantTopic } : {}),
-          ...(attemptedIds.length
-            ? { id: { notIn: attemptedIds.slice(0, 400) } }
-            : {}),
-        },
-        select: {
-          id: true,
-          stem: true,
-          choices: true,
-          answer: true,
-          explanation: true,
-          topic: true,
-          difficulty: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: "desc" },
-        take: 30,
-      });
+      try {
+        const difficultyPreferences = difficultyPreference(effectiveDifficulty);
+        const reuseCandidates = await prisma.question.findMany({
+          where: {
+            exam: "GRE",
+            section: "Quant",
+            difficulty: { in: difficultyPreferences },
+            ...(wantTopic ? { topic: wantTopic } : {}),
+            ...(attemptedIds.length
+              ? { id: { notIn: attemptedIds.slice(0, 400) } }
+              : {}),
+          },
+          select: {
+            id: true,
+            stem: true,
+            choices: true,
+            answer: true,
+            explanation: true,
+            topic: true,
+            difficulty: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: "desc" },
+          take: 30,
+        });
 
-      const reuseFiltered = reuseCandidates
+        const reuseFiltered = reuseCandidates
         .filter((candidate) =>
           validQuantCategory(
             "GRE",
             typeof candidate.topic === "string" ? candidate.topic : undefined
           )
         )
+        .filter((candidate) => {
+          const qcShape = looksLikeQcChoices(candidate.choices ?? []);
+          const qcConcept = isQcConcept(candidate.topic);
+          if (!qcConcept && qcShape) return false;
+          if (qcConcept && (!candidate.explanation || candidate.choices?.length !== 4)) return false;
+          return true;
+        })
         .filter((candidate) => {
           const hash = questionHash(candidate.stem, candidate.choices ?? []);
           return !avoidHashes.includes(hash);
@@ -1422,22 +1496,44 @@ export async function POST(req: Request) {
         quantityB: generated.quantityB,
       });
 
+      const qcConcept = typeof generated.concept === "string" && /^quantitative comparison$/i.test(generated.concept);
+      if (!qcConcept && looksLikeQcChoices(modern.choices)) {
+        throw new Error("QC_SHAPE_FOR_NON_QC_CONCEPT");
+      }
+      if (qcConcept && (!modern.quantityA || !modern.quantityB)) {
+        throw new Error("QC_MISSING_QUANTITIES");
+      }
+
       rememberQuestionHash(
         userIdSafe,
         questionHash(modern.stem, modern.choices ?? [])
       );
 
       return respondWithQuestion(modern);
+      } catch (err) {
+        console.error("[next-question][fallback][GRE Quant]", { concept: wantTopic, mode: canonicalMode }, err);
+        return bankFallback({
+          exam: "GRE",
+          section: "Quant",
+          topic: wantTopic,
+          respond: respondWithQuestion,
+        });
+      }
     }
 
     if (exam === "GMAT" && section === "Quant") {
       const wantTopic = resolvedTopic?.kind === "Quant" ? resolvedTopic.value : undefined;
-      const difficultyLabels = difficultyPreference(effectiveDifficulty).map(scoreToDifficulty);
-      const recentStems = attemptedQs.map((q) => q.stem).filter(Boolean).slice(0, 5);
+      try {
+        const difficultyLabels = difficultyPreference(effectiveDifficulty).map(scoreToDifficulty);
+        const recentStems = attemptedQs.map((q) => q.stem).filter(Boolean).slice(0, 5);
 
       const basePoolRaw =
         GMAT_QUESTIONS.filter((q) => {
           if (wantTopic && q.concept !== wantTopic) return false;
+          const qcShape = looksLikeQcChoices(q.choices);
+          const qcConcept = isQcConcept(q.concept);
+          if (!qcConcept && qcShape) return false;
+          if (qcConcept && q.choices.length !== 4) return false;
           return true;
         }) ?? [];
       const basePool = basePoolRaw.length > 0 ? basePoolRaw : GMAT_QUESTIONS;
@@ -1522,12 +1618,29 @@ export async function POST(req: Request) {
         quantityB: null,
       });
 
+      const qcConcept2 = isQcConcept(chosen.concept);
+      if (!qcConcept2 && looksLikeQcChoices(modern.choices)) {
+        throw new Error("QC_SHAPE_FOR_NON_QC_CONCEPT");
+      }
+      if (qcConcept2 && (!modern.quantityA || !modern.quantityB)) {
+        throw new Error("QC_MISSING_QUANTITIES");
+      }
+
       rememberQuestionHash(
         userIdSafe,
         questionHash(modern.stem, modern.choices ?? [])
       );
 
-      return respondWithQuestion(modern);
+        return respondWithQuestion(modern);
+      } catch (err) {
+        console.error("[next-question][fallback][GMAT Quant]", { concept: wantTopic, mode: canonicalMode }, err);
+        return bankFallback({
+          exam: "GMAT",
+          section: "Quant",
+          topic: wantTopic,
+          respond: respondWithQuestion,
+        });
+      }
     }
 
     // ───────────────────────────────
@@ -2042,7 +2155,13 @@ export async function POST(req: Request) {
 
     return respondWithQuestion(modern);
   } catch (err: any) {
-    console.error("[next-question] error:", err);
+    console.error("[next-question] error:", {
+      message: err?.message,
+      exam: requestBody?.exam ?? "unknown",
+      section: requestBody?.section ?? "unknown",
+      mode: requestBody?.mode ?? requestBody?.studyMode ?? "unknown",
+      topic: requestBody?.topic ?? "unknown",
+    });
     return NextResponse.json({ error: "SERVER_ERROR", message: err?.message ?? "Unknown" }, { status: 500 });
   }
 }

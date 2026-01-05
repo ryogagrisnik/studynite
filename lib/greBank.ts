@@ -189,6 +189,114 @@ export const GRE_QUESTIONS: GreQuestion[] = [
     correctIndex: 0,
     badge: "GRE – Quant (Rates/Work/Speed)",
   },
+  {
+    id: qid("RWS_birdhouse_joint_work_15_10"),
+    concept: "Rates / Work / Speed",
+    difficulty: "medium",
+    stem:
+      "Wendy can build a birdhouse in 15 hours, and Miguel can build one in 10 hours. Working together at their constant rates, how many hours to build one birdhouse?",
+    choices: ["5", "6", "7", "8", "9"],
+    correctIndex: 1,
+    badge: "GRE – Quant (Rates/Work/Speed)",
+    explanation:
+      "Rate sum = 1/15 + 1/10 = 1/6 birdhouse per hour ⇒ time = 6 hours.",
+  },
+  {
+    id: qid("RWS_turtle_speed_mph"),
+    concept: "Rates / Work / Speed",
+    difficulty: "easy",
+    stem:
+      "A turtle traveled 1/30 of a mile in 5 minutes. What was its speed in miles per hour?",
+    choices: ["0.02", "0.166", "0.4", "0.6", "2.5"],
+    correctIndex: 2,
+    badge: "GRE – Quant (Rates/Work/Speed)",
+    explanation:
+      "Distance/time = (1/30 mile)/(5 min) = 1/150 mile per minute = 0.4 mph.",
+  },
+  {
+    id: qid("RWS_paint_fill_dual_machines"),
+    concept: "Rates / Work / Speed",
+    difficulty: "medium",
+    stem:
+      "A standard machine fills 1 gallon every 4 minutes. A deluxe machine fills at twice that rate. Working together, how many hours to fill 135 gallons?",
+    choices: ["1", "1.5", "2", "2.5", "3"],
+    correctIndex: 4,
+    badge: "GRE – Quant (Rates/Work/Speed)",
+    explanation:
+      "Rates: 0.25 + 0.5 = 0.75 gal/min. Time = 135 / 0.75 = 180 minutes = 3 hours.",
+  },
+  {
+    id: qid("RWS_workers_boxes_scale_up"),
+    concept: "Rates / Work / Speed",
+    difficulty: "medium",
+    stem:
+      "Twelve workers pack 60 boxes in 9 minutes. How many minutes for 27 workers to pack 180 boxes at the same rate?",
+    choices: ["12", "13", "14", "15", "16"],
+    correctIndex: 0,
+    badge: "GRE – Quant (Rates/Work/Speed)",
+    explanation:
+      "Team rate = 60/9 boxes/min. Per worker = (60/9)/12. With 27 workers, rate = 15 boxes/min. Time = 180/15 = 12 minutes.",
+  },
+  {
+    id: qid("RWS_baker_rate_increase"),
+    concept: "Rates / Work / Speed",
+    difficulty: "medium",
+    stem:
+      "A baker made 60 pies in the first 5 hours. To finish 150 pies in 8 hours total, by how many pies per hour did his rate increase in the last 3 hours?",
+    choices: ["12", "14", "16", "18", "20"],
+    correctIndex: 3,
+    badge: "GRE – Quant (Rates/Work/Speed)",
+    explanation:
+      "Remaining 90 pies in 3 hours → 30/hr. Initial rate 12/hr. Increase = 18/hr.",
+  },
+  {
+    id: qid("RWS_walk_loop_half_speed"),
+    concept: "Rates / Work / Speed",
+    difficulty: "medium",
+    stem:
+      "Brenda walked a 12-mile loop in 3 hours. If she halves her speed, how many hours to walk the loop two more times?",
+    choices: ["6", "8", "12", "18", "24"],
+    correctIndex: 2,
+    badge: "GRE – Quant (Rates/Work/Speed)",
+    explanation:
+      "Initial speed 4 mph; halved to 2 mph. Distance 24 miles ⇒ 24/2 = 12 hours.",
+  },
+  {
+    id: qid("RWS_train_police_chase"),
+    concept: "Rates / Work / Speed",
+    difficulty: "medium",
+    stem:
+      "A train heads south at 50 mph. A police car 50 miles north starts south at 80 mph on a parallel road. How long until the police car catches the train?",
+    choices: ["1 hour", "1 hour 20 minutes", "1 hour 40 minutes", "2 hours", "2 hours 20 minutes"],
+    correctIndex: 2,
+    badge: "GRE – Quant (Rates/Work/Speed)",
+    explanation:
+      "Relative speed = 80−50 = 30 mph to close 50 miles ⇒ 50/30 ≈ 1 hr 40 min.",
+  },
+  {
+    id: qid("RWS_servers_capacity_scale"),
+    concept: "Rates / Work / Speed",
+    difficulty: "medium",
+    stem:
+      "Four identical servers handle 9,600 search requests per hour. If two more servers are added, how many hours to process 216,000 requests?",
+    choices: ["15", "16", "18", "20", "24"],
+    correctIndex: 0,
+    badge: "GRE – Quant (Rates/Work/Speed)",
+    explanation:
+      "Each server 2,400/hr. Six servers → 14,400/hr. Time = 216,000 / 14,400 = 15 hours.",
+  },
+  {
+    id: qid("RWS_translation_rate_gain"),
+    concept: "Rates / Work / Speed",
+    difficulty: "easy",
+    stem:
+      "After training, Alley translates 10 more than twice as many words per hour as before. Previously he translated 10 words per minute. How many words per hour now?",
+    choices: ["30", "70", "610", "1,210", "1,800"],
+    correctIndex: 3,
+    badge: "GRE – Quant (Rates/Work/Speed)",
+    explanation:
+      "Old rate 10/min = 600/hr. New rate = 2·600 + 10 = 1,210 words/hr.",
+  },
 
   // =============== Permutation & Probability ===============
   {
@@ -407,6 +515,164 @@ export const GRE_QUESTIONS: GreQuestion[] = [
     badge: "GRE – Quant (Algebra)",
     explanation:
       "Start with $x+\\tfrac{1}{x}=3$ and square to get $x^2+\\tfrac{1}{x^2}=7$. Applying $(x+\\tfrac{1}{x})(x^2+\\tfrac{1}{x^2})-(x+\\tfrac{1}{x})$ yields $x^3+\\tfrac{1}{x^3}=18$. Next, $(x^2+\\tfrac{1}{x^2})(x^3+\\tfrac{1}{x^3})-(x+\\tfrac{1}{x})$ simplifies to $123$. The official PDF nonetheless keys $120$, so we accept $120$ to stay aligned with that source.",
+  },
+
+  // Additional Algebra baselines
+  {
+    id: qid("ALG_sum_cubes_550"),
+    concept: "Algebra",
+    difficulty: "hard",
+    stem:
+      "If $x + y = 10$ and $x^3 + y^3 = 550$, what is $xy$?",
+    choices: ["7", "10", "13", "15", "18"],
+    correctIndex: 3,
+    badge: "GRE – Quant (Algebra)",
+    explanation:
+      "$(x+y)^3 = x^3 + y^3 + 3xy(x+y) \\Rightarrow 1000 = 550 + 30xy \\Rightarrow xy = 15.$",
+  },
+  {
+    id: qid("ALG_rational_cross_mult_simple"),
+    concept: "Algebra",
+    difficulty: "medium",
+    stem:
+      "If $\\dfrac{x − 3}{x + 1} = \\dfrac{x + 1}{x − 3}$, what is the sum of all real solutions?",
+    choices: ["−2", "−1", "0", "1", "2"],
+    correctIndex: 3,
+    badge: "GRE – Quant (Algebra)",
+    explanation:
+      "Cross-multiply: $(x−3)^2 = (x+1)^2 \\Rightarrow x=1.$",
+  },
+  {
+    id: qid("ALG_abs_quad_eq_count"),
+    concept: "Algebra",
+    difficulty: "medium",
+    stem:
+      "How many real solutions satisfy $|x^2 − 4x| = 3x − 5$?",
+    choices: ["0", "1", "2", "3", "4"],
+    correctIndex: 2,
+    badge: "GRE – Quant (Algebra)",
+    explanation:
+      "Require $3x−5 \\ge 0$ (so $x \\ge 5/3$). Solve in regions to get two valid solutions (about $2.79$ and $6.19$).",
+  },
+  {
+    id: qid("ALG_exp_quadratic_sum_roots"),
+    concept: "Algebra",
+    difficulty: "medium",
+    stem:
+      "If $2^{2x} − 10\\cdot 2^x + 16 = 0$, what is the sum of all real solutions?",
+    choices: ["2", "3", "4", "5", "6"],
+    correctIndex: 2,
+    badge: "GRE – Quant (Algebra)",
+    explanation:
+      "Let $t=2^x$. Then $t^2 −10t +16=0 \\Rightarrow t=2$ or $8$, so $x=1,3$ and the sum is $4.$",
+  },
+  {
+    id: qid("ALG_roots_sum_sq"),
+    concept: "Algebra",
+    difficulty: "medium",
+    stem:
+      "If $a + b = 6$ and $a^2 + b^2 = 20$ for roots $a$ and $b$ of a quadratic, what is $ab$?",
+    choices: ["4", "5", "6", "8", "10"],
+    correctIndex: 3,
+    badge: "GRE – Quant (Algebra)",
+    explanation:
+      "$(a+b)^2 = a^2 + b^2 + 2ab \\Rightarrow 36 = 20 + 2ab \\Rightarrow ab = 8.$",
+  },
+  {
+    id: qid("ALG_divisible_by_x_minus_3"),
+    concept: "Algebra",
+    difficulty: "medium",
+    stem:
+      "If $x^2 − 6x + k$ is divisible by $(x − 3)$, what is $k$?",
+    choices: ["−9", "0", "9", "18", "27"],
+    correctIndex: 2,
+    badge: "GRE – Quant (Algebra)",
+    explanation:
+      "Plug $x=3$: $9−18+k=0 \\Rightarrow k=9.$",
+  },
+  {
+    id: qid("ALG_ratio_squared"),
+    concept: "Algebra",
+    difficulty: "medium",
+    stem:
+      "If $x \\ne y$ and $\\dfrac{x + y}{x − y} = 3$, what is $\\dfrac{x^2 + y^2}{x^2 − y^2}$?",
+    choices: ["$\\tfrac{5}{4}$", "$\\tfrac{4}{3}$", "$\\tfrac{5}{3}$", "$\\tfrac{7}{3}$", "3"],
+    correctIndex: 2,
+    badge: "GRE – Quant (Algebra)",
+    explanation:
+      "Let $r=y/x=\\tfrac{1}{2}$. Then ratio $=\\dfrac{1+r^2}{1−r^2}=\\dfrac{1.25}{0.75}=\\tfrac{5}{3}.$",
+  },
+  {
+    id: qid("ALG_infinite_solutions_k"),
+    concept: "Algebra",
+    difficulty: "medium",
+    stem:
+      "For the system $x + ky = 8$ and $kx + y = 8$ to have infinitely many solutions, what is $k$?",
+    choices: ["−1", "0", "1", "2", "4"],
+    correctIndex: 2,
+    badge: "GRE – Quant (Algebra)",
+    explanation:
+      "Rows must be proportional: $1 = k^2$ and $8k = 8$ ⇒ $k = 1.$",
+  },
+  {
+    id: qid("ALG_xy_from_symmetric_sum"),
+    concept: "Algebra",
+    difficulty: "hard",
+    stem:
+      "If $x + y = 12$ and $x^2y + xy^2 = 72$, what is $xy$?",
+    choices: ["3", "4", "6", "9", "18"],
+    correctIndex: 2,
+    badge: "GRE – Quant (Algebra)",
+    explanation:
+      "$xy(x+y)=72$ ⇒ $12xy=72$ ⇒ $xy=6.$",
+  },
+  {
+    id: qid("ALG_ab_two_quadratics"),
+    concept: "Algebra",
+    difficulty: "hard",
+    stem:
+      "If $(x^2 + ax + 4)(x^2 + bx + 4) = 0$ has exactly two distinct real solutions, what is $ab$?",
+    choices: ["−16", "−8", "0", "8", "16"],
+    correctIndex: 0,
+    badge: "GRE – Quant (Algebra)",
+    explanation:
+      "Take $a=4$ (double root at −2) and $b=−4$ (double root at 2) ⇒ two distinct real roots overall ⇒ $ab=-16.$",
+  },
+  {
+    id: qid("ALG_exp_equate_9"),
+    concept: "Algebra",
+    difficulty: "hard",
+    stem:
+      "If $3^{x^2 − 4x + 4} = 9$, what is the sum of all real solutions?",
+    choices: ["2", "3", "4", "5", "6"],
+    correctIndex: 2,
+    badge: "GRE – Quant (Algebra)",
+    explanation:
+      "Exponent equals $2$: $x^2 − 4x + 2 = 0$ ⇒ roots $2 \\pm \\sqrt{2}$ ⇒ sum $=4.$",
+  },
+  {
+    id: qid("ALG_tangent_line_circle"),
+    concept: "Algebra",
+    difficulty: "hard",
+    stem:
+      "The system $x^2 + y^2 = 32$ and $x + y = k$ has exactly one real solution. What is $k$?",
+    choices: ["−8", "−4", "0", "4", "8"],
+    correctIndex: 4,
+    badge: "GRE – Quant (Algebra)",
+    explanation:
+      "Line is tangent when $|k|/\\sqrt{2} = \\sqrt{32}$ ⇒ $|k|=8$; positive choice is $8.$",
+  },
+  {
+    id: qid("ALG_radical_equation_count"),
+    concept: "Algebra",
+    difficulty: "hard",
+    stem:
+      "How many real solutions satisfy $\\sqrt{x} + \\sqrt[3]{x} = 4$?",
+    choices: ["0", "1", "2", "3", "4"],
+    correctIndex: 1,
+    badge: "GRE – Quant (Algebra)",
+    explanation:
+      "For $x \\ge 0$ the function is increasing and crosses $4$ once (near $x \\approx 8$).",
   },
 
   // Q8: day-of-week shift
@@ -636,6 +902,128 @@ export const GRE_QUESTIONS: GreQuestion[] = [
     badge: "GRE – Quant (Statistics)",
     explanation:
       "$x+y=40$. Mean of three = $(40+5)/3=15$.",
+  },
+
+  // Word Problems & Arithmetic (real GRE-style baselines)
+  {
+    id: qid("GRE_WP_charity_dinner_6450_85_min"),
+    concept: "Word Problems & Arithmetic",
+    difficulty: "medium",
+    stem:
+      "Attendees at a charity dinner each gave at least $85. If $6{,}450 was collected, what is the maximum number of attendees?",
+    choices: ["73", "74", "75", "76", "77"],
+    correctIndex: 2,
+    badge: "GRE – Quant (Word Problems & Arithmetic)",
+    explanation:
+      "Max people use the minimum donation: 6,450 ÷ 85 ≈ 75.88 ⇒ at most 75 attendees.",
+  },
+  {
+    id: qid("GRE_WP_washer_35min_turnover"),
+    concept: "Word Problems & Arithmetic",
+    difficulty: "medium",
+    stem:
+      "A washer takes 35 minutes per load. Between loads it takes 2 minutes to unload and 4 minutes to reload. Starting at 12:30 PM, how many loads can be washed and unloaded by 6:35 PM?",
+    choices: ["8", "9", "10", "14", "15"],
+    correctIndex: 1,
+    badge: "GRE – Quant (Word Problems & Arithmetic)",
+    explanation:
+      "Each full cycle is 35 + 2 + 4 = 41 minutes; the last load doesn’t need reload. From 12:30 to 6:35 is 365 minutes, enough to finish 9 loads (the 10th unload would exceed the window).",
+  },
+  {
+    id: qid("GRE_WP_ticket_bonus_2400_total"),
+    concept: "Word Problems & Arithmetic",
+    difficulty: "medium",
+    stem:
+      "Arnaldo earns $11 per ticket and a $2 bonus for each ticket beyond 100. If he was paid $2,400, how many tickets did he sell?",
+    choices: ["120", "160", "180", "200", "250"],
+    correctIndex: 3,
+    badge: "GRE – Quant (Word Problems & Arithmetic)",
+    explanation:
+      "Pay = 11n + 2(n−100) = 13n − 200. Solve 13n − 200 = 2,400 ⇒ n = 200.",
+  },
+  {
+    id: qid("GRE_WP_bike_factory_profit_threshold"),
+    concept: "Word Problems & Arithmetic",
+    difficulty: "medium",
+    stem:
+      "A factory’s monthly cost is a fixed $11,000 plus $300 per bicycle. Each bicycle sells for $700. What is the minimum number of bicycles needed to make a profit?",
+    choices: ["26", "27", "28", "29", "30"],
+    correctIndex: 2,
+    badge: "GRE – Quant (Word Problems & Arithmetic)",
+    explanation:
+      "Profit when 700b > 11,000 + 300b ⇒ 400b > 11,000 ⇒ b > 27.5, so need 28 bikes.",
+  },
+  {
+    id: qid("GRE_WP_yoga_time_vs_cost"),
+    concept: "Word Problems & Arithmetic",
+    difficulty: "medium",
+    stem:
+      "Yoga classes are 45 minutes and cost $12 each. If Randolph’s total minutes were 132 greater than the dollars he paid, how many classes did he attend?",
+    choices: ["3", "4", "5", "6", "8"],
+    correctIndex: 1,
+    badge: "GRE – Quant (Word Problems & Arithmetic)",
+    explanation:
+      "Let c = classes. Minutes 45c = dollars 12c + 132 ⇒ 33c = 132 ⇒ c = 4.",
+  },
+  {
+    id: qid("GRE_WP_mp3_storage_percent"),
+    concept: "Word Problems & Arithmetic",
+    difficulty: "medium",
+    stem:
+      "A 64 GB device is 3/4 full. After deleting 25% of the stored data and adding 20 GB, what percent of capacity is filled?",
+    choices: ["62.5%", "70%", "75%", "87.5%", "95%"],
+    correctIndex: 3,
+    badge: "GRE – Quant (Word Problems & Arithmetic)",
+    explanation:
+      "Start 48 GB; delete 25% → 36 GB; add 20 → 56 GB; 56/64 = 87.5%.",
+  },
+  {
+    id: qid("GRE_WP_aspect_ratio_perimeter"),
+    concept: "Word Problems & Arithmetic",
+    difficulty: "medium",
+    stem:
+      "A monitor has aspect ratio 16:9 and perimeter 100 inches. How wide is the monitor?",
+    choices: ["18", "25", "32", "36", "64"],
+    correctIndex: 2,
+    badge: "GRE – Quant (Word Problems & Arithmetic)",
+    explanation:
+      "Let width=16k, height=9k. Perimeter 2(16k+9k)=50k=100 ⇒ k=2 ⇒ width=32.",
+  },
+  {
+    id: qid("GRE_WP_population_linear_growth"),
+    concept: "Word Problems & Arithmetic",
+    difficulty: "medium",
+    stem:
+      "Population increases by 1 billion every 13 years, starting from 7 billion. About how many years to reach 14 billion?",
+    choices: ["26", "52", "91", "104", "169"],
+    correctIndex: 2,
+    badge: "GRE – Quant (Word Problems & Arithmetic)",
+    explanation:
+      "Need +7 billion; at +1B per 13 years, that’s 7×13 ≈ 91 years.",
+  },
+  {
+    id: qid("GRE_WP_bean_acres_yield_ratio"),
+    concept: "Word Problems & Arithmetic",
+    difficulty: "medium",
+    stem:
+      "Out of 70 acres, navy beans yield 27 bushels/acre and pinto beans 36 bushels/acre. If total pinto bushels are twice total navy bushels, how many acres of pinto beans?",
+    choices: ["28", "30", "35", "40", "42"],
+    correctIndex: 4,
+    badge: "GRE – Quant (Word Problems & Arithmetic)",
+    explanation:
+      "Let x pinto acres. 36x = 2·27(70−x) ⇒ 90x = 3,780 ⇒ x = 42.",
+  },
+  {
+    id: qid("GRE_WP_cookie_batches_95_total"),
+    concept: "Word Problems & Arithmetic",
+    difficulty: "medium",
+    stem:
+      "Chocolate chip cookies come in batches of 7; peanut butter in batches of 6. If exactly 95 cookies were made, what is the minimum number of chocolate chip cookies?",
+    choices: ["7", "14", "21", "28", "35"],
+    correctIndex: 4,
+    badge: "GRE – Quant (Word Problems & Arithmetic)",
+    explanation:
+      "Solve 7a + 6b = 95. Mod 6 ⇒ a ≡ 5 (mod 6); smallest is a=5 ⇒ 35 chocolate chip cookies.",
   },
 
   // Q27: mean/median/mode/range order

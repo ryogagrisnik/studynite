@@ -1,22 +1,35 @@
-export default function Terms(){
+export default function Terms() {
   return (
-    <div className="section" style={{maxWidth:900}}>
-      <h1>Terms of Service</h1>
-      <div style={{background:'#FCEBD7',padding:12,borderRadius:12,margin:'12px 0'}}>
-        <em>Disclaimer: BlobPrep uses original GRE-style and GMAT-style questions. We are not affiliated with or endorsed by ETS, GMAC, or any official exam body.</em>
+    <div className="page" style={{ maxWidth: 900 }}>
+      <div className="stack">
+        <h1 className="page-title">Terms of Service</h1>
+        <div className="card" style={{ background: "var(--green-soft)" }}>
+          <em>
+            Disclaimer: StudyNite lets you upload your own materials. You are responsible for
+            ensuring you have the rights to share and use any content you upload.
+          </em>
+        </div>
+        <h3>Agreement</h3>
+        <p>By using StudyNite, you accept these terms.</p>
+        <h3>Use of service</h3>
+        <p>Use StudyNite for personal or classroom study. Abuse may result in limits or termination.</p>
+        <h3>Accounts & security</h3>
+        <p>Hosts must keep their credentials secure. Joiners participate with a display name only.</p>
+        <h3>Content handling</h3>
+        <p>
+          Uploaded source materials are processed to generate quizzes, then discarded.
+          Decks and game results are stored according to your account settings.
+        </p>
+        <h3>Payments & subscriptions</h3>
+        <p>
+          Paid plans are billed through Stripe. You may cancel anytime from the billing portal and
+          your access remains active until the end of the billing period.
+        </p>
+        <h3>Limitation of liability</h3>
+        <p>StudyNite is provided as-is without warranties.</p>
+        <h3>Governing law</h3>
+        <p>Applicable local laws apply.</p>
       </div>
-      <h3>Agreement</h3>
-      <p>By using BlobPrep, you accept these terms.</p>
-      <h3>Use of service</h3>
-      <p>Fair use applies. Abuse may result in limits or termination.</p>
-      <h3>Accounts & security</h3>
-      <p>Keep your credentials secure.</p>
-      <h3>Payments & subscriptions</h3>
-      <p>Recurring charges apply for Pro (once enabled). Cancel anytime.</p>
-      <h3>Limitation of liability</h3>
-      <p>Service provided as-is without warranties.</p>
-      <h3>Governing law</h3>
-      <p>Applicable local laws apply.</p>
     </div>
   );
 }

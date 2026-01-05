@@ -12,7 +12,7 @@ import {
   GRE_RC_ALLOWED,
   GRE_VERBAL_ALLOWED,
 } from "./aiSchema";
-import { validateGreQuant } from "./validator/quant";
+import { validateGreQuant, isQc } from "./validator/quant";
 import { validateGreRcItem } from "./validator/verbal";
 import { sanitizeExplanation, generateExplanation, getExplanationTargetWords } from "./explainer";
 import { checkQuestionQuality } from "./quality";
@@ -77,6 +77,19 @@ function ensureCategory(section: "Quant" | "Verbal", concept: string): boolean {
   return GRE_VERBAL_ALLOWED.has(concept);
 }
 
+const WORD_PROBLEM_BASELINES: { stem: string; answer: string; idea: string }[] = [
+  { stem: "Charity dinner: at least $85 each, total $6,450; max attendees?", answer: "75 attendees", idea: "divide by minimum donation, floor to integer" },
+  { stem: "Washer cycles: 35 min wash + 6 min turnover; from 12:30 PM to 6:35 PM, how many loads finished?", answer: "9 loads", idea: "compute total window, count full cycles; last load skips reload" },
+  { stem: "Tickets: $11 each + $2 bonus after 100 tickets; total pay $2,400; tickets sold?", answer: "200 tickets", idea: "piecewise linear pay; solve linear equation" },
+  { stem: "Bike factory: fixed $11k + $300/bike, sells at $700; min bikes for profit?", answer: "28 bikes", idea: "revenue > cost inequality; solve and ceil" },
+  { stem: "Yoga classes: 45 min, $12; minutes = dollars + 132; classes?", answer: "4 classes", idea: "set up linear equation equating minutes and dollars" },
+  { stem: "64 GB device 3/4 full; delete 25% of stored, add 20 GB; final percent of capacity?", answer: "87.5%", idea: "track amounts stepwise, then percent of capacity" },
+  { stem: "Monitor 16:9 perimeter 100; width?", answer: "32 inches", idea: "ratio substitution with perimeter equation" },
+  { stem: "Population grows +1B every 13 years from 7B; years to reach 14B?", answer: "≈91 years", idea: "linear rate approximation: need +7B increments" },
+  { stem: "Beans: 70 acres split; navy 27/acre, pinto 36/acre; pinto bushels = 2× navy; pinto acres?", answer: "42 acres", idea: "set up yields, solve linear equation" },
+  { stem: "Cookies: batches of 7 and 6 total 95; min chocolate chip (made in 7s)?", answer: "35 cookies", idea: "linear Diophantine, minimize one variable under total" },
+];
+
 function baseUserPrompt(p: {
   section: "Quant" | "Verbal";
   concept?: string;
@@ -85,6 +98,7 @@ function baseUserPrompt(p: {
   avoidHashes?: string[];
   avoidStems?: string[];
 }) {
+  const conceptKey = (p.concept ?? p.topic ?? "").toLowerCase();
   const lines = [
     `EXAM: GRE`,
     `SECTION: ${p.section}`,
@@ -104,6 +118,16 @@ function baseUserPrompt(p: {
   if (examples.length) {
     lines.push("AVOID_SIMILAR_STEMS:");
     for (const ex of examples) lines.push(`- ${ex.slice(0, 180)}`);
+  }
+  if (p.section === "Quant" && conceptKey.includes("word problems")) {
+    const refs = pickN(WORD_PROBLEM_BASELINES, Math.min(3, WORD_PROBLEM_BASELINES.length));
+    lines.push("REFERENCE_EXAMPLES (style only; vary numbers and context):");
+    for (const ref of refs) {
+      lines.push(`- ${ref.stem} | Answer: ${ref.answer} | Idea: ${ref.idea}`);
+    }
+    lines.push(
+      "VARY_CONTEXTS: rotate among time/rate, mixture, scheduling, finance, geometry, counting/probability, and number properties. Avoid repeating clothing/retail/discount themes back to back."
+    );
   }
   if (p.section === "Quant") {
     if (p.difficulty === "hard") {
@@ -197,6 +221,14 @@ export async function generateGreQuantBatch(args: {
   if (/^quantitative comparison$/i.test(q.concept) && (!q.kind || q.choices.length !== 4)) {
     q.kind = "qc";
     q.choices = ["Quantity A", "Quantity B", "Equal", "Cannot be determined"];
+  }
+  // Reject accidental QC format for non-QC concepts
+  const qcConcept = /^quantitative comparison$/i.test(q.concept || "");
+  if (!qcConcept && (q.kind === "qc" || isQc(q.choices, q.stem))) {
+    throw new Error("QC_SHAPE_FOR_NON_QC_CONCEPT");
+  }
+  if (qcConcept && (!q.quantityA || !q.quantityB)) {
+    throw new Error("QC_MISSING_QUANTITIES");
   }
 
   q.exam = "GRE";

@@ -6,6 +6,11 @@ export function questionHash(stem: string, choices?: string[]): string {
   return djb2(base);
 }
 
+/** Stable hash for arbitrary text blobs. */
+export function textHash(value: string): string {
+  return djb2(normalize(value));
+}
+
 /** Loose/structure hash — collapses numerals and common surface forms to catch
  *  “same problem different numbers” so we can press GPT to diversify structure.
  */

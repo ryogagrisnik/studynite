@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/prisma";
-import { hashPassword } from "@/lib/password";
-import { createEmailVerificationToken } from "@/lib/tokens";
-import { sendEmail } from "@/lib/email";
-import { getAppBaseUrl } from "@/lib/urls";
+
+import { withApi } from "@/lib/api";
+import { env } from "@/lib/env";
 import { verificationEmailTemplate } from "@/lib/emailTemplates";
+import { sendEmailWithRetry } from "@/lib/jobs";
+import { hashPassword } from "@/lib/password";
+import prisma from "@/lib/prisma";
+import { rateLimit } from "@/lib/rateLimit";
+import { getRequestIp } from "@/lib/request";
+import { createEmailVerificationToken } from "@/lib/tokens";
+import { getAppBaseUrl } from "@/lib/urls";
 
 const schema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -13,7 +18,17 @@ const schema = z.object({
   password: z.string().min(8).max(128),
 });
 
-export async function POST(request: Request) {
+export const POST = withApi(async (request: Request) => {
+  const ip = getRequestIp(request);
+  const signupMax = Math.max(1, Number(env.RATE_LIMIT_SIGNUP_MAX ?? "4"));
+  const limit = await rateLimit(`auth:signup:${ip}`, { max: signupMax, windowMs: 60_000 });
+  if (!limit.ok) {
+    const retryAfter = Math.max(1, Math.ceil((limit.resetAt - Date.now()) / 1000));
+    const res = NextResponse.json({ error: "RATE_LIMITED", retryAfter }, { status: 429 });
+    res.headers.set("Retry-After", String(retryAfter));
+    return res;
+  }
+
   const payload = await request.json().catch(() => null);
   const parsed = schema.safeParse(payload);
 
@@ -48,9 +63,9 @@ export async function POST(request: Request) {
   const verifyUrl = `${getAppBaseUrl()}/verify-email?token=${token}`;
 
   try {
-    await sendEmail({
+    await sendEmailWithRetry({
       to: email,
-      subject: "Verify your BlobPrep account",
+      subject: "Verify your StudyNite account",
       html: verificationEmailTemplate(verifyUrl),
     });
   } catch (error) {
@@ -58,4 +73,4 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ success: true });
-}
+});
