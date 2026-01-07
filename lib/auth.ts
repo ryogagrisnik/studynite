@@ -86,6 +86,9 @@ if (googleId && googleSecret) {
     GoogleProvider({
       clientId: googleId,
       clientSecret: googleSecret,
+      // Allow linking Google accounts to an existing email/password user.
+      // TODO: Replace with a proper account-linking flow if you need stricter security.
+      allowDangerousEmailAccountLinking: true,
     })
   );
 }

@@ -97,7 +97,11 @@ export default function SignUp() {
         </form>
 
         <div className="stack">
-          <button className="btn btn-outline" type="button" onClick={() => signIn("google")}>
+          <button
+            className="btn btn-outline"
+            type="button"
+            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+          >
             Continue with Google
           </button>
           <p className="muted" style={{ textAlign: "center" }}>

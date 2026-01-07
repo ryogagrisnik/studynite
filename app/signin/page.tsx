@@ -7,11 +7,24 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 type MessageState = { type: "success" | "error"; text: string } | null;
 
+function normalizeCallbackUrl(value: string | null) {
+  if (!value) return "/dashboard";
+  if (value.startsWith("/")) return value;
+  try {
+    const parsed = new URL(value);
+    const path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    return path.startsWith("/") ? path : "/dashboard";
+  } catch {
+    return "/dashboard";
+  }
+}
+
 function SignInClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams?.get("callbackUrl") || "/dashboard";
+  const callbackUrl = normalizeCallbackUrl(searchParams?.get("callbackUrl") ?? null);
   const verified = searchParams?.get("verified");
+  const errorParam = searchParams?.get("error");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,10 +32,30 @@ function SignInClient() {
   const [message, setMessage] = useState<MessageState>(null);
 
   useEffect(() => {
+    if (errorParam) {
+      const errorMessages: Record<string, string> = {
+        OAuthAccountNotLinked:
+          "This email is already linked to a different sign-in method. Try the original method or contact support.",
+        OAuthSignin: "Google sign-in failed. Please try again.",
+        OAuthCallback: "Google sign-in failed. Please try again.",
+        OAuthCreateAccount: "We couldn't create your account from Google. Please try again.",
+        Callback: "Sign-in failed. Please try again.",
+        Configuration: "Sign-in is temporarily unavailable. Please try again later.",
+        AccessDenied: "Sign-in was canceled or denied.",
+        CredentialsSignin: "Invalid email or password.",
+      };
+      const friendly = errorMessages[errorParam];
+      const suffix = friendly ? "" : ` (error: ${errorParam})`;
+      setMessage({
+        type: "error",
+        text: `${friendly ?? "Sign-in failed. Please try again."}${suffix}`,
+      });
+      return;
+    }
     if (verified) {
       setMessage({ type: "success", text: "Email verified! You can sign in now." });
     }
-  }, [verified]);
+  }, [errorParam, verified]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

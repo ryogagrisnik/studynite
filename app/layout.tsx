@@ -2,6 +2,7 @@
 import "katex/dist/katex.min.css";
 import "./globals.css";
 import Link from "next/link";
+import Image from "next/image";
 import Providers from "./providers";
 import Script from "next/script";
 import AuthNav from "../components/AuthNav";
@@ -67,9 +68,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="nav">
             <div className="container nav-inner">
               <Link href="/" aria-label="StudyNite home" className="nav-logo">
-                <span className="nav-wordmark">StudyNite</span>
+                <Image src="/assets/logo.png" alt="StudyNite logo" width={520} height={140} priority />
               </Link>
-              <div className="nav-links" style={{ display: "flex", gap: 16, alignItems: "center" }}>
+              <div className="nav-links">
                 <Link href="/dashboard">Dashboard</Link>
                 <Link href="/decks/new">Forge Quiz</Link>
                 <Link href="/party/join">Join Party</Link>

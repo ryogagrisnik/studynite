@@ -338,15 +338,15 @@ export default async function Home() {
             </div>
             <h2 className="section-title pixel-title">Pricing</h2>
             <p className="section-sub">
-              Free keeps your party moving with light caps. Pro lifts the limits for longer
-              quizzes, more daily decks, and unlimited practice questions.
+              Free keeps the party rolling with light caps. Pro unlocks longer runs, more daily
+              decks, and unlimited practice.
             </p>
           </div>
           <div className="orn-divider" />
           <div className="pricing-grid">
             <div className="plan">
               <h3 className="plan__title">Free</h3>
-              <p className="plan__blurb">Perfect for short runs and casual review.</p>
+              <p className="plan__blurb">Great for quick quests and casual review.</p>
               <ul className="plan__features">
                 <li>
                   <span className="plan__dot" />
@@ -369,7 +369,11 @@ export default async function Home() {
             <div className="plan plan--pro">
               <span className="plan__badge">Pro</span>
               <h3 className="plan__title">Pro</h3>
-              <p className="plan__blurb">Built for long sessions and bigger squads.</p>
+              <div className="plan__price">
+                <span className="num">$5.99</span>
+                <span className="per">monthly</span>
+              </div>
+              <p className="plan__blurb">Built for long raids and bigger squads.</p>
               <ul className="plan__features">
                 <li>
                   <span className="plan__dot" />
@@ -394,7 +398,7 @@ export default async function Home() {
             </div>
           </div>
           <p className="muted" style={{ textAlign: "center" }}>
-            For the full breakdown and purchase options, visit the pricing page.
+            See the full loot list and checkout options on the pricing page.
           </p>
         </div>
       </section>

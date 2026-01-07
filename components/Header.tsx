@@ -31,7 +31,9 @@ export default function Header() {
             </div>
           ) : (
             <div className="auth">
-              <button onClick={() => signIn("google")} className="btn small">Sign in</button>
+              <button onClick={() => signIn("google", { callbackUrl: "/dashboard" })} className="btn small">
+                Sign in
+              </button>
               {/* Or use a link: <Link href="/signin" className="btn small">Sign in</Link> */}
             </div>
           )}

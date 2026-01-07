@@ -30,7 +30,7 @@ export default async function Pricing() {
         <div className="stack" style={{ alignItems: "center", textAlign: "center" }}>
           <h1 className="page-title">Pricing</h1>
           <p className="page-sub">
-            Choose your tier. Free keeps the quest going, Pro lifts the caps for longer sessions.
+            Pick your path. Free keeps the quest moving, Pro unlocks the long runs.
           </p>
           <div className="row">
             <span className="badge">Up to {PRO_MAX_QUESTION_COUNT} questions</span>
@@ -49,8 +49,8 @@ export default async function Pricing() {
               </div>
               <h2 className="section-title pixel-title">Free vs Pro</h2>
               <p className="section-sub">
-                Free is great for quick review. Pro removes the practice cap and raises the quiz
-                limits for long study marathons.
+                Free is great for short quests. Pro removes the practice cap and raises limits for
+                marathon sessions.
               </p>
             </div>
             <div className="orn-divider" />
@@ -61,7 +61,7 @@ export default async function Pricing() {
                   <span className="num">$0</span>
                   <span className="per">forever</span>
                 </div>
-                <p className="plan__blurb">Best for short runs and small groups.</p>
+                <p className="plan__blurb">Best for quick quests and small squads.</p>
                 <ul className="plan__features">
                   <li>
                     <span className="plan__dot" />
@@ -89,10 +89,10 @@ export default async function Pricing() {
                 <span className="plan__badge">Pro</span>
                 <h3 className="plan__title">Pro</h3>
                 <div className="plan__price">
-                  <span className="num">Pro</span>
+                  <span className="num">$5.99</span>
                   <span className="per">monthly</span>
                 </div>
-                <p className="plan__blurb">For heavy study streaks and big classes.</p>
+                <p className="plan__blurb">For long raids, big squads, and endless practice.</p>
                 <ul className="plan__features">
                   <li>
                     <span className="plan__dot" />
