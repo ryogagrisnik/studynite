@@ -186,11 +186,11 @@ export default function DashboardClient({
     <div className="page stack">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Your StudyNite quizzes</h1>
+          <h1 className="page-title">Your RunePrep quizzes</h1>
           <p className="page-sub">Create quizzes, edit questions, and launch parties.</p>
         </div>
         <Link className="btn btn-primary" href="/decks/new">
-          Start a StudyNite Party
+          Start a RunePrep Party
         </Link>
       </div>
 

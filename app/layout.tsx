@@ -28,7 +28,7 @@ validateEnv();
 
 
 export const metadata = {
-  title: "StudyNite",
+  title: "RunePrep",
   description: "Studying, but multiplayer.",
 };
 
@@ -67,8 +67,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* NAVBAR */}
           <div className="nav">
             <div className="container nav-inner">
-              <Link href="/" aria-label="StudyNite home" className="nav-logo">
-                <Image src="/assets/logo.png" alt="StudyNite logo" width={520} height={140} priority />
+              <Link href="/" aria-label="RunePrep home" className="nav-logo">
+                <Image src="/assets/logo.png" alt="RunePrep logo" width={520} height={140} priority />
               </Link>
               <div className="nav-links">
                 <Link href="/dashboard">Dashboard</Link>
@@ -104,7 +104,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               }}
             >
               <div>
-                <strong>StudyNite</strong> © 2025
+                <strong>RunePrep</strong> © 2025
               </div>
               <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
                 <Link href="/dashboard">Dashboard</Link>

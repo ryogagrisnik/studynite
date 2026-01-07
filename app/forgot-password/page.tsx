@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
     if (response.ok) {
       setMessage({
         type: "success",
-        text: "If your email exists in StudyNite, a reset link is on the way.",
+        text: "If your email exists in RunePrep, a reset link is on the way.",
       });
     } else {
       setMessage({ type: "error", text: "We couldn’t send that reset link. Try again." });

@@ -5,14 +5,14 @@ export default function Terms() {
         <h1 className="page-title">Terms of Service</h1>
         <div className="card" style={{ background: "var(--green-soft)" }}>
           <em>
-            Disclaimer: StudyNite lets you upload your own materials. You are responsible for
+            Disclaimer: RunePrep lets you upload your own materials. You are responsible for
             ensuring you have the rights to share and use any content you upload.
           </em>
         </div>
         <h3>Agreement</h3>
-        <p>By using StudyNite, you accept these terms.</p>
+        <p>By using RunePrep, you accept these terms.</p>
         <h3>Use of service</h3>
-        <p>Use StudyNite for personal or classroom study. Abuse may result in limits or termination.</p>
+        <p>Use RunePrep for personal or classroom study. Abuse may result in limits or termination.</p>
         <h3>Accounts & security</h3>
         <p>Hosts must keep their credentials secure. Joiners participate with a display name only.</p>
         <h3>Content handling</h3>
@@ -26,7 +26,7 @@ export default function Terms() {
           your access remains active until the end of the billing period.
         </p>
         <h3>Limitation of liability</h3>
-        <p>StudyNite is provided as-is without warranties.</p>
+        <p>RunePrep is provided as-is without warranties.</p>
         <h3>Governing law</h3>
         <p>Applicable local laws apply.</p>
       </div>

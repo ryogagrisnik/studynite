@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-type StudyNiteEventPayload = {
+type RunePrepEventPayload = {
   event: string;
   deckId?: string;
   partyId?: string;
@@ -10,9 +10,9 @@ type StudyNiteEventPayload = {
 };
 
 export async function POST(req: Request) {
-  let payload: StudyNiteEventPayload | null = null;
+  let payload: RunePrepEventPayload | null = null;
   try {
-    payload = (await req.json()) as StudyNiteEventPayload;
+    payload = (await req.json()) as RunePrepEventPayload;
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid payload" }, { status: 400 });
   }
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     receivedAt: new Date().toISOString(),
   };
 
-  console.info("[StudyNiteEvent]", enriched);
+  console.info("[RunePrepEvent]", enriched);
 
   return NextResponse.json({ ok: true });
 }

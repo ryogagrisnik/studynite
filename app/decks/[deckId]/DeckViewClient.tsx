@@ -305,9 +305,9 @@ export default function DeckViewClient({
     return `${window.location.origin}/decks/${deck.id}?shareId=${deck.shareId}`;
   }, [deck.id, deck.shareId]);
   const buildReportLink = (type: string, prompt: string) => {
-    const subject = `StudyNite report: ${deck.title}`;
+    const subject = `RunePrep report: ${deck.title}`;
     const body = `Quiz: ${deck.title}\nQuiz ID: ${deck.id}\nType: ${type}\nPrompt:\n${prompt}`;
-    return `mailto:support@studynite.app?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    return `mailto:support@runeprep.app?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   useEffect(() => {

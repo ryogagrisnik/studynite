@@ -70,7 +70,7 @@ a{ text-decoration:none; color:var(--green) }
 
 .container{ max-width:var(--maxw); margin:0 auto; padding:0 24px }
 
-/* ================= StudyNite layout ================= */
+/* ================= RunePrep layout ================= */
 .page{ padding:56px 0 80px; }
 .page-header{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; }
 .page-title{

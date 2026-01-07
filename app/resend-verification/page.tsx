@@ -39,7 +39,7 @@ export default function ResendVerificationPage() {
       <div className="card stack" style={{ maxWidth: 460, margin: "0 auto" }}>
         <div>
           <h1 className="page-title">Resend verification link</h1>
-          <p className="page-sub">Enter the email you used for StudyNite and we’ll resend a link.</p>
+          <p className="page-sub">Enter the email you used for RunePrep and we’ll resend a link.</p>
         </div>
         {message ? (
           <div

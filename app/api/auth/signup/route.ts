@@ -65,7 +65,7 @@ export const POST = withApi(async (request: Request) => {
   try {
     await sendEmailWithRetry({
       to: email,
-      subject: "Verify your StudyNite account",
+      subject: "Verify your RunePrep account",
       html: verificationEmailTemplate(verifyUrl),
     });
   } catch (error) {

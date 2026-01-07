@@ -86,7 +86,7 @@ function SignInClient() {
     <div className="page">
       <div className="card stack" style={{ maxWidth: 460, margin: "0 auto" }}>
         <div>
-          <h1 className="page-title">Welcome back to StudyNite</h1>
+          <h1 className="page-title">Welcome back to RunePrep</h1>
           <p className="page-sub">Sign in to host quizzes and parties.</p>
         </div>
 

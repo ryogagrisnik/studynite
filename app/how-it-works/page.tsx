@@ -10,7 +10,7 @@ export default async function HowItWorksPage() {
     <div className="page stack">
       <div className="page-header">
         <div>
-          <h1 className="page-title">How StudyNite works</h1>
+          <h1 className="page-title">How RunePrep works</h1>
           <p className="page-sub">
             Upload your material, generate study items, and host a focused multiplayer review.
           </p>
@@ -23,7 +23,7 @@ export default async function HowItWorksPage() {
             <div className="stack how-copy">
               <h2 className="card-title">Quest log</h2>
               <p className="card-sub">
-                StudyNite keeps things clean: you pick the counts, we generate the content, and the
+                RunePrep keeps things clean: you pick the counts, we generate the content, and the
                 host runs the pace for everyone.
               </p>
               <div className="stack how-steps">

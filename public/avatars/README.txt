@@ -1,4 +1,4 @@
-Add the StudyNite avatar images here with these filenames:
+Add the RunePrep avatar images here with these filenames:
 - wizard.jpeg
 - knight.jpeg
 - archer.jpeg

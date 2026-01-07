@@ -34,9 +34,9 @@ export default function PrizePromoModal() {
       <div className="modal-card promo-modal">
         <div className="promo-header">
           <span className="promo-kicker">Monthly Quest</span>
-          <h2 className="promo-title">Win a $1,000 StudyNite Prize</h2>
+          <h2 className="promo-title">Win a $1,000 RunePrep Prize</h2>
           <p className="promo-sub">
-            Play StudyNite every month to unlock a chance at a $1,000 reward. Make it your ritual,
+            Play RunePrep every month to unlock a chance at a $1,000 reward. Make it your ritual,
             and let the party roll.
           </p>
         </div>

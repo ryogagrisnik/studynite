@@ -13,7 +13,7 @@ export default async function Dashboard() {
     return (
       <div className="page">
         <div className="card stack">
-          <h1 className="page-title">Your StudyNite quizzes</h1>
+          <h1 className="page-title">Your RunePrep quizzes</h1>
           <p className="page-sub">
             Sign in to save quizzes, track accuracy, and host multiplayer parties.
           </p>

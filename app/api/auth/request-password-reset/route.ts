@@ -45,7 +45,7 @@ export const POST = withApi(async (request: Request) => {
     try {
       await sendEmailWithRetry({
         to: email,
-        subject: "Reset your StudyNite password",
+        subject: "Reset your RunePrep password",
         html: passwordResetTemplate(resetUrl),
       });
     } catch (error) {

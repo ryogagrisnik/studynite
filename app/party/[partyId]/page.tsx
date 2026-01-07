@@ -558,7 +558,7 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
           state.results.players.length
         : null;
     const lines = [
-      `StudyNite Results - ${state.deck.title}`,
+      `RunePrep Results - ${state.deck.title}`,
       ...topPlayers.map((player, index) => `${index + 1}. ${player.name} (${player.totalScore})`),
     ];
     if (overallAccuracy !== null) {
@@ -959,7 +959,7 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
         <div className="card stack rpg-reveal">
           <h2 className="card-title">Results</h2>
           <div className="card" style={{ borderStyle: "dashed" }}>
-            <strong>StudyNite Results</strong>
+            <strong>RunePrep Results</strong>
             <p className="muted">{state.deck.title}</p>
             <div className="stack" style={{ marginTop: 8 }}>
               {topPlayers.map((player, index) => {

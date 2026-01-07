@@ -24,7 +24,7 @@ export default async function Home() {
         <div className="quest-panel panel--stone hero-panel">
           <div className="chapter-head chapter-head--hero">
             <span className="chapter-pill">Prologue</span>
-            <span className="chapter-title">The Study Hall Awakens</span>
+            <span className="chapter-title">The Runes of Awakening</span>
             <span className="chapter-line" />
           </div>
           <div className="orn-divider" />
@@ -123,7 +123,7 @@ export default async function Home() {
                 <img
                   className="hero-image"
                   src="/hero.png"
-                  alt="StudyNite hero scene"
+                  alt="RunePrep hero scene"
                 />
               </div>
             </div>
@@ -250,7 +250,7 @@ export default async function Home() {
               <img
                 className="hero-image"
                 src="/showcase.png"
-                alt="StudyNite showcase"
+                alt="RunePrep showcase"
               />
             </div>
             <div className="stack">
@@ -412,7 +412,7 @@ export default async function Home() {
               <span className="chapter-title">Guild Wall</span>
               <span className="chapter-line" />
             </div>
-            <h2 className="section-title pixel-title">Students rate StudyNite 4.5 out of 5</h2>
+            <h2 className="section-title pixel-title">Students rate RunePrep 4.5 out of 5</h2>
             <p className="section-sub">
               Notes from early adventurers echo through the hall.
             </p>
@@ -435,13 +435,13 @@ export default async function Home() {
               <div className="card testimonial-card quest-scroll">
                 <blockquote>
                   This service is awesome, and it really helped me in my macro econ course! Group
-                  study via StudyNite was really effective for my friends and I.
+                  study via RunePrep was really effective for my friends and I.
                 </blockquote>
                 <div className="testimonial-author">— Daniel Pinaud, UCSD Senior</div>
               </div>
               <div className="card testimonial-card quest-scroll">
                 <blockquote>
-                  StudyNite made our review sessions feel structured instead of chaotic. The party
+                  RunePrep made our review sessions feel structured instead of chaotic. The party
                   flow kept everyone focused and we finished faster than usual.
                 </blockquote>
                 <div className="testimonial-author">— Russell Arashi, UCSD Senior</div>

@@ -103,9 +103,9 @@ export default function CreateDeckPage() {
     return (
       <div className="page">
         <div className="card stack">
-          <h1 className="page-title">Create a StudyNite quiz</h1>
+          <h1 className="page-title">Create a RunePrep quiz</h1>
           <p className="page-sub">
-            Create an account to generate quizzes and host StudyNite parties.
+            Create an account to generate quizzes and host RunePrep parties.
           </p>
           <div className="row">
             <Link className="btn btn-primary" href="/signup?callbackUrl=/decks/new">
@@ -244,7 +244,7 @@ export default function CreateDeckPage() {
     <div className="page stack">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Create a StudyNite quiz</h1>
+          <h1 className="page-title">Create a RunePrep quiz</h1>
           <p className="page-sub">
             Paste text or upload PDFs/images. Choose exactly how many items to generate.
           </p>

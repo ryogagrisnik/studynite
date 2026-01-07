@@ -50,7 +50,7 @@ export default function SignUp() {
     <div className="page">
       <div className="card stack" style={{ maxWidth: 460, margin: "0 auto" }}>
         <div>
-          <h1 className="page-title">Create your StudyNite account</h1>
+          <h1 className="page-title">Create your RunePrep account</h1>
           <p className="page-sub">Only hosts need accounts. Joiners play with just a name.</p>
         </div>
 
