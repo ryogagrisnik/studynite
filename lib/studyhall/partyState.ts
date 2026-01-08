@@ -352,7 +352,11 @@ export async function buildPartyState(partyId: string, playerToken?: string | nu
       distribution,
       flashcardStats,
       correctIndex:
-        currentQuestion && hostPlayerId && player && player.id === hostPlayerId
+        currentQuestion &&
+        party.answerRevealedAt &&
+        hostPlayerId &&
+        player &&
+        player.id === hostPlayerId
           ? currentQuestion.correctIndex
           : null,
       revealedCorrectIndex,

@@ -891,7 +891,7 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
                 <h2 className="card-title">Host controls</h2>
                 <div className="stack">
                   <span className="badge">
-                    Correct answer: {state.correctIndex !== null ? String.fromCharCode(65 + state.correctIndex) : "-"}
+                    Correct answer: {answerRevealed && state.revealedCorrectIndex !== null ? String.fromCharCode(65 + state.revealedCorrectIndex) : "-"}
                   </span>
                   <span className="muted">Fastest correct answer earns +{state.results?.bonusPointValue ?? 1} bonus.</span>
                   <div className="row">
