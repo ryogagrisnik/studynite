@@ -8,6 +8,7 @@ import Script from "next/script";
 import AuthNav from "../components/AuthNav";
 import PrizePromoModal from "../components/PrizePromoModal";
 import CosmeticSync from "../components/CosmeticSync";
+import { Analytics } from "@vercel/analytics/next";
 import { Press_Start_2P, Space_Grotesk } from "next/font/google";
 import { validateEnv } from "@/lib/env";
 
@@ -91,6 +92,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
           <PrizePromoModal />
           <CosmeticSync />
+          <Analytics />
 
           {/* FOOTER */}
           <div className="footer">
