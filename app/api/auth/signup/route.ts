@@ -11,6 +11,7 @@ import { rateLimit } from "@/lib/rateLimit";
 import { getRequestIp } from "@/lib/request";
 import { createEmailVerificationToken } from "@/lib/tokens";
 import { getAppBaseUrl } from "@/lib/urls";
+import { track } from "@vercel/analytics/server";
 
 const schema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -58,6 +59,12 @@ export const POST = withApi(async (request: Request) => {
       passwordHash,
     },
   });
+
+  try {
+    await track("signup", { method: "credentials" });
+  } catch {
+    // analytics failures should not block signup
+  }
 
   const token = await createEmailVerificationToken(user.id);
   const verifyUrl = `${getAppBaseUrl()}/verify-email?token=${token}`;

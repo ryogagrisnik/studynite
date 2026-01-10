@@ -8,6 +8,7 @@ import { env } from "./env";
 import prisma from "./prisma";
 import { verifyPassword } from "./password";
 import { rateLimit } from "./rateLimit";
+import { track } from "@vercel/analytics/server";
 
 export async function verifyCredentials(
   emailInput: string,
@@ -106,6 +107,17 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: "database" },
   pages: {
     signIn: "/signin",
+  },
+  events: {
+    async signIn({ account, isNewUser }) {
+      const method = account?.provider ?? "unknown";
+      const eventName = isNewUser ? "signup" : "login";
+      try {
+        await track(eventName, { method });
+      } catch {
+        // analytics failures should not block auth
+      }
+    },
   },
 
   callbacks: {
