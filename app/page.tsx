@@ -283,7 +283,7 @@ export default async function Home() {
               </div>
               <div className="row" style={{ marginTop: 16 }}>
                 <Link className="btn btn-outline" href="/how-it-works">
-                  Open Quest Log
+                  Open Leaderboard
                 </Link>
               </div>
             </div>

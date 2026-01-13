@@ -24,7 +24,7 @@ export default async function AchievementsPage() {
         </div>
         <div className="row">
           <Link className="btn btn-outline" href="/how-it-works">
-            Quest log
+            Leaderboard
           </Link>
           {isAuthed ? (
             <Link className="btn btn-primary" href="/dashboard">

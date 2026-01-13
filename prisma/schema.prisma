@@ -307,6 +307,7 @@ model PartySubmission {
 
   @@unique([partyPlayerId, questionId])
   @@index([partyId, questionId])
+  @@index([createdAt, partyPlayerId])
 }
 
 model PartyFlashcardSubmission {

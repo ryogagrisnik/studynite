@@ -75,7 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/dashboard">Dashboard</Link>
                 <Link href="/decks/new">Forge Quiz</Link>
                 <Link href="/party/join">Join Party</Link>
-                <Link href="/how-it-works">Quest Log</Link>
+                <Link href="/how-it-works">Leaderboard</Link>
                 <Link href="/pricing">Pricing</Link>
                 <Link href="/achievements">Guild Achievements</Link>
                 <Link className="btn btn-primary" href="/decks/new">Begin Quest</Link>
