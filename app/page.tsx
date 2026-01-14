@@ -42,13 +42,7 @@ export default async function Home() {
                   </Link>
                 )}
               </div>
-              {isAuthed ? null : (
-                <div className="hero-links">
-                  <Link className="hero-link" href="/signin?callbackUrl=/decks/new">
-                    Return to camp
-                  </Link>
-                </div>
-              )}
+              {isAuthed ? null : null}
               <p className="path-label">What you do</p>
               <div className="path-grid">
                 <Link className="quest-card" href="/decks/new">
