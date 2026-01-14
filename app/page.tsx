@@ -33,28 +33,22 @@ export default async function Home() {
               <h1 className="page-title">Turn your notes into multiplayer quizzes.</h1>
               <div className="row hero-cta">
                 {isAuthed ? (
-                  <>
-                    <Link className="btn btn-primary" href="/decks/new">
-                      Begin Quest
-                    </Link>
-                    <Link className="btn btn-outline" href="/dashboard">
-                      Open Dashboard
-                    </Link>
-                  </>
+                  <Link className="btn btn-primary" href="/decks/new">
+                    Begin Quest
+                  </Link>
                 ) : (
-                  <>
-                    <Link className="btn btn-primary" href="/signup?callbackUrl=/decks/new">
-                      Begin Quest
-                    </Link>
-                    <Link className="btn btn-outline" href="/signin?callbackUrl=/decks/new">
-                      Return to Camp
-                    </Link>
-                  </>
+                  <Link className="btn btn-primary" href="/signup?callbackUrl=/decks/new">
+                    Begin Quest
+                  </Link>
                 )}
-                <Link className="btn btn-outline" href="/party/join">
-                  Join Party
-                </Link>
               </div>
+              {isAuthed ? null : (
+                <div className="hero-links">
+                  <Link className="hero-link" href="/signin?callbackUrl=/decks/new">
+                    Return to camp
+                  </Link>
+                </div>
+              )}
               <p className="path-label">What you do</p>
               <div className="path-grid">
                 <Link className="quest-card" href="/decks/new">
@@ -346,6 +340,10 @@ export default async function Home() {
           <div className="pricing-grid">
             <div className="plan">
               <h3 className="plan__title">Free</h3>
+              <div className="plan__price">
+                <span className="num">$0</span>
+                <span className="per">forever</span>
+              </div>
               <p className="plan__blurb">Great for quick quests and casual review.</p>
               <ul className="plan__features">
                 <li>

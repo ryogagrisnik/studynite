@@ -33,14 +33,23 @@ export async function verifyCredentials(
   }
 
   if (!user.emailVerified) {
-    const hasOauth = await prisma.account.findFirst({ where: { userId: user.id } });
-    if (!hasOauth) {
-      throw new Error("Email not verified");
-    }
-    try {
-      await prisma.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } });
-    } catch {
-      // non-fatal
+    const verificationRequired = Boolean(env.RESEND_API_KEY);
+    if (!verificationRequired) {
+      try {
+        await prisma.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } });
+      } catch {
+        // non-fatal
+      }
+    } else {
+      const hasOauth = await prisma.account.findFirst({ where: { userId: user.id } });
+      if (!hasOauth) {
+        throw new Error("Email not verified");
+      }
+      try {
+        await prisma.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } });
+      } catch {
+        // non-fatal
+      }
     }
   }
 

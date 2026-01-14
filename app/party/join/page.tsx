@@ -121,7 +121,6 @@ export default function JoinPartyPage() {
             ))}
           </div>
         </div>
-        {error ? <div className="card" style={{ borderColor: "#FCA5A5" }}>{error}</div> : null}
       </div>
 
       <div className="card stack">
@@ -137,6 +136,24 @@ export default function JoinPartyPage() {
             placeholder="ABC123"
           />
         </div>
+        {error ? (
+          <div className="card card--error stack" role="alert">
+            <strong>Couldn't join the party.</strong>
+            <span>{error}</span>
+            <div className="row">
+              <button
+                className="btn btn-outline btn-small"
+                onClick={handleJoin}
+                disabled={loading || !code.trim() || !name.trim()}
+              >
+                Try again
+              </button>
+              <button className="btn btn-outline btn-small" onClick={() => setError(null)}>
+                Dismiss
+              </button>
+            </div>
+          </div>
+        ) : null}
         <div className="row">
           <button
             className="btn btn-primary"

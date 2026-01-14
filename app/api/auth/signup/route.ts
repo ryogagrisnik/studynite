@@ -51,12 +51,14 @@ export const POST = withApi(async (request: Request) => {
   }
 
   const passwordHash = await hashPassword(password);
+  const verificationRequired = Boolean(env.RESEND_API_KEY);
 
   const user = await prisma.user.create({
     data: {
       name,
       email,
       passwordHash,
+      emailVerified: verificationRequired ? null : new Date(),
     },
   });
 
@@ -66,18 +68,20 @@ export const POST = withApi(async (request: Request) => {
     // analytics failures should not block signup
   }
 
-  const token = await createEmailVerificationToken(user.id);
-  const verifyUrl = `${getAppBaseUrl()}/verify-email?token=${token}`;
+  if (verificationRequired) {
+    const token = await createEmailVerificationToken(user.id);
+    const verifyUrl = `${getAppBaseUrl()}/verify-email?token=${token}`;
 
-  try {
-    await sendEmailWithRetry({
-      to: email,
-      subject: "Verify your RunePrep account",
-      html: verificationEmailTemplate(verifyUrl),
-    });
-  } catch (error) {
-    console.error("signup email send failed", error);
+    try {
+      await sendEmailWithRetry({
+        to: email,
+        subject: "Verify your RunePrep account",
+        html: verificationEmailTemplate(verifyUrl),
+      });
+    } catch (error) {
+      console.error("signup email send failed", error);
+    }
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, verificationRequired });
 });

@@ -159,6 +159,11 @@ a{ text-decoration:none; color:var(--green) }
   overflow:hidden;
   box-shadow:var(--shadow);
 }
+.card--error{
+  border-color:#fca5a5;
+  background:#fef2f2;
+  color:#7f1d1d;
+}
 .card.card--plain{
   background:#fff;
   border:1px solid var(--border);
@@ -1265,6 +1270,17 @@ button.card:disabled{ cursor:not-allowed; opacity:0.6; }
   font-size:12px;
   padding:8px 12px;
 }
+.text-link{
+  font-weight:700;
+  color:var(--green);
+  text-decoration:none;
+  border-bottom:1px dashed rgba(15,118,110,0.45);
+  padding-bottom:2px;
+}
+.text-link:hover{
+  color:var(--green-hover);
+  border-bottom-color:rgba(15,118,110,0.75);
+}
 
 /* ================= SELECT DROPDOWNS ================= */
 .select{
@@ -1431,6 +1447,23 @@ button.card:disabled{ cursor:not-allowed; opacity:0.6; }
 }
 .hero-cta{
   gap:12px;
+}
+.hero-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+  align-items:center;
+  font-weight:700;
+}
+.hero-link{
+  color:var(--green);
+  text-decoration:none;
+  border-bottom:1px dashed rgba(15,118,110,0.45);
+  padding-bottom:2px;
+}
+.hero-link:hover{
+  color:var(--green-hover);
+  border-bottom-color:rgba(15,118,110,0.75);
 }
 .hero-party{
   gap:12px;
@@ -2235,6 +2268,24 @@ button.card:disabled{ cursor:not-allowed; opacity:0.6; }
   border:1px dashed var(--border);
   background:rgba(255,255,255,0.7);
 }
+.leaderboard-empty-actions{
+  margin-top:14px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+  align-items:center;
+}
+.leaderboard-empty-link{
+  font-weight:700;
+  color:var(--green);
+  text-decoration:none;
+  border-bottom:1px dashed rgba(15,118,110,0.45);
+  padding-bottom:2px;
+}
+.leaderboard-empty-link:hover{
+  color:var(--green-hover);
+  border-bottom-color:rgba(15,118,110,0.75);
+}
 .leaderboard-foot{
   margin-top:18px;
   display:flex;
@@ -2485,6 +2536,59 @@ button.card:disabled{ cursor:not-allowed; opacity:0.6; }
 .pricing{ padding:80px 0; text-align:center; }
 .pricing .sub{ margin-top:6px; opacity:.85; }
 .pricing-grid{ display:grid; grid-template-columns:repeat(2, minmax(260px, 1fr)); gap:28px; max-width:1000px; margin:28px auto 0; align-items:stretch; }
+
+.compare-grid{ margin-top:24px; }
+.compare-card{
+  text-align:left;
+  border-radius:20px;
+  padding:22px;
+}
+.compare-card--pro{
+  background:var(--green-soft);
+  border-color:rgba(15,118,110,0.25);
+}
+.compare-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 12px;
+  border-radius:999px;
+  font-weight:800;
+  font-size:12px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  background:#fff;
+  border:1px solid var(--border);
+  color:var(--ink);
+}
+.compare-pill--pro{
+  background:#e8fbf7;
+  border-color:rgba(15,118,110,0.3);
+  color:var(--green);
+}
+.compare-list{
+  list-style:none;
+  padding:0;
+  margin:16px 0 0;
+  display:grid;
+  gap:10px;
+}
+.compare-item{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  color:var(--ink);
+}
+.compare-dot{
+  width:8px;
+  height:8px;
+  border-radius:999px;
+  background:var(--orange);
+  margin-top:7px;
+}
+.compare-dot--pro{
+  background:var(--green);
+}
 
 .plan{ position:relative; border-radius:28px; padding:28px 28px 32px; background:#fff; border:1px solid var(--border); box-shadow:none; transition:none; }
 .plan:hover{ transform:none; box-shadow:none; border-color:var(--border); }

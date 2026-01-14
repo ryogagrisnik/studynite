@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 const AUTH_KEY = "studynite:promo:authed";
@@ -12,6 +11,7 @@ export default function PrizePromoModal() {
   const { status, data } = useSession();
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const isAuthed = status === "authenticated";
   const userId = (data?.user as any)?.id as string | undefined;
 
@@ -29,6 +29,22 @@ export default function PrizePromoModal() {
 
   if (!open) return null;
 
+  const markDismissed = () => {
+    if (typeof window === "undefined") return;
+    window.sessionStorage.setItem(AUTH_KEY, "1");
+    window.sessionStorage.setItem(GUEST_KEY, "1");
+  };
+
+  const dismissPromo = () => {
+    markDismissed();
+    setOpen(false);
+  };
+
+  const handleNavigate = (href: string) => {
+    dismissPromo();
+    router.push(href);
+  };
+
   return (
     <div className="modal-backdrop">
       <div className="modal-card promo-modal">
@@ -43,24 +59,28 @@ export default function PrizePromoModal() {
         <div className="promo-actions">
           {isAuthed ? (
             <>
-              <Link className="btn btn-primary" href="/decks/new">
+              <button className="btn btn-primary" type="button" onClick={() => handleNavigate("/decks/new")}>
                 Start a new quiz
-              </Link>
-              <Link className="btn btn-outline" href="/dashboard">
+              </button>
+              <button className="btn btn-outline" type="button" onClick={() => handleNavigate("/dashboard")}>
                 Open dashboard
-              </Link>
+              </button>
             </>
           ) : (
             <>
-              <Link className="btn btn-primary" href="/signup?callbackUrl=/decks/new">
+              <button
+                className="btn btn-primary"
+                type="button"
+                onClick={() => handleNavigate("/signup?callbackUrl=/decks/new")}
+              >
                 Sign up and play
-              </Link>
-              <Link className="btn btn-outline" href="/how-it-works">
+              </button>
+              <button className="btn btn-outline" type="button" onClick={() => handleNavigate("/how-it-works")}>
                 See how it works
-              </Link>
+              </button>
             </>
           )}
-          <button className="btn btn-outline" onClick={() => setOpen(false)}>
+          <button className="btn btn-outline" onClick={dismissPromo}>
             Maybe later
           </button>
         </div>

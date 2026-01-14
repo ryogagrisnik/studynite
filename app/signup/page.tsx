@@ -39,9 +39,12 @@ export default function SignUp() {
       body: JSON.stringify({ event: "signup" }),
     });
 
+    const verificationRequired = body?.verificationRequired !== false;
     setMessage({
       type: "success",
-      text: "Account created! Check your inbox for a verification link.",
+      text: verificationRequired
+        ? "Account created! Check your inbox for a verification link."
+        : "Account created! You can sign in now.",
     });
     setPending(false);
   }

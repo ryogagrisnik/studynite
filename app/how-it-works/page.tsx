@@ -188,6 +188,14 @@ export default async function HowItWorksPage({
         {leaderboard.length === 0 ? (
           <div className="leaderboard-empty muted">
             No answers logged yet. Be the first to climb the ranks.
+            <div className="leaderboard-empty-actions">
+              <Link className="btn btn-primary" href="/decks/new">
+                Start a quiz
+              </Link>
+              <Link className="leaderboard-empty-link" href="/party/join">
+                Join a party instead
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="leaderboard-table">

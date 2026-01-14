@@ -74,6 +74,11 @@ export default function DashboardClient({
     setProgress(next);
   }, [progressKey, userEmail]);
 
+  const handleRetry = () => {
+    setError(null);
+    router.refresh();
+  };
+
   const handleStartParty = async (deckId: string) => {
     setError(null);
     setStartingId(deckId);
@@ -194,7 +199,14 @@ export default function DashboardClient({
         </Link>
       </div>
 
-      {error ? <div className="card" style={{ borderColor: "#FCA5A5" }}>{error}</div> : null}
+      {error ? (
+        <div className="card card--error stack" role="alert">
+          <span>{error}</span>
+          <button className="btn btn-outline btn-small" type="button" onClick={handleRetry}>
+            Try again
+          </button>
+        </div>
+      ) : null}
 
       <div className="grid-2">
         <div className="card vegas-panel meta-panel">
@@ -354,11 +366,11 @@ export default function DashboardClient({
           </div>
           {sampleError ? <div className="card card--plain">{sampleError}</div> : null}
           <div className="row">
-            <Link className="btn btn-outline" href="/decks/new">
+            <Link className="btn btn-primary" href="/decks/new">
               Create a quiz
             </Link>
-            <button className="btn btn-primary" onClick={handleCreateSample} disabled={creatingSample}>
-              {creatingSample ? "Building sample..." : "Create sample quiz"}
+            <button className="btn btn-outline" onClick={handleCreateSample} disabled={creatingSample}>
+              {creatingSample ? "Building sample..." : "Try a sample quiz"}
             </button>
           </div>
         </div>
