@@ -75,9 +75,6 @@ export default function PrizePromoModal() {
               >
                 Sign up and play
               </button>
-              <button className="btn btn-outline" type="button" onClick={() => handleNavigate("/how-it-works")}>
-                See how it works
-              </button>
             </>
           )}
           <button className="btn btn-outline" onClick={dismissPromo}>
