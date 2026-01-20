@@ -60,6 +60,8 @@ export default function DashboardClient({
   const [creatingSample, setCreatingSample] = useState(false);
   const [sampleError, setSampleError] = useState<string | null>(null);
   const [progress, setProgress] = useState<ProgressState | null>(null);
+  const [cancelingPremium, setCancelingPremium] = useState(false);
+  const [cancelNotice, setCancelNotice] = useState<string | null>(null);
 
   const progressKey = useMemo(() => getProgressKey(userId), [userId]);
   const levelProgress = useMemo(() => {
@@ -187,6 +189,27 @@ export default function DashboardClient({
     }
   };
 
+  const handleCancelPremium = async () => {
+    setCancelingPremium(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/billing/cancel", {
+        method: "POST",
+        headers: { Accept: "application/json" },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "Unable to cancel premium.");
+      }
+      setCancelNotice("Premium is cancelled. You'll keep access until the end of the current billing period.");
+      router.refresh();
+    } catch (err: any) {
+      setError(err?.message || "Unable to cancel premium.");
+    } finally {
+      setCancelingPremium(false);
+    }
+  };
+
   return (
     <div className="page stack">
       <div className="page-header">
@@ -205,6 +228,18 @@ export default function DashboardClient({
           <button className="btn btn-outline btn-small" type="button" onClick={handleRetry}>
             Try again
           </button>
+        </div>
+      ) : null}
+
+      {cancelNotice ? (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <div className="modal-card">
+            <h2 className="card-title">Premium cancelled</h2>
+            <p className="card-sub">{cancelNotice}</p>
+            <button className="btn btn-primary" type="button" onClick={() => setCancelNotice(null)}>
+              Close
+            </button>
+          </div>
         </div>
       ) : null}
 
@@ -458,6 +493,17 @@ export default function DashboardClient({
           </div>
         </div>
       )}
+
+      {isPro ? (
+        <button
+          className="btn btn-outline btn-small cancel-premium-fab"
+          type="button"
+          onClick={handleCancelPremium}
+          disabled={cancelingPremium}
+        >
+          {cancelingPremium ? "Canceling..." : "Cancel premium"}
+        </button>
+      ) : null}
     </div>
   );
 }

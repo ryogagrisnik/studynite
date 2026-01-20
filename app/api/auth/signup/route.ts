@@ -38,7 +38,10 @@ export const POST = withApi(async (request: Request) => {
   }
 
   const { name, email, password } = parsed.data;
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const normalizedEmail = email.trim().toLowerCase();
+  const existing = await prisma.user.findFirst({
+    where: { email: { equals: normalizedEmail, mode: "insensitive" } },
+  });
 
   if (existing) {
     if (!existing.passwordHash) {
@@ -51,12 +54,12 @@ export const POST = withApi(async (request: Request) => {
   }
 
   const passwordHash = await hashPassword(password);
-  const verificationRequired = Boolean(env.RESEND_API_KEY);
+  const verificationRequired = false;
 
   const user = await prisma.user.create({
     data: {
       name,
-      email,
+      email: normalizedEmail,
       passwordHash,
       emailVerified: verificationRequired ? null : new Date(),
     },

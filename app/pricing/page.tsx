@@ -39,51 +39,6 @@ export default async function Pricing() {
           </div>
         </div>
 
-        <div className="grid-2 compare-grid">
-          <div className="card compare-card">
-            <span className="compare-pill">Free includes</span>
-            <ul className="compare-list">
-              <li className="compare-item">
-                <span className="compare-dot" />
-                Up to {FREE_MAX_QUESTION_COUNT} questions and {FREE_MAX_FLASHCARD_COUNT} flashcards per deck.
-              </li>
-              <li className="compare-item">
-                <span className="compare-dot" />
-                {FREE_DAILY_DECK_LIMIT} new decks per day.
-              </li>
-              <li className="compare-item">
-                <span className="compare-dot" />
-                {FREE_REGENERATE_LIMIT} regenerations per deck.
-              </li>
-              <li className="compare-item">
-                <span className="compare-dot" />
-                Up to {PRACTICE_LIMIT} practice questions per 12-hour window.
-              </li>
-            </ul>
-          </div>
-          <div className="card compare-card compare-card--pro">
-            <span className="compare-pill compare-pill--pro">Pro includes</span>
-            <ul className="compare-list">
-              <li className="compare-item">
-                <span className="compare-dot compare-dot--pro" />
-                Up to {PRO_MAX_QUESTION_COUNT} questions and {PRO_MAX_FLASHCARD_COUNT} flashcards per deck.
-              </li>
-              <li className="compare-item">
-                <span className="compare-dot compare-dot--pro" />
-                {PRO_DAILY_DECK_LIMIT} new decks per day.
-              </li>
-              <li className="compare-item">
-                <span className="compare-dot compare-dot--pro" />
-                {PRO_REGENERATE_LIMIT} regenerations per deck.
-              </li>
-              <li className="compare-item">
-                <span className="compare-dot compare-dot--pro" />
-                Unlimited practice questions.
-              </li>
-            </ul>
-          </div>
-        </div>
-
         <section className="pricing rpg-reveal" id="pricing">
           <div className="quest-panel panel--parchment">
             <div className="slab-header">

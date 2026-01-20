@@ -2,7 +2,7 @@ import { PartyMode } from "@prisma/client";
 
 import prisma from "@/lib/prisma";
 import { HOST_INACTIVE_MS } from "@/lib/studyhall/constants";
-import { getPartyEventStamp } from "@/lib/studyhall/partyEvents";
+import { getPartyEventStamp, markPartyEvent } from "@/lib/studyhall/partyEvents";
 import { computeTimerState } from "@/lib/studyhall/timer";
 
 type PartyStateResult =
@@ -118,7 +118,7 @@ function stateCacheKey(partyId: string, playerToken?: string | null) {
 export async function buildPartyState(partyId: string, playerToken?: string | null): Promise<PartyStateResult> {
   const now = new Date();
   const cacheKey = stateCacheKey(partyId, playerToken);
-  const eventStamp = await getPartyEventStamp(partyId);
+  let eventStamp = await getPartyEventStamp(partyId);
   const cached = stateCache.get(cacheKey);
   if (cached && cached.expiresAt > now.getTime() && cached.stamp === eventStamp) {
     return cached.data;
@@ -188,10 +188,8 @@ export async function buildPartyState(partyId: string, playerToken?: string | nu
 
   const currentQuestion = mode === PartyMode.QUIZ ? questions[party.currentQuestionIndex] || null : null;
   const currentFlashcard = mode === PartyMode.FLASHCARDS ? flashcards[party.currentQuestionIndex] || null : null;
-  const revealedCorrectIndex =
-    mode === PartyMode.QUIZ && party.answerRevealedAt && currentQuestion
-      ? currentQuestion.correctIndex
-      : null;
+  let answerRevealedAt = party.answerRevealedAt;
+  let revealedCorrectIndex = null as number | null;
 
   let distribution: number[] | null = null;
   let flashcardStats: { knewIt: number; missed: number } | null = null;
@@ -278,6 +276,40 @@ export async function buildPartyState(partyId: string, playerToken?: string | nu
     questionDurationSec: party.questionDurationSec,
   }, now);
 
+  if (party.status === "ACTIVE" && mode === PartyMode.QUIZ && currentQuestion && !answerRevealedAt) {
+    const timeExpired = timerState.timeRemainingMs <= 0;
+    let allAnswered = false;
+    if (!timeExpired) {
+      const eligiblePlayerIds = visiblePlayers.map((p) => p.id);
+      if (eligiblePlayerIds.length > 0) {
+        const submissionCount = await prisma.partySubmission.count({
+          where: {
+            partyId: party.id,
+            questionId: currentQuestion.id,
+            partyPlayerId: { in: eligiblePlayerIds },
+          },
+        });
+        allAnswered = submissionCount >= eligiblePlayerIds.length;
+      }
+    }
+    if (timeExpired || allAnswered) {
+      const revealTime = new Date();
+      const updated = await prisma.party.updateMany({
+        where: { id: party.id, answerRevealedAt: null },
+        data: { answerRevealedAt: revealTime },
+      });
+      answerRevealedAt = revealTime;
+      if (updated.count > 0) {
+        eventStamp = await markPartyEvent(party.id);
+      }
+    }
+  }
+
+  revealedCorrectIndex =
+    mode === PartyMode.QUIZ && answerRevealedAt && currentQuestion
+      ? currentQuestion.correctIndex
+      : null;
+
   const players = visiblePlayers
     .map((p) => ({
       id: p.id,
@@ -307,7 +339,7 @@ export async function buildPartyState(partyId: string, playerToken?: string | nu
         hostPlayerId,
         currentQuestionIndex: party.currentQuestionIndex,
         questionStartedAt: party.questionStartedAt ? party.questionStartedAt.toISOString() : null,
-        answerRevealedAt: party.answerRevealedAt ? party.answerRevealedAt.toISOString() : null,
+        answerRevealedAt: answerRevealedAt ? answerRevealedAt.toISOString() : null,
         timeRemainingMs: timerState.timeRemainingMs,
         questionDurationSec: timerState.durationSec,
         joinLocked: party.joinLocked,
@@ -353,7 +385,7 @@ export async function buildPartyState(partyId: string, playerToken?: string | nu
       flashcardStats,
       correctIndex:
         currentQuestion &&
-        party.answerRevealedAt &&
+        answerRevealedAt &&
         hostPlayerId &&
         player &&
         player.id === hostPlayerId

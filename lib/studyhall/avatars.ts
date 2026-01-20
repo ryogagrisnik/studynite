@@ -5,12 +5,13 @@ export type Avatar = {
 };
 
 export const avatars: Avatar[] = [
-  { id: "wizard", label: "Wizard", src: "/avatars/wizard.jpeg" },
-  { id: "knight", label: "Knight", src: "/avatars/knight.jpeg" },
-  { id: "archer", label: "Archer", src: "/avatars/archer.jpeg" },
-  { id: "rogue", label: "Rogue", src: "/avatars/rogue.jpeg" },
-  { id: "squire", label: "Squire", src: "/avatars/squire.jpeg" },
-  { id: "paladin", label: "Paladin", src: "/avatars/paladin.jpeg" },
+  { id: "wizard", label: "Merlin, the Water Mage", src: "/avatars/wizard.png" },
+  { id: "knight", label: "Michael, of the Iron Night", src: "/avatars/knight.png" },
+  { id: "archer", label: "Circe, the Elven Assassin", src: "/avatars/archer.jpeg" },
+  { id: "rogue", label: "Russell, the Feline Rogue", src: "/avatars/rogue.jpeg" },
+  { id: "pepe", label: "Cinder, the Koala Mage", src: "/avatars/pepe.png" },
+  { id: "rider", label: "Daniel, the Great Spartan", src: "/avatars/rider.png" },
+  { id: "paladin", label: "Bartholomew, the Sun Crusader", src: "/avatars/paladin.png" },
 ];
 
 export const DEFAULT_AVATAR_ID = avatars[0]?.id ?? "wizard";

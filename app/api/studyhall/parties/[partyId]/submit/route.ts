@@ -123,6 +123,22 @@ export async function POST(req: Request, { params }: { params: { partyId: string
         data: { score: { increment: isCorrect ? 1 : 0 } },
       }),
     ]);
+    if (!party.answerRevealedAt) {
+      const playerCount = await prisma.partyPlayer.count({
+        where: { partyId: params.partyId, leftAt: null, kickedAt: null },
+      });
+      if (playerCount > 0) {
+        const submissionCount = await prisma.partySubmission.count({
+          where: { partyId: params.partyId, questionId: payload.questionId },
+        });
+        if (submissionCount >= playerCount) {
+          await prisma.party.updateMany({
+            where: { id: params.partyId, answerRevealedAt: null },
+            data: { answerRevealedAt: new Date() },
+          });
+        }
+      }
+    }
     await markPartyEvent(params.partyId);
 
     return NextResponse.json({ ok: true, locked: true });

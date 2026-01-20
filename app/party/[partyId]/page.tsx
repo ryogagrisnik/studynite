@@ -813,7 +813,7 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
               {answersLocked ? <span className="badge answer-locked">Answers locked</span> : null}
               {answerRevealed ? <span className="badge">Answer revealed</span> : null}
             </div>
-            <h2 className="card-title">{state.question.prompt}</h2>
+            <h2 className="card-title party-question-text">{state.question.prompt}</h2>
             <div className="stack">
               {state.question.choices.map((choice, index) => (
                 <button

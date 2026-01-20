@@ -19,13 +19,14 @@ export default function PrizePromoModal() {
 
   useEffect(() => {
     if (status === "loading") return;
+    if (!isAuthed) return;
     if (!pathname) return;
     if (typeof window === "undefined") return;
     const shown = window.sessionStorage.getItem(storageKey);
     if (shown === "1") return;
     window.sessionStorage.setItem(storageKey, "1");
     setOpen(true);
-  }, [status, storageKey, pathname, userId]);
+  }, [status, storageKey, pathname, userId, isAuthed]);
 
   if (!open) return null;
 

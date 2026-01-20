@@ -31,7 +31,7 @@ export async function rateLimit(key: string, options: RateLimitOptions): Promise
   const windowMs = Math.max(1000, options.windowMs);
   const max = Math.max(1, options.max);
 
-  if (!redis.raw) {
+  const fallback = () => {
     const existing = memBuckets.get(key);
     if (!existing || now >= existing.resetAt) {
       const resetAt = now + windowMs;
@@ -46,20 +46,28 @@ export async function rateLimit(key: string, options: RateLimitOptions): Promise
       remaining: Math.max(0, max - nextCount),
       resetAt: existing.resetAt,
     };
+  };
+
+  if (!redis.raw) {
+    return fallback();
   }
 
-  const windowSeconds = Math.ceil(windowMs / 1000);
-  const resetKey = `${key}:reset`;
-  const count = await redis.incr(key);
-  if (count === 1) {
-    await redis.expire(key, windowSeconds);
-    await redis.set(resetKey, String(now + windowMs), { ex: windowSeconds });
+  try {
+    const windowSeconds = Math.ceil(windowMs / 1000);
+    const resetKey = `${key}:reset`;
+    const count = await redis.incr(key);
+    if (count === 1) {
+      await redis.expire(key, windowSeconds);
+      await redis.set(resetKey, String(now + windowMs), { ex: windowSeconds });
+    }
+    const resetRaw = await redis.get(resetKey);
+    const resetAt = toNumber(resetRaw) ?? now + windowMs;
+    return {
+      ok: count <= max,
+      remaining: Math.max(0, max - count),
+      resetAt,
+    };
+  } catch {
+    return fallback();
   }
-  const resetRaw = await redis.get(resetKey);
-  const resetAt = toNumber(resetRaw) ?? now + windowMs;
-  return {
-    ok: count <= max,
-    remaining: Math.max(0, max - count),
-    resetAt,
-  };
 }

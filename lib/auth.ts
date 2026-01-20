@@ -15,7 +15,7 @@ export async function verifyCredentials(
   password: string,
   options: { skipRateLimit?: boolean } = {}
 ) {
-  const email = emailInput.toLowerCase();
+  const email = emailInput.trim().toLowerCase();
   if (!options.skipRateLimit) {
     const loginMax = Math.max(1, Number(env.RATE_LIMIT_LOGIN_MAX ?? "8"));
     const rate = await rateLimit(`auth:login:${email}`, { max: loginMax, windowMs: 60_000 });
@@ -24,8 +24,8 @@ export async function verifyCredentials(
     }
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email },
+  const user = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
   });
 
   if (!user || !user.passwordHash) {
@@ -33,23 +33,10 @@ export async function verifyCredentials(
   }
 
   if (!user.emailVerified) {
-    const verificationRequired = Boolean(env.RESEND_API_KEY);
-    if (!verificationRequired) {
-      try {
-        await prisma.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } });
-      } catch {
-        // non-fatal
-      }
-    } else {
-      const hasOauth = await prisma.account.findFirst({ where: { userId: user.id } });
-      if (!hasOauth) {
-        throw new Error("Email not verified");
-      }
-      try {
-        await prisma.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } });
-      } catch {
-        // non-fatal
-      }
+    try {
+      await prisma.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } });
+    } catch {
+      // non-fatal
     }
   }
 
@@ -112,8 +99,8 @@ export const authOptions: NextAuthOptions = {
 
   secret: process.env.NEXTAUTH_SECRET,
 
-  // You’re using the Prisma Session model, so database strategy is correct
-  session: { strategy: "database" },
+  // Use JWT sessions to avoid db session writes on flaky connections in dev
+  session: { strategy: "jwt" },
   pages: {
     signIn: "/signin",
   },
@@ -130,6 +117,13 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        (token as any).userId = user.id;
+        (token as any).emailVerified = (user as any).emailVerified ?? null;
+      }
+      return token;
+    },
     async signIn({ user, account }) {
       // When signing in with Google, mark email as verified if not already.
       if (account?.provider === "google" && user?.id) {
@@ -144,18 +138,35 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
-    async session({ session, user }) {
+    async session({ session, user, token }) {
       if (session.user) {
         const enriched = session.user as any;
-        const u = user as any; // access Prisma fields not on AdapterUser type
-        enriched.id = user.id; // expose userId to client
-        enriched.emailVerified = (user as any).emailVerified;
-        enriched.stripeCustomerId = u.stripeCustomerId ?? null;
-        enriched.stripeSubscriptionId = u.stripeSubscriptionId ?? null;
-        enriched.proPlan = u.proPlan ?? null;
-        enriched.proSince = u.proSince ? new Date(u.proSince).toISOString() : null;
-        enriched.proExpiresAt = u.proExpiresAt ? new Date(u.proExpiresAt).toISOString() : null;
-        enriched.isPro = !!(u.proExpiresAt && new Date(u.proExpiresAt).getTime() > Date.now());
+        let u = user as any; // access Prisma fields not on AdapterUser type
+        const tokenUserId = (token as any)?.userId as string | undefined;
+        const tokenEmail = session.user.email ?? (token?.email as string | undefined);
+        if (!u) {
+          try {
+            u = tokenUserId
+              ? await prisma.user.findUnique({ where: { id: tokenUserId } })
+              : tokenEmail
+                ? await prisma.user.findUnique({ where: { email: tokenEmail } })
+                : null;
+          } catch {
+            u = null;
+          }
+        }
+        if (u) {
+          enriched.id = u.id; // expose userId to client
+          enriched.emailVerified = u.emailVerified;
+          enriched.stripeCustomerId = u.stripeCustomerId ?? null;
+          enriched.stripeSubscriptionId = u.stripeSubscriptionId ?? null;
+          enriched.proPlan = u.proPlan ?? null;
+          enriched.proSince = u.proSince ? new Date(u.proSince).toISOString() : null;
+          enriched.proExpiresAt = u.proExpiresAt ? new Date(u.proExpiresAt).toISOString() : null;
+          enriched.isPro = !!(u.proExpiresAt && new Date(u.proExpiresAt).getTime() > Date.now());
+        } else if (tokenUserId) {
+          enriched.id = tokenUserId;
+        }
       }
       return session;
     },

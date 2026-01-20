@@ -107,7 +107,7 @@ export default function CreateDeckPage() {
           <p className="page-sub">
             Create an account to generate quizzes and host RunePrep parties.
           </p>
-          <div className="row">
+          <div className="row cta-row">
             <Link className="btn btn-primary" href="/signup?callbackUrl=/decks/new">
               Create free account
             </Link>

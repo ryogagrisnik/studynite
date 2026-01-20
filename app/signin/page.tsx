@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 type MessageState = { type: "success" | "error"; text: string } | null;
 
@@ -20,7 +20,6 @@ function normalizeCallbackUrl(value: string | null) {
 }
 
 function SignInClient() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = normalizeCallbackUrl(searchParams?.get("callbackUrl") ?? null);
   const verified = searchParams?.get("verified");
@@ -63,23 +62,11 @@ function SignInClient() {
     setPending(true);
     setMessage(null);
 
-    const result = await signIn("credentials", {
-      redirect: false,
+    await signIn("credentials", {
       email,
       password,
       callbackUrl,
     });
-
-    if (!result || result.error) {
-      setMessage({
-        type: "error",
-        text: result?.error === "Email not verified" ? "Verify your email to continue." : "Invalid credentials.",
-      });
-      setPending(false);
-      return;
-    }
-
-    router.push(result.url ?? callbackUrl);
   }
 
   return (

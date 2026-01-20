@@ -73,7 +73,7 @@ export default function JoinPartyPage() {
               ? "Your seat is saved. Jump back in with one click."
               : "Rejoin your last party with your name and avatar."}
           </p>
-          <div className="row">
+          <div className="row cta-row">
             <button className="btn btn-primary" onClick={() => router.push(`/party/${lastPartyId}`)}>
               Resume party
             </button>
@@ -140,7 +140,7 @@ export default function JoinPartyPage() {
           <div className="card card--error stack" role="alert">
             <strong>Couldn't join the party.</strong>
             <span>{error}</span>
-            <div className="row">
+            <div className="row cta-row">
               <button
                 className="btn btn-outline btn-small"
                 onClick={handleJoin}
@@ -154,7 +154,7 @@ export default function JoinPartyPage() {
             </div>
           </div>
         ) : null}
-        <div className="row">
+        <div className="row cta-row">
           <button
             className="btn btn-primary"
             onClick={handleJoin}
