@@ -47,7 +47,7 @@ export default function PrizePromoModal() {
   };
 
   return (
-    <div className="modal-backdrop">
+    <div className="modal-backdrop" data-nosnippet>
       <div className="modal-card promo-modal">
         <div className="promo-header">
           <span className="promo-kicker">Monthly Quest</span>

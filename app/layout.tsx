@@ -10,6 +10,7 @@ import NavLinks from "../components/NavLinks";
 import PrizePromoModal from "../components/PrizePromoModal";
 import CosmeticSync from "../components/CosmeticSync";
 import { Analytics } from "@vercel/analytics/next";
+import type { Metadata } from "next";
 import { Press_Start_2P, Space_Grotesk } from "next/font/google";
 import { validateEnv } from "@/lib/env";
 
@@ -29,9 +30,38 @@ const pressStart = Press_Start_2P({
 validateEnv();
 
 
-export const metadata = {
-  title: "RunePrep",
-  description: "Studying, but multiplayer.",
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL;
+
+export const metadata: Metadata = {
+  title: {
+    default: "RunePrep",
+    template: "RunePrep | %s",
+  },
+  description:
+    "Turn your notes into multiplayer quizzes. Auto-generate questions and host live study parties in minutes.",
+  metadataBase: siteUrl ? new URL(siteUrl) : undefined,
+  openGraph: {
+    title: "RunePrep",
+    description:
+      "Turn your notes into multiplayer quizzes. Auto-generate questions and host live study parties in minutes.",
+    type: "website",
+    url: "/",
+    images: [
+      {
+        url: "/assets/banner.png",
+        width: 1200,
+        height: 630,
+        alt: "RunePrep multiplayer quiz generator",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "RunePrep",
+    description:
+      "Turn your notes into multiplayer quizzes. Auto-generate questions and host live study parties in minutes.",
+    images: ["/assets/banner.png"],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
