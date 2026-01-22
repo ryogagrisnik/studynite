@@ -6,6 +6,7 @@ import Image from "next/image";
 import Providers from "./providers";
 import Script from "next/script";
 import AuthNav from "../components/AuthNav";
+import NavLinks from "../components/NavLinks";
 import PrizePromoModal from "../components/PrizePromoModal";
 import CosmeticSync from "../components/CosmeticSync";
 import { Analytics } from "@vercel/analytics/next";
@@ -72,21 +73,33 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Image src="/assets/logo.png" alt="RunePrep logo" width={520} height={140} priority />
               </Link>
               <input id="nav-toggle" className="nav-toggle" type="checkbox" />
-              <label htmlFor="nav-toggle" className="nav-toggle-btn">
-                Menu
+              <label htmlFor="nav-toggle" className="nav-toggle-btn nav-toggle-btn--open" aria-label="Open menu">
+                <span className="nav-toggle-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M4 7h16M4 12h16M4 17h16" />
+                  </svg>
+                </span>
               </label>
               <div className="nav-links">
-                <Link href="/dashboard">Dashboard</Link>
-                <Link href="/decks/new">Forge Quiz</Link>
-                <Link href="/party/join">Join Party</Link>
-                <Link href="/how-it-works">Leaderboard</Link>
-                <Link href="/pricing">Pricing</Link>
-                <Link href="/achievements">Guild Achievements</Link>
-                <Link className="btn btn-primary" href="/decks/new">Begin Quest</Link>
-
-                {/* Sign In / Sign Out */}
-                <AuthNav />
+                <div className="nav-drawer-head">
+                  <span className="nav-drawer-title">Menu</span>
+                  <label htmlFor="nav-toggle" className="nav-toggle-btn nav-toggle-btn--close" aria-label="Close menu">
+                    <span className="nav-toggle-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <path d="M6 6l12 12M18 6l-12 12" />
+                      </svg>
+                    </span>
+                  </label>
+                </div>
+                <div className="nav-list">
+                  <NavLinks />
+                </div>
+                <div className="nav-auth">
+                  {/* Sign In / Sign Out */}
+                  <AuthNav />
+                </div>
               </div>
+              <label htmlFor="nav-toggle" className="nav-scrim" aria-hidden="true" />
             </div>
           </div>
 

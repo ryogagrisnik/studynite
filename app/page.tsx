@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 export default function Home() {
+  const demoHref = process.env.NEXT_PUBLIC_DEMO_PARTY_CODE ? "/demo/party" : "/demo";
+
   return (
     <div className="page stack home pixel-ui">
       <section className="hero-slab hero-slab--glow sparkle-layer rpg-reveal">
@@ -18,10 +20,10 @@ export default function Home() {
                 Upload notes, auto-generate questions, and host a live party with a single link.
               </p>
               <div className="row hero-cta">
-                <Link className="btn btn-primary" href="/demo">
+                <Link className="btn btn-primary btn-hero" href={demoHref}>
                   Try a sample quiz
                 </Link>
-                <Link className="btn btn-primary" href="/decks/new">
+                <Link className="btn btn-primary btn-hero" href="/decks/new">
                   Build your own
                 </Link>
               </div>
@@ -44,7 +46,7 @@ export default function Home() {
                 </Link>
               </div>
             </div>
-            <div className="card hero-media panel--notice">
+            <div className="hero-media hero-media--plain">
               <div className="hero-media-inner">
                 <img
                   className="hero-image"
@@ -227,7 +229,7 @@ export default function Home() {
         <div className="section-divider" aria-hidden="true" />
         <div className="quest-panel panel--stone">
           <div className="split-grid spacious">
-            <div className="card hero-media panel--notice">
+            <div className="hero-media hero-media--plain">
               <img
                 className="hero-image"
                 src="/showcase.png"

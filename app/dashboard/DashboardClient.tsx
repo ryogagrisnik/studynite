@@ -217,9 +217,6 @@ export default function DashboardClient({
           <h1 className="page-title">Your RunePrep quizzes</h1>
           <p className="page-sub">Create quizzes, edit questions, and launch parties.</p>
         </div>
-        <Link className="btn btn-primary" href="/decks/new">
-          Start a RunePrep Party
-        </Link>
       </div>
 
       {error ? (

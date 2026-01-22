@@ -400,7 +400,7 @@ export default function CreateDeckPage() {
           </div>
         ) : null}
 
-        <div className="row">
+        <div className="row deck-cta-row">
           <button className="btn btn-primary" type="submit" disabled={loading}>
             {loading && loadingMode === "deck" ? "Generating..." : "Generate quiz"}
           </button>
