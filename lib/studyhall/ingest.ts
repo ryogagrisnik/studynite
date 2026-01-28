@@ -143,18 +143,75 @@ function compactStudyText(input: string) {
 function looksLikePolicyLine(line: string) {
   const lowered = line.toLowerCase();
   if (lowered.length < 8) return false;
-  return (
-    /do not (reproduce|distribute|display|share|copy)/i.test(lowered) ||
-    /unauthorized/i.test(lowered) ||
-    /copyright/i.test(lowered) ||
-    /all rights reserved/i.test(lowered) ||
-    /lecture notes/i.test(lowered) ||
-    /course materials?/i.test(lowered) ||
-    /recordings?/i.test(lowered) ||
-    /syllabus/i.test(lowered) ||
-    /grading/i.test(lowered) ||
-    /attendance/i.test(lowered) ||
-    /academic integrity/i.test(lowered) ||
-    /\b(course|class|academic)\s+policy\b/i.test(lowered)
-  );
+  const hardPatterns = [
+    /do not (reproduce|distribute|display|share|copy)/i,
+    /unauthorized/i,
+    /copyright/i,
+    /all rights reserved/i,
+    /lecture notes/i,
+    /course materials?/i,
+    /recordings?/i,
+    /syllabus/i,
+    /grading/i,
+    /attendance/i,
+    /academic integrity/i,
+    /\bplagiarism\b/i,
+    /\b(course|class|academic)\s+policy\b/i,
+    /\b(course|class)\s+(overview|description|objectives|outcomes|goals|requirements|info|focus)\b/i,
+    /\btextbook\b/i,
+    /\brequired (text|reading|materials)\b/i,
+    /\bprereq(u?isite)?s?\b/i,
+    /\bcoreq(u?isite)?s?\b/i,
+    /\b(instructor|professor|teacher|ta|teaching assistant)\b/i,
+    /\boffice hours\b/i,
+    /\b(email|phone|contact|room|location|building)\b/i,
+    /\b(canvas|blackboard|moodle|lms|course website)\b/i,
+    /\b(add\/drop|withdraw(al)?)\b/i,
+    /\bcredits?\b|\bunits?\b|\bcredit hours?\b/i,
+  ];
+
+  if (hardPatterns.some((pattern) => pattern.test(lowered))) {
+    return true;
+  }
+
+  const softKeywords = [
+    "exam",
+    "midterm",
+    "final",
+    "quiz",
+    "homework",
+    "assignment",
+    "project",
+    "due",
+    "deadline",
+    "late",
+    "schedule",
+    "calendar",
+    "week",
+    "session",
+    "lecture",
+    "class",
+    "course",
+  ];
+  let hits = 0;
+  for (const keyword of softKeywords) {
+    if (lowered.includes(keyword)) hits += 1;
+  }
+  if (hits >= 2) return true;
+  if (
+    hits >= 1 &&
+    /(%|percent|points?|pts\b|due\b|deadline|date\b|time\b|\b\d{1,2}:\d{2}\b)/i.test(lowered)
+  ) {
+    return true;
+  }
+
+  if (/\b[A-Z]{2,}\s?\d{2,}\b/.test(line) && /\b(course|class|section)\b/i.test(lowered)) {
+    return true;
+  }
+
+  if (/^(week|lecture|session)\s*\d+[:\-]/i.test(line)) {
+    return true;
+  }
+
+  return false;
 }

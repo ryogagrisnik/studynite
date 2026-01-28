@@ -115,6 +115,18 @@ const POLICY_PATTERNS = [
   /\bgrading\b/i,
   /\battendance\b/i,
   /\b(course|class|academic)\s+policy\b/i,
+  /\b(course|class)\s+(overview|description|objectives|outcomes|goals|requirements|info|focus)\b/i,
+  /\b(instructor|professor|teacher|ta|teaching assistant)\b/i,
+  /\boffice hours\b/i,
+  /\b(textbook|required (text|reading|materials))\b/i,
+];
+
+const LECTURE_REF_PATTERNS = [
+  /\b(in (this|the)|from|during|in)\s+(lecture|class|session)\b/i,
+  /\b(last|today'?s|this)\s+(lecture|class|session)\b/i,
+  /\baccording to (the )?(lecture|class|session)\b/i,
+  /\b(discussed|covered|mentioned|taught|learned)\s+(in|during)\s+(lecture|class|session)\b/i,
+  /\bwe\s+(discussed|covered|learned|saw)\b/i,
 ];
 
 const GENERIC_LABELS = new Set([
@@ -155,6 +167,12 @@ function looksLikePolicyText(value: string) {
   return POLICY_PATTERNS.some((pattern) => pattern.test(cleaned));
 }
 
+function looksLikeLectureRef(value: string) {
+  const cleaned = sanitizeText(value);
+  if (!cleaned) return false;
+  return LECTURE_REF_PATTERNS.some((pattern) => pattern.test(cleaned));
+}
+
 function hasTrailingFragment(value: string) {
   return /[-:]\s*$/.test(value.trim());
 }
@@ -185,6 +203,7 @@ function isValidQuestion(question: GeneratedQuestion, sourceText?: string) {
   if (!Array.isArray(question.choices) || question.choices.length !== 4) return false;
   if (question.correctIndex < 0 || question.correctIndex >= question.choices.length) return false;
   if (looksLikePolicyText(prompt) || hasTrailingFragment(prompt)) return false;
+  if (looksLikeLectureRef(prompt)) return false;
   if (isGenericLabel(prompt)) return false;
   if (hasPlaceholderText(prompt)) return false;
   const cleanedChoices = question.choices.map((choice) => sanitizeText(choice));
@@ -237,6 +256,7 @@ export async function generateStudyDeck({
   includeQuestions = true,
   includeFlashcards = true,
   includeExplanations = true,
+  difficulty = "medium",
 }: {
   sourceText: string;
   title?: string;
@@ -245,6 +265,7 @@ export async function generateStudyDeck({
   includeQuestions?: boolean;
   includeFlashcards?: boolean;
   includeExplanations?: boolean;
+  difficulty?: "easy" | "medium" | "hard";
 }): Promise<GeneratedDeck> {
   const safeQuestionCount = includeQuestions
     ? clampCount(questionCount, MIN_QUESTION_COUNT, MAX_QUESTION_COUNT)
@@ -275,6 +296,8 @@ export async function generateStudyDeck({
     "- Use clear wording; avoid trick questions.",
     "- Do not use generic labels like 'Note', 'Overview', or 'Section' as flashcard fronts.",
     "- Ignore any policy text (copyright, recording rules, grading, or syllabus notes).",
+    `- Difficulty: ${difficulty}.`,
+    "- Easy = direct recall/definitions. Medium = 1-2 step reasoning. Hard = multi-step or nuanced inference.",
     "- Output JSON only.",
   ].filter(Boolean);
 

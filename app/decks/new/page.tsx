@@ -26,6 +26,7 @@ export default function CreateDeckPage() {
   const [files, setFiles] = useState<File[]>([]);
   const includeQuestions = true;
   const [questionCountInput, setQuestionCountInput] = useState(String(DEFAULT_QUESTION_COUNT));
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [loading, setLoading] = useState(false);
   const [loadingMode, setLoadingMode] = useState<"deck" | "party" | "edit" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -186,6 +187,7 @@ export default function CreateDeckPage() {
     formData.append("includeQuestions", "true");
     formData.append("includeFlashcards", "false");
     formData.append("questionCount", String(questionCount));
+    formData.append("difficulty", difficulty);
     files.forEach((file) => formData.append("files", file));
 
     setLoading(true);
@@ -237,7 +239,7 @@ export default function CreateDeckPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await submitDeck("deck");
+    await submitDeck("party");
   };
 
   return (
@@ -280,6 +282,25 @@ export default function CreateDeckPage() {
           />
           <div className="field-help">
             {MIN_QUESTION_COUNT}-{maxQuestionCount} questions
+          </div>
+        </div>
+
+        <div className="field">
+          <label className="field-label" htmlFor="difficulty">Difficulty</label>
+          <select
+            id="difficulty"
+            className="select"
+            value={difficulty}
+            onChange={(event) =>
+              setDifficulty(event.target.value as "easy" | "medium" | "hard")
+            }
+          >
+            <option value="easy">Easy — direct recall</option>
+            <option value="medium">Medium — 1-2 steps</option>
+            <option value="hard">Hard — multi-step reasoning</option>
+          </select>
+          <div className="field-help">
+            Difficulty guides how challenging the generated questions are.
           </div>
         </div>
 
@@ -402,7 +423,7 @@ export default function CreateDeckPage() {
 
         <div className="row deck-cta-row">
           <button className="btn btn-primary" type="submit" disabled={loading}>
-            {loading && loadingMode === "deck" ? "Generating..." : "Generate quiz"}
+            {loading && loadingMode === "party" ? "Starting..." : "Generate & start quiz party"}
           </button>
           <button
             className="btn btn-outline"
@@ -411,14 +432,6 @@ export default function CreateDeckPage() {
             onClick={() => submitDeck("edit")}
           >
             {loading && loadingMode === "edit" ? "Preparing..." : "Generate & edit"}
-          </button>
-          <button
-            className="btn btn-outline"
-            type="button"
-            disabled={loading || !canStartParty}
-            onClick={() => submitDeck("party")}
-          >
-            {loading && loadingMode === "party" ? "Starting..." : "Generate & start quiz party"}
           </button>
           <span className="muted">
             {canStartParty

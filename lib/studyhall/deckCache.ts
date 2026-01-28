@@ -12,6 +12,7 @@ type DeckCacheKeyInput = {
   includeQuestions: boolean;
   includeFlashcards: boolean;
   includeExplanations: boolean;
+  difficulty: "easy" | "medium" | "hard";
   questionCount: number;
   flashcardCount: number;
 };
@@ -20,6 +21,7 @@ function buildKey(input: DeckCacheKeyInput) {
   const base = [
     input.userId,
     CACHE_VERSION,
+    input.difficulty,
     input.includeQuestions ? "q1" : "q0",
     input.includeFlashcards ? "f1" : "f0",
     input.includeExplanations ? "e1" : "e0",

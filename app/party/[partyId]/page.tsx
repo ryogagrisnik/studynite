@@ -137,6 +137,7 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
   const [updatingLock, setUpdatingLock] = useState(false);
   const [kickingPlayerId, setKickingPlayerId] = useState<string | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showResultsDetails, setShowResultsDetails] = useState(false);
   const [progress, setProgress] = useState<ProgressState | null>(null);
   const [partyOutcome, setPartyOutcome] = useState<SessionOutcome | null>(null);
   const [partyAwarded, setPartyAwarded] = useState(false);
@@ -688,23 +689,6 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
 
       {error ? <div className="card" style={{ borderColor: "#FCA5A5" }}>{error}</div> : null}
       {actionError ? <div className="card" style={{ borderColor: "#FCA5A5" }}>{actionError}</div> : null}
-      {state.party.status === "COMPLETE" ? (
-        <div className="card stack rpg-reveal">
-          <h2 className="card-title">Party ended</h2>
-          <p className="card-sub">This session is complete. Review results or return to your quiz.</p>
-          <div className="row">
-            {state.deck.deckId ? (
-              <Link className="btn btn-outline" href={`/decks/${state.deck.deckId}`}>
-                Open quiz
-              </Link>
-            ) : null}
-            <Link className="btn btn-outline" href="/dashboard">
-              Back to dashboard
-            </Link>
-          </div>
-        </div>
-      ) : null}
-
       {state.party.status === "LOBBY" ? (
         <div className="card stack rpg-reveal">
           <h2 className="card-title">Lobby</h2>
@@ -958,157 +942,142 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
       {state.party.status === "COMPLETE" ? (
         <div className="card stack rpg-reveal">
           <h2 className="card-title">Results</h2>
-          <div className="card" style={{ borderStyle: "dashed" }}>
-            <strong>RunePrep Results</strong>
-            <p className="muted">{state.deck.title}</p>
-            <div className="stack" style={{ marginTop: 8 }}>
-              {topPlayers.map((player, index) => {
+          <div className="row" style={{ flexWrap: "wrap", gap: 10 }}>
+            <span className="badge">
+              Winner: {topPlayers[0]?.name ?? "—"}
+            </span>
+            <span className="badge">Players: {state.players.length}</span>
+            <span className="badge">
+              Questions: {state.results?.totalItems ?? totalItems}
+            </span>
+            {recap ? (
+              <span className="badge badge-soft">
+                {Math.round(recap.overallAccuracy * 100)}% overall accuracy
+              </span>
+            ) : null}
+          </div>
+
+          <div className="card stack">
+            <h3 className="card-title">Leaderboard</h3>
+            <div className="scoreboard results">
+              {state.players.map((player, index) => {
                 const avatar = getAvatarById(player.avatarId) ?? getAvatarById(DEFAULT_AVATAR_ID);
+                const rowClass = `score-row ${player.isHost ? "is-host" : ""}${index < 3 ? " score-row--tier" : ""}`;
                 return (
-                  <div
-                    key={player.id}
-                    className={`row result-podium-row ${index === 0 ? "is-first" : ""}`}
-                    style={{ justifyContent: "space-between" }}
-                  >
+                  <div key={player.id} className={rowClass}>
                     <span className="row" style={{ gap: 10 }}>
                       {avatar ? <img className="avatar" src={avatar.src} alt={avatar.label} /> : null}
                       {index + 1}. {player.name}
                     </span>
-                    <span className="badge">{player.totalScore}</span>
+                    <span className="row" style={{ gap: 6 }}>
+                      <span className="badge">{player.totalScore}</span>
+                      {player.bonusScore > 0 ? (
+                        <span className="badge badge-soft">+{player.bonusScore}</span>
+                      ) : null}
+                    </span>
                   </div>
                 );
               })}
             </div>
-          </div>
-          <div className="scoreboard results">
-            {state.players.map((player, index) => {
-              const avatar = getAvatarById(player.avatarId) ?? getAvatarById(DEFAULT_AVATAR_ID);
-              const rowClass = `score-row ${player.isHost ? "is-host" : ""}${index < 3 ? " score-row--tier" : ""}`;
-              return (
-                <div key={player.id} className={rowClass}>
-                  <span className="row" style={{ gap: 10 }}>
-                    {avatar ? <img className="avatar" src={avatar.src} alt={avatar.label} /> : null}
-                    {index + 1}. {player.name}
-                  </span>
-                  <span className="row" style={{ gap: 6 }}>
-                    <span className="badge">{player.totalScore}</span>
-                    {player.bonusScore > 0 ? (
-                      <span className="badge badge-soft">+{player.bonusScore}</span>
-                    ) : null}
-                  </span>
-                </div>
-              );
-            })}
           </div>
 
           {state.results ? (
             <div className="stack">
               {recap ? (
                 <div className="card stack">
-                  <h3 className="card-title">Session recap</h3>
-                  <div className="row">
-                    <span className="badge">
-                      {Math.round(recap.overallAccuracy * 100)}% overall accuracy
-                    </span>
-                    <span className="badge badge-soft">{state.results.totalItems} total items</span>
-                  </div>
-                  <div className="stack">
-                    <strong>Most missed questions</strong>
-                    {recap.hardestQuiz.length === 0 ? (
-                      <span className="muted">No misses yet.</span>
-                    ) : (
-                      recap.hardestQuiz.map((question) => (
-                        <div key={question.id} className="card card--plain">
-                          <div className="row" style={{ justifyContent: "space-between" }}>
-                            <span className="badge">Q{question.order}</span>
-                            <span className="badge">
-                              {Math.round(question.accuracy * 100)}% correct
-                            </span>
-                          </div>
-                          <p className="muted">{question.prompt}</p>
+                  <h3 className="card-title">Most missed questions</h3>
+                  {recap.hardestQuiz.length === 0 ? (
+                    <span className="muted">No misses yet.</span>
+                  ) : (
+                    <div className="stack">
+                      {recap.hardestQuiz.map((question) => (
+                        <div key={question.id} className="row" style={{ justifyContent: "space-between", gap: 12 }}>
+                          <span className="muted">
+                            Q{question.order}. {question.prompt}
+                          </span>
+                          <span className="badge">
+                            {Math.round(question.accuracy * 100)}% correct
+                          </span>
                         </div>
-                      ))
-                    )}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : null}
-              <div className="grid-2">
-                <div className="card stack">
-                  <h3 className="card-title">Performance</h3>
-                  <div className="stack">
-                    {state.results.players.map((player) => {
-                      const avatar = getAvatarById(player.avatarId) ?? getAvatarById(DEFAULT_AVATAR_ID);
-                    const accuracy = `${Math.round(player.accuracy * 100)}%`;
-                    const avgTime = player.avgTimeMs ? `${(player.avgTimeMs / 1000).toFixed(1)}s avg` : "— avg";
-                    return (
-                      <div key={player.id} className="card card--plain stack">
-                        <div className="row" style={{ justifyContent: "space-between" }}>
-                          <span className="row" style={{ gap: 10 }}>
-                            {avatar ? <img className="avatar" src={avatar.src} alt={avatar.label} /> : null}
-                            <strong>{player.name}</strong>
-                          </span>
-                          <span className="badge">{player.totalScore}</span>
-                        </div>
-                        <div className="row muted" style={{ gap: 12 }}>
-                          <span>{accuracy} accuracy</span>
-                          <span>{avgTime}</span>
-                          <span>Fastest x{player.fastestCount}</span>
-                          {player.bonusScore > 0 ? <span>Bonus +{player.bonusScore}</span> : null}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                </div>
 
-                <div className="card stack">
-                  <h3 className="card-title">Question breakdown</h3>
-                  <div className="stack">
-                    {state.results.questions.map((question) => {
-                          const total = question.totalCount || 1;
-                          const accuracy = total > 0 ? question.correctCount / total : 0;
-                          const isSwing = total > 0 && accuracy < 0.5;
-                          const fastest = question.fastestPlayerId && resultPlayerLookup
-                            ? resultPlayerLookup.get(question.fastestPlayerId)
-                            : null;
-                          return (
-                            <div key={question.id} className="card card--plain stack">
-                              <div className="row" style={{ justifyContent: "space-between" }}>
-                                <span className="row" style={{ gap: 6 }}>
-                                  <span className="badge">Q{question.order}</span>
-                                  {isSwing ? <span className="badge swing-badge">Swing question</span> : null}
-                                </span>
-                                <span className="badge">
-                                  Correct: {String.fromCharCode(65 + question.correctIndex)}
-                                </span>
-                              </div>
-                              <p className="muted">{question.prompt}</p>
-                              <div className="stack">
-                                {question.distribution.map((count, idx) => (
-                                  <div key={`${question.id}-dist-${idx}`}>
-                                    <div className="row" style={{ justifyContent: "space-between" }}>
-                                      <span>{String.fromCharCode(65 + idx)}</span>
-                                      <span className="badge">{count}</span>
-                                    </div>
-                                    <div className="progress" style={{ marginTop: 6 }}>
-                                      <span style={{ width: `${Math.round((count / total) * 100)}%` }} />
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                              <div className="row muted">
-                                <span>
-                                  Fastest: {fastest ? fastest.name : "—"}
-                                </span>
-                                <span>
-                                  {question.fastestTimeMs ? `${(question.fastestTimeMs / 1000).toFixed(1)}s` : ""}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                  </div>
+              <div className="card stack">
+                <div className="row" style={{ justifyContent: "space-between" }}>
+                  <h3 className="card-title">Detailed breakdown</h3>
+                  <button
+                    className="btn btn-outline btn-small"
+                    onClick={() => setShowResultsDetails((prev) => !prev)}
+                  >
+                    {showResultsDetails ? "Hide details" : "Show details"}
+                  </button>
                 </div>
+                {showResultsDetails ? (
+                  <div className="stack">
+                    <div className="stack">
+                      <strong>Player stats</strong>
+                      {state.results.players.map((player) => {
+                        const avatar = getAvatarById(player.avatarId) ?? getAvatarById(DEFAULT_AVATAR_ID);
+                        const accuracy = `${Math.round(player.accuracy * 100)}%`;
+                        const avgTime = player.avgTimeMs ? `${(player.avgTimeMs / 1000).toFixed(1)}s avg` : "— avg";
+                        return (
+                          <div key={player.id} className="card card--plain stack">
+                            <div className="row" style={{ justifyContent: "space-between" }}>
+                              <span className="row" style={{ gap: 10 }}>
+                                {avatar ? <img className="avatar" src={avatar.src} alt={avatar.label} /> : null}
+                                <strong>{player.name}</strong>
+                              </span>
+                              <span className="badge">{player.totalScore}</span>
+                            </div>
+                            <div className="row muted" style={{ gap: 12 }}>
+                              <span>{accuracy} accuracy</span>
+                              <span>{avgTime}</span>
+                              <span>Fastest x{player.fastestCount}</span>
+                              {player.bonusScore > 0 ? <span>Bonus +{player.bonusScore}</span> : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="stack">
+                      <strong>Questions</strong>
+                      {state.results.questions.map((question) => {
+                        const total = question.totalCount ?? 0;
+                        const accuracy = total > 0 ? question.correctCount / total : 0;
+                        const fastest = question.fastestPlayerId && resultPlayerLookup
+                          ? resultPlayerLookup.get(question.fastestPlayerId)
+                          : null;
+                        return (
+                          <div key={question.id} className="card card--plain stack">
+                            <div className="row" style={{ justifyContent: "space-between" }}>
+                              <span className="badge">Q{question.order}</span>
+                              <span className="badge">
+                                {Math.round(accuracy * 100)}% correct
+                              </span>
+                            </div>
+                            <p className="muted">{question.prompt}</p>
+                            <div className="row muted" style={{ gap: 12 }}>
+                              <span>Correct: {String.fromCharCode(65 + question.correctIndex)}</span>
+                              <span>
+                                Fastest: {fastest ? fastest.name : "—"}
+                              </span>
+                              <span>
+                                {question.fastestTimeMs ? `${(question.fastestTimeMs / 1000).toFixed(1)}s` : ""}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="muted">
+                    Expand to view per-player stats and question-level accuracy.
+                  </p>
+                )}
               </div>
             </div>
           ) : null}
@@ -1122,8 +1091,13 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
           ) : null}
           <div className="row">
             <Link className="btn btn-primary" href="/dashboard">
-              Play again
+              Back to dashboard
             </Link>
+            {state.deck.deckId ? (
+              <Link className="btn btn-outline" href={`/decks/${state.deck.deckId}`}>
+                Open quiz
+              </Link>
+            ) : null}
             <button className="btn btn-outline" onClick={handleCopyResults}>
               Share results
             </button>

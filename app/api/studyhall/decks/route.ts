@@ -42,6 +42,7 @@ const formSchema = z.object({
   includeFlashcards: z.enum(["true", "false"]).optional(),
   questionCount: optionalCount,
   flashcardCount: optionalCount,
+  difficulty: z.enum(["easy", "medium", "hard"]).optional(),
 });
 
 function buildTestDeck(args: {
@@ -145,6 +146,7 @@ export const POST = withApi(async (req: Request) => {
     includeFlashcards: form.get("includeFlashcards")?.toString(),
     questionCount: form.get("questionCount"),
     flashcardCount: form.get("flashcardCount"),
+    difficulty: form.get("difficulty")?.toString(),
   });
   if (!parsed.success) {
     return NextResponse.json({ ok: false, error: "Invalid form fields" }, { status: 400 });
@@ -157,6 +159,7 @@ export const POST = withApi(async (req: Request) => {
   const includeFlashcards = (parsed.data.includeFlashcards ?? "false") === "true";
   const questionCountRaw = Number(parsed.data.questionCount ?? DEFAULT_QUESTION_COUNT);
   const flashcardCountRaw = Number(parsed.data.flashcardCount ?? DEFAULT_FLASHCARD_COUNT);
+  const difficulty = parsed.data.difficulty ?? "medium";
   const maxQuestionCount = isPro ? PRO_MAX_QUESTION_COUNT : FREE_MAX_QUESTION_COUNT;
   const maxFlashcardCount = isPro ? PRO_MAX_FLASHCARD_COUNT : FREE_MAX_FLASHCARD_COUNT;
   const questionCount = clampCount(questionCountRaw, MIN_QUESTION_COUNT, maxQuestionCount);
@@ -203,6 +206,7 @@ export const POST = withApi(async (req: Request) => {
         questionCount,
         flashcardCount,
         includeExplanations: isPro,
+        difficulty,
       });
       if (cached) {
         generated = cached;
@@ -215,6 +219,7 @@ export const POST = withApi(async (req: Request) => {
           includeQuestions,
           includeFlashcards,
           includeExplanations: isPro,
+          difficulty,
         });
         await setCachedDeck(
           {
@@ -225,6 +230,7 @@ export const POST = withApi(async (req: Request) => {
             questionCount,
             flashcardCount,
             includeExplanations: isPro,
+            difficulty,
           },
           generated
         );
