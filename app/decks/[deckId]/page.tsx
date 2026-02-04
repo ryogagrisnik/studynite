@@ -65,7 +65,7 @@ export default async function DeckPage({
           prompt: q.prompt,
           choices: q.choices,
           correctIndex: q.correctIndex,
-          explanation: isPro ? q.explanation : null,
+          explanation: q.explanation ?? null,
         })),
         flashcards: [],
         regenerateCount: deck.regenerateCount ?? 0,

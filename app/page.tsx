@@ -32,9 +32,27 @@ export const metadata: Metadata = {
 
 export default function Home() {
   const demoHref = process.env.NEXT_PUBLIC_DEMO_PARTY_CODE ? "/demo/party" : "/demo";
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "RunePrep",
+    applicationCategory: "EducationalApplication",
+    operatingSystem: "Web",
+    description:
+      "Turn your notes into multiplayer quizzes. Auto-generate questions and host live study parties in minutes.",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+  };
 
   return (
     <div className="page stack home pixel-ui">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <section className="hero-slab hero-slab--glow sparkle-layer rpg-reveal">
         <div className="quest-panel panel--stone hero-panel">
           <div className="chapter-head chapter-head--hero">
@@ -50,11 +68,11 @@ export default function Home() {
                 Upload notes, auto-generate questions, and host a live party with a single link.
               </p>
               <div className="row hero-cta">
-                <Link className="btn btn-primary btn-hero" href={demoHref}>
-                  Try a sample quiz
-                </Link>
                 <Link className="btn btn-primary btn-hero" href="/decks/new">
-                  Build your own
+                  Start a live party
+                </Link>
+                <Link className="btn btn-outline btn-hero" href={demoHref}>
+                  Try a sample quiz
                 </Link>
               </div>
               <p className="path-label">What you do</p>
@@ -83,55 +101,6 @@ export default function Home() {
                   src="/hero.png"
                   alt="RunePrep hero scene"
                 />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="slab slab--steps rpg-reveal">
-        <div className="section-divider" aria-hidden="true" />
-        <div className="quest-panel panel--parchment">
-          <div className="slab-header">
-            <div className="chapter-head">
-              <span className="chapter-pill">Chapter I</span>
-              <span className="chapter-title">The Path</span>
-              <span className="chapter-line" />
-            </div>
-            <h2 className="section-title pixel-title">How it works</h2>
-            <p className="section-sub">Upload materials, generate a quiz, then run a live party.</p>
-          </div>
-          <div className="orn-divider" />
-          <div className="steps-grid">
-            <div className="step">
-              <span className="badge">1</span>
-              <div>
-                <strong>Upload materials</strong>
-                <p className="muted">
-                  Upload anything, from slides, lecture transcripts to class notes, it doesn't
-                  matter, we’ll take it all!
-                </p>
-              </div>
-            </div>
-            <div className="step">
-              <span className="badge">2</span>
-              <div>
-                <strong>Generate a quiz</strong>
-                <p className="muted">
-                  Based on what you upload, we instantly turn it into quiz questions and a
-                  ready‑to‑host group test built from your exact material.
-                </p>
-              </div>
-            </div>
-            <div className="step">
-              <span className="badge">3</span>
-              <div>
-                <strong>Play together</strong>
-                <p className="muted">
-                  Share a link or code and everyone joins the same live round, answering in sync
-                  while the host controls the pace, reveals answers, and everyone sees scores update
-                  in real time.
-                </p>
               </div>
             </div>
           </div>
@@ -187,6 +156,55 @@ export default function Home() {
                   party flow made cramming feel focused.
                 </blockquote>
                 <div className="testimonial-author">— Jeremy Jor, UCSD Sophomore</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="slab slab--steps rpg-reveal">
+        <div className="section-divider" aria-hidden="true" />
+        <div className="quest-panel panel--parchment">
+          <div className="slab-header">
+            <div className="chapter-head">
+              <span className="chapter-pill">Chapter I</span>
+              <span className="chapter-title">The Path</span>
+              <span className="chapter-line" />
+            </div>
+            <h2 className="section-title pixel-title">How it works</h2>
+            <p className="section-sub">Upload materials, generate a quiz, then run a live party.</p>
+          </div>
+          <div className="orn-divider" />
+          <div className="steps-grid">
+            <div className="step">
+              <span className="badge">1</span>
+              <div>
+                <strong>Upload materials</strong>
+                <p className="muted">
+                  Upload anything, from slides, lecture transcripts to class notes, it doesn't
+                  matter, we’ll take it all!
+                </p>
+              </div>
+            </div>
+            <div className="step">
+              <span className="badge">2</span>
+              <div>
+                <strong>Generate a quiz</strong>
+                <p className="muted">
+                  Based on what you upload, we instantly turn it into quiz questions and a
+                  ready‑to‑host group test built from your exact material.
+                </p>
+              </div>
+            </div>
+            <div className="step">
+              <span className="badge">3</span>
+              <div>
+                <strong>Play together</strong>
+                <p className="muted">
+                  Share a link or code and everyone joins the same live round, answering in sync
+                  while the host controls the pace, reveals answers, and everyone sees scores update
+                  in real time.
+                </p>
               </div>
             </div>
           </div>

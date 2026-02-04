@@ -226,6 +226,7 @@ export default function DeckViewClient({
   const [shareError, setShareError] = useState<string | null>(null);
   const [shareExpiryOption, setShareExpiryOption] = useState<"never" | "24h" | "7d" | "30d">("never");
   const [shareNotice, setShareNotice] = useState<string | null>(null);
+  const [explanationLoading, setExplanationLoading] = useState<Record<string, boolean>>({});
   const regenerateLimit = deck.regenerateLimit ?? 0;
   const remainingRegens = Math.max(0, regenerateLimit - regenerateCount);
 
@@ -341,11 +342,48 @@ export default function DeckViewClient({
 
     const isCorrect = choiceIndex === currentQuestion.correctIndex;
     setQuizResults((prev) => ({ ...prev, [currentQuestion.id]: isCorrect }));
+    if (!isCorrect) {
+      void requestExplanation(currentQuestion, choiceIndex);
+    }
     if (isOwner) {
       await fetch("/api/studyhall/attempts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ questionId: currentQuestion.id, isCorrect }),
+      });
+    }
+  };
+
+  const requestExplanation = async (question: DeckQuestion, userIndex?: number) => {
+    if (question.explanation || explanationLoading[question.id]) return;
+    setExplanationLoading((prev) => ({ ...prev, [question.id]: true }));
+    try {
+      const response = await fetch("/api/studyhall/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          deckId: deck.id,
+          questionId: question.id,
+          shareId: deck.shareId,
+          userIndex,
+        }),
+      });
+      const data = await response.json();
+      if (response.ok && data?.explanation) {
+        setQuestions((prev) =>
+          prev.map((item) =>
+            item.id === question.id ? { ...item, explanation: data.explanation } : item
+          )
+        );
+      }
+    } catch {
+      // Ignore explanation failures; quiz flow should not break.
+    } finally {
+      setExplanationLoading((prev) => {
+        if (!prev[question.id]) return prev;
+        const next = { ...prev };
+        delete next[question.id];
+        return next;
       });
     }
   };
@@ -767,9 +805,11 @@ export default function DeckViewClient({
                     <strong>
                       {selectedIndex === currentQuestion.correctIndex ? "Correct" : "Incorrect"}
                     </strong>
-                    {isPro && currentQuestion.explanation ? (
+                    {selectedIndex !== currentQuestion.correctIndex ? (
                       <p className="card-sub" style={{ marginTop: 8 }}>
-                        {currentQuestion.explanation}
+                        {explanationLoading[currentQuestion.id]
+                          ? "Generating a short explanation..."
+                          : currentQuestion.explanation || "Explanation unavailable right now."}
                       </p>
                     ) : null}
                     <div className="row" style={{ marginTop: 12 }}>
@@ -855,7 +895,7 @@ export default function DeckViewClient({
                 <div className="review-item-sub">
                   Correct: {question.choices[question.correctIndex]}
                 </div>
-                {isPro && question.explanation ? (
+                {question.explanation ? (
                   <div className="review-item-sub">Note: {question.explanation}</div>
                 ) : null}
                 <div className="review-item-actions">

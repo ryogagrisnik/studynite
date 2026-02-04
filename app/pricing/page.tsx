@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 
@@ -14,6 +15,26 @@ import {
 } from "@/lib/studyhall/constants";
 import { PRACTICE_LIMIT } from "@/lib/server/practiceAccess";
 
+export const metadata: Metadata = {
+  title: "Pricing",
+  description:
+    "Simple pricing for RunePrep: create multiplayer quizzes from your notes and host live study parties.",
+  alternates: { canonical: "/pricing" },
+  openGraph: {
+    title: "RunePrep Pricing",
+    description:
+      "Simple pricing for RunePrep: create multiplayer quizzes from your notes and host live study parties.",
+    url: "/pricing",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "RunePrep Pricing",
+    description:
+      "Simple pricing for RunePrep: create multiplayer quizzes from your notes and host live study parties.",
+  },
+};
+
 export default async function Pricing() {
   const session = await getServerSession(authOptions);
   const userAny = session?.user as any;
@@ -26,6 +47,35 @@ export default async function Pricing() {
 
   return (
     <div className="page stack pixel-ui">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: "RunePrep",
+            description:
+              "Turn your notes into multiplayer quizzes and host live study parties.",
+            brand: { "@type": "Brand", name: "RunePrep" },
+            offers: [
+              {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "USD",
+                category: "free",
+                name: "Free",
+              },
+              {
+                "@type": "Offer",
+                price: "5.99",
+                priceCurrency: "USD",
+                category: "subscription",
+                name: "Pro (monthly)",
+              },
+            ],
+          }),
+        }}
+      />
       <div className="container stack">
         <div className="stack" style={{ alignItems: "center", textAlign: "center" }}>
           <h1 className="page-title">Pricing</h1>

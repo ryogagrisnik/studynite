@@ -156,6 +156,19 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
     if (typeof window === "undefined") return "";
     return `${window.location.origin}/party/${params.partyId}`;
   }, [params.partyId]);
+  const inviteLink = shareLink || `https://runeprep.com/party/${params.partyId}`;
+
+  const inviteMessage = useMemo(() => {
+    if (!state) return "";
+    const topPlayers = state.players.slice(0, 3);
+    const title = state.deck.title ? `"${state.deck.title}"` : "our quiz";
+    const lines = [`We just wrapped a RunePrep quiz on ${title}.`];
+    if (topPlayers.length) {
+      lines.push(`Top players: ${topPlayers.map((player) => player.name).join(", ")}.`);
+    }
+    lines.push(`Join the next round with code ${state.party.joinCode} or jump in: ${inviteLink}`);
+    return lines.join(" ");
+  }, [state, inviteLink]);
 
   const awardPartySession = (input: SessionInput) => {
     const base = progress ?? loadProgress(progressKey);
@@ -541,8 +554,8 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
   };
 
   const handleCopy = async () => {
-    if (!shareLink) return;
-    await navigator.clipboard.writeText(shareLink);
+    if (!inviteLink) return;
+    await navigator.clipboard.writeText(inviteLink);
   };
 
   const handleCopyCode = async () => {
@@ -569,6 +582,11 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
       lines.push(`Party bonus: ${partyOutcome.bonus.label}`);
     }
     await navigator.clipboard.writeText(lines.join("\n"));
+  };
+
+  const handleCopyInviteMessage = async () => {
+    if (!inviteMessage) return;
+    await navigator.clipboard.writeText(inviteMessage);
   };
 
   const timeRemaining = (() => {
@@ -955,6 +973,34 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
                 {Math.round(recap.overallAccuracy * 100)}% overall accuracy
               </span>
             ) : null}
+          </div>
+
+          <div className="card stack">
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <h3 className="card-title">Share summary + invite friends</h3>
+              <button className="btn btn-outline btn-small" onClick={handleCopyInviteMessage}>
+                Copy invite message
+              </button>
+            </div>
+            <p className="card-sub">Send your recap and invite others to the next round.</p>
+            <div className="stack" style={{ gap: 12 }}>
+              <div className="row">
+                <input className="input" value={inviteLink} readOnly />
+                <button className="btn btn-outline" onClick={handleCopy}>
+                  Copy link
+                </button>
+              </div>
+              <div className="row">
+                <span className="badge">Code: {state.party.joinCode}</span>
+                <button className="btn btn-outline btn-small" onClick={handleCopyCode}>
+                  Copy code
+                </button>
+              </div>
+              <div className="field">
+                <label className="field-label">Prefilled message</label>
+                <textarea className="input" rows={3} value={inviteMessage} readOnly />
+              </div>
+            </div>
           </div>
 
           <div className="card stack">
