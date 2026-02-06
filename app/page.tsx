@@ -50,12 +50,12 @@ export default function Home() {
   };
 
   return (
-    <div className="page stack home pixel-ui">
+    <div className="page stack home pixel-ui pixel-home">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <section className="hero-slab hero-slab--glow sparkle-layer rpg-reveal">
+      <section className="hero-slab hero-slab--glow sparkle-layer rpg-reveal pixel-sky">
         <div className="quest-panel panel--stone hero-panel">
           <div className="chapter-head chapter-head--hero">
             <span className="chapter-pill">Prologue</span>
@@ -97,7 +97,7 @@ export default function Home() {
               </div>
             </div>
             <div className="hero-media hero-media--plain">
-              <div className="hero-media-inner">
+              <div className="hero-media-inner pixel-frame">
                 <img
                   className="hero-image"
                   src="/hero.png"
