@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Multiplayer quizzes from your notes",
+  title: {
+    absolute: "RunePrep | Multiplayer quizzes from your notes",
+  },
   description:
     "Turn your notes into multiplayer quizzes. Auto-generate questions and host a live study party with a single link.",
   alternates: { canonical: "/" },

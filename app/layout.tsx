@@ -101,7 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="nav">
             <div className="container nav-inner">
               <Link href="/" aria-label="RunePrep home" className="nav-logo">
-                <Image src="/assets/logo.png" alt="RunePrep logo" width={520} height={140} priority />
+                <Image src="/assets/logo.png" alt="RunePrep" width={520} height={140} priority />
               </Link>
               <input id="nav-toggle" className="nav-toggle" type="checkbox" />
               <label htmlFor="nav-toggle" className="nav-toggle-btn nav-toggle-btn--open" aria-label="Open menu">
