@@ -10,7 +10,7 @@ import { hasActiveProSession } from "@/lib/server/membership";
 import { getCachedDeck, setCachedDeck } from "@/lib/studyhall/deckCache";
 import { checkDeckLimits, recordDeckCreate } from "@/lib/studyhall/deckLimits";
 import { extractStudyText } from "@/lib/studyhall/ingest";
-import { generateStudyDeck } from "@/lib/studyhall/generator";
+import { generateStudyDeck, type GeneratedDeck } from "@/lib/studyhall/generator";
 import { clampCount, generateShareId, toSafeTitle } from "@/lib/studyhall/utils";
 import { getTestUserId } from "@/lib/testing";
 import {
@@ -53,7 +53,7 @@ function buildTestDeck(args: {
   includeQuestions: boolean;
   includeFlashcards: boolean;
   includeExplanations: boolean;
-}) {
+}): GeneratedDeck {
   const questions = args.includeQuestions
     ? Array.from({ length: args.questionCount }).map((_, idx) => ({
         prompt: `Sample question ${idx + 1}`,
@@ -185,7 +185,7 @@ export const POST = withApi(async (req: Request) => {
       );
     }
     const sourceText = await extractStudyText({ text, files, userId });
-    let generated = isTestMode
+    let generated: GeneratedDeck | null = isTestMode
       ? buildTestDeck({
           sourceText,
           title,
@@ -211,7 +211,7 @@ export const POST = withApi(async (req: Request) => {
       if (cached) {
         generated = cached;
       } else {
-        generated = await generateStudyDeck({
+        const fresh = await generateStudyDeck({
           sourceText,
           title,
           questionCount,
@@ -221,6 +221,7 @@ export const POST = withApi(async (req: Request) => {
           includeExplanations: isPro,
           difficulty,
         });
+        generated = fresh;
         await setCachedDeck(
           {
             userId: cacheUserId,
@@ -232,9 +233,12 @@ export const POST = withApi(async (req: Request) => {
             includeExplanations: isPro,
             difficulty,
           },
-          generated
+          fresh
         );
       }
+    }
+    if (!generated) {
+      throw new Error("Unable to generate quiz.");
     }
 
     const deck = await prisma.studyDeck.create({

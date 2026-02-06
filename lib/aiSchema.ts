@@ -11,6 +11,7 @@ export const BaseQuestion = z.object({
   choices: z.array(z.string()).min(2),
   correctIndex: z.number().int().nonnegative(),
   explanation: z.string().optional(),
+  difficulty: z.string().optional(),
   // optional RC content
   passage: z.string().optional(),
   // QC optional helpers

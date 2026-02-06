@@ -1,3 +1,25 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description:
+    "Learn how RunePrep handles data, uploaded materials, cookies, and privacy rights.",
+  alternates: { canonical: "/privacy" },
+  openGraph: {
+    title: "Privacy Policy | RunePrep",
+    description:
+      "Learn how RunePrep handles data, uploaded materials, cookies, and privacy rights.",
+    url: "/privacy",
+    type: "article",
+  },
+  twitter: {
+    card: "summary",
+    title: "Privacy Policy | RunePrep",
+    description:
+      "Learn how RunePrep handles data, uploaded materials, cookies, and privacy rights.",
+  },
+};
+
 export default function Privacy() {
   return (
     <div className="page" style={{ maxWidth: 900 }}>

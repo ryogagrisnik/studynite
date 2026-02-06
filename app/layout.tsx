@@ -13,6 +13,7 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Press_Start_2P, Space_Grotesk } from "next/font/google";
 import { validateEnv } from "@/lib/env";
+import { getAppBaseUrl } from "@/lib/urls";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -30,7 +31,7 @@ const pressStart = Press_Start_2P({
 validateEnv();
 
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL;
+const siteUrl = getAppBaseUrl();
 
 export const metadata: Metadata = {
   title: {
@@ -39,7 +40,7 @@ export const metadata: Metadata = {
   },
   description:
     "Turn your notes into multiplayer quizzes. Auto-generate questions and host live study parties in minutes.",
-  metadataBase: siteUrl ? new URL(siteUrl) : undefined,
+  metadataBase: new URL(siteUrl),
   openGraph: {
     title: "RunePrep",
     description:

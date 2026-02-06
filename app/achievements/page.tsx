@@ -1,9 +1,30 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { buildAchievements, emptyAchievementMetrics, getAchievementMetrics } from "@/lib/studyhall/achievements";
 import AchievementsGrid from "@/components/AchievementsGrid";
+
+export const metadata: Metadata = {
+  title: "Guild Achievements",
+  description:
+    "Track milestones you unlock while studying and hosting multiplayer quiz parties on RunePrep.",
+  alternates: { canonical: "/achievements" },
+  openGraph: {
+    title: "Guild Achievements | RunePrep",
+    description:
+      "Track milestones you unlock while studying and hosting multiplayer quiz parties on RunePrep.",
+    url: "/achievements",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Guild Achievements | RunePrep",
+    description:
+      "Track milestones you unlock while studying and hosting multiplayer quiz parties on RunePrep.",
+  },
+};
 
 export default async function AchievementsPage() {
   const session = await getServerSession(authOptions);

@@ -1,3 +1,25 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description:
+    "Read the RunePrep terms of service, usage guidelines, subscriptions, and liability limits.",
+  alternates: { canonical: "/terms" },
+  openGraph: {
+    title: "Terms of Service | RunePrep",
+    description:
+      "Read the RunePrep terms of service, usage guidelines, subscriptions, and liability limits.",
+    url: "/terms",
+    type: "article",
+  },
+  twitter: {
+    card: "summary",
+    title: "Terms of Service | RunePrep",
+    description:
+      "Read the RunePrep terms of service, usage guidelines, subscriptions, and liability limits.",
+  },
+};
+
 export default function Terms() {
   return (
     <div className="page" style={{ maxWidth: 900 }}>

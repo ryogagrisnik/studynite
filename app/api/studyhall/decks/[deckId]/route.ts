@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
@@ -81,7 +82,7 @@ export async function PATCH(req: Request, { params }: { params: { deckId: string
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 403 });
   }
 
-  const updates: Promise<any>[] = [];
+  const updates: Prisma.PrismaPromise<unknown>[] = [];
 
   if (payload.title !== undefined) {
     updates.push(

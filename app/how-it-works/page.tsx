@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { Prisma } from "@prisma/client";
@@ -7,6 +8,26 @@ import prisma from "@/lib/prisma";
 import { DEFAULT_AVATAR_ID, getAvatarById } from "@/lib/studyhall/avatars";
 
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: "Leaderboard",
+  description:
+    "See the top RunePrep adventurers ranked by questions answered across solo and multiplayer sessions.",
+  alternates: { canonical: "/how-it-works" },
+  openGraph: {
+    title: "Leaderboard | RunePrep",
+    description:
+      "See the top RunePrep adventurers ranked by questions answered across solo and multiplayer sessions.",
+    url: "/how-it-works",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Leaderboard | RunePrep",
+    description:
+      "See the top RunePrep adventurers ranked by questions answered across solo and multiplayer sessions.",
+  },
+};
 
 type LeaderboardRange = "all" | "weekly";
 
