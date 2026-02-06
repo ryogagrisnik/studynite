@@ -111,9 +111,9 @@ export default function Home() {
 
       <section className="slab slab--rating rpg-reveal">
         <div className="section-divider" aria-hidden="true" />
-        <div className="quest-panel panel--notice">
+        <div className="quest-panel panel--notice panel--hero-frame">
           <div className="slab-header">
-            <div className="chapter-head">
+            <div className="chapter-head chapter-head--hero">
               <span className="chapter-pill">Chapter VI</span>
               <span className="chapter-title">Guild Wall</span>
               <span className="chapter-line" />
@@ -125,7 +125,7 @@ export default function Home() {
           </div>
           <div className="orn-divider" />
           <div className="split-grid spacious rating-grid">
-            <div className="card rating-card quest-scroll">
+            <div className="card rating-card quest-scroll card--hero-frame">
               <div className="rating-row" aria-label="Rated 4.5 out of 5 stars">
                 <div className="star-row" aria-hidden="true">
                   <span className="star star--full"><span className="star-fill" /></span>
@@ -138,21 +138,21 @@ export default function Home() {
               </div>
             </div>
             <div className="stack">
-              <div className="card testimonial-card quest-scroll">
+              <div className="card testimonial-card quest-scroll card--hero-frame">
                 <blockquote>
                   This service is awesome, and it really helped me in my macro econ course! Group
                   study via RunePrep was really effective for my friends and I.
                 </blockquote>
                 <div className="testimonial-author">— Daniel Pinaud, UCSD Senior</div>
               </div>
-              <div className="card testimonial-card quest-scroll">
+              <div className="card testimonial-card quest-scroll card--hero-frame">
                 <blockquote>
                   RunePrep made our review sessions feel structured instead of chaotic. The party
                   flow kept everyone focused and we finished faster than usual.
                 </blockquote>
                 <div className="testimonial-author">— Russell Arashi, UCSD Senior</div>
               </div>
-              <div className="card testimonial-card quest-scroll">
+              <div className="card testimonial-card quest-scroll card--hero-frame">
                 <blockquote>
                   I love that I can study solo and then host a quick quiz for my friends. The
                   party flow made cramming feel focused.
@@ -166,7 +166,7 @@ export default function Home() {
 
       <section className="slab slab--steps rpg-reveal">
         <div className="section-divider" aria-hidden="true" />
-        <div className="quest-panel panel--parchment">
+        <div className="quest-panel panel--parchment panel--hero-frame">
           <div className="slab-header">
             <div className="chapter-head">
               <span className="chapter-pill">Chapter I</span>
@@ -215,7 +215,7 @@ export default function Home() {
 
       <section className="slab slab--modes rpg-reveal">
         <div className="section-divider" aria-hidden="true" />
-        <div className="quest-panel panel--notice">
+        <div className="quest-panel panel--notice panel--hero-frame">
           <div className="slab-header">
             <div className="chapter-head">
               <span className="chapter-pill">Chapter II</span>
@@ -277,7 +277,7 @@ export default function Home() {
 
       <section className="slab slab--showcase rpg-reveal">
         <div className="section-divider" aria-hidden="true" />
-        <div className="quest-panel panel--stone">
+        <div className="quest-panel panel--stone panel--hero-frame">
           <div className="split-grid spacious">
             <div className="hero-media hero-media--plain">
               <img
@@ -326,7 +326,7 @@ export default function Home() {
 
       <section className="slab slab--features rpg-reveal">
         <div className="section-divider" aria-hidden="true" />
-        <div className="quest-panel panel--notice">
+        <div className="quest-panel panel--notice panel--hero-frame">
           <div className="slab-header">
             <div className="chapter-head">
               <span className="chapter-pill">Chapter IV</span>
@@ -362,7 +362,7 @@ export default function Home() {
 
       <section className="slab slab--features rpg-reveal">
         <div className="section-divider" aria-hidden="true" />
-        <div className="quest-panel panel--journal">
+        <div className="quest-panel panel--journal panel--hero-frame">
           <div className="slab-header">
             <div className="chapter-head">
               <span className="chapter-pill">Chapter VII</span>
