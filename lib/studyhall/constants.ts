@@ -17,11 +17,11 @@ export const MAX_QUESTION_SECONDS = 30;
 export const HOST_INACTIVE_MS = 45_000;
 export const PARTY_RETENTION_DAYS = 30;
 
-export const FREE_MAX_QUESTION_COUNT = 15;
+export const FREE_MAX_QUESTION_COUNT = 25;
 export const PRO_MAX_QUESTION_COUNT = 60;
 export const FREE_MAX_FLASHCARD_COUNT = 20;
 export const PRO_MAX_FLASHCARD_COUNT = 40;
-export const FREE_DAILY_DECK_LIMIT = 3;
+export const FREE_DAILY_DECK_LIMIT = 5;
 export const PRO_DAILY_DECK_LIMIT = 10;
 export const DECK_COOLDOWN_MS = 5 * 60 * 1000;
 export const FREE_REGENERATE_LIMIT = 2;

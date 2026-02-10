@@ -280,7 +280,7 @@ export async function buildPartyState(partyId: string, playerToken?: string | nu
     const timeExpired = timerState.timeRemainingMs <= 0;
     let allAnswered = false;
     if (!timeExpired) {
-      const eligiblePlayerIds = visiblePlayers.map((p) => p.id);
+      const eligiblePlayerIds = activePlayers.map((p) => p.id);
       if (eligiblePlayerIds.length > 0) {
         const submissionCount = await prisma.partySubmission.count({
           where: {

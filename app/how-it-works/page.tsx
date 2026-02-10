@@ -173,9 +173,6 @@ export default async function HowItWorksPage({
       <div className="page-header">
         <div>
           <h1 className="page-title">Global leaderboard</h1>
-          <p className="page-sub">
-            Questions answered across solo practice and multiplayer parties.
-          </p>
         </div>
         <div className="row">
           <Link className={`btn ${range === "all" ? "btn-primary" : "btn-outline"}`} href="/how-it-works">
@@ -190,7 +187,7 @@ export default async function HowItWorksPage({
         </div>
       </div>
 
-      <section className="card leaderboard-card rpg-reveal">
+      <section className="card leaderboard-card leaderboard-altar rpg-reveal">
         <div className="leaderboard-head">
           <div>
             <h2 className="card-title">Top adventurers</h2>
@@ -228,7 +225,10 @@ export default async function HowItWorksPage({
                 key={row.userId}
                 className={`leaderboard-row${row.userId === userId ? " is-you" : ""}${rankClass}`}
               >
-                <div className="leaderboard-rank">#{index + 1}</div>
+                <div className="leaderboard-rank">
+                  <span className="leaderboard-sigil" aria-hidden="true" />
+                  <span className="leaderboard-rank-text">#{index + 1}</span>
+                </div>
                 <div className="leaderboard-name">
                   <img
                     className="avatar leaderboard-avatar"
