@@ -3,10 +3,12 @@
 import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type MessageState = { type: "success" | "error"; text: string } | null;
 
 export default function SignUp() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,14 +41,23 @@ export default function SignUp() {
       body: JSON.stringify({ event: "signup" }),
     });
 
-    const verificationRequired = body?.verificationRequired !== false;
-    setMessage({
-      type: "success",
-      text: verificationRequired
-        ? "Account created! Check your inbox for a verification link."
-        : "Account created! You can sign in now.",
+    const login = await signIn("credentials", {
+      email: email.trim().toLowerCase(),
+      password,
+      redirect: false,
+      callbackUrl: "/dashboard",
     });
-    setPending(false);
+
+    if (login?.error) {
+      setMessage({
+        type: "success",
+        text: "Account created! Sign in with your email and password.",
+      });
+      setPending(false);
+      return;
+    }
+
+    router.push(login?.url || "/dashboard");
   }
 
   return (
@@ -99,18 +110,9 @@ export default function SignUp() {
           </button>
         </form>
 
-        <div className="stack">
-          <button
-            className="btn btn-outline"
-            type="button"
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-          >
-            Continue with Google
-          </button>
-          <p className="muted" style={{ textAlign: "center" }}>
-            Already have an account? <Link href="/signin">Sign in</Link>
-          </p>
-        </div>
+        <p className="muted" style={{ textAlign: "center" }}>
+          Already have an account? <Link href="/signin">Sign in</Link>
+        </p>
       </div>
     </div>
   );

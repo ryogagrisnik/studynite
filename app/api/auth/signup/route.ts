@@ -45,10 +45,16 @@ export const POST = withApi(async (request: Request) => {
 
   if (existing) {
     if (!existing.passwordHash) {
-      return NextResponse.json(
-        { error: "Account exists via social login. Sign in with Google, then add a password in settings." },
-        { status: 409 }
-      );
+      const passwordHash = await hashPassword(password);
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          passwordHash,
+          emailVerified: existing.emailVerified ?? new Date(),
+          name: existing.name ?? name,
+        },
+      });
+      return NextResponse.json({ success: true, verificationRequired: false, passwordSet: true });
     }
     return NextResponse.json({ error: "Email already registered" }, { status: 409 });
   }

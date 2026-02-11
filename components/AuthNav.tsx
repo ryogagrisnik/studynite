@@ -10,10 +10,7 @@ export default function AuthNav() {
   if (session?.user) {
     return (
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <span style={{ fontSize: 12, opacity: 0.8 }}>
-          {(session.user as any).email}{" "}
-          {(session.user as any).emailVerified ? "" : "(verify email)"}
-        </span>
+        <span style={{ fontSize: 12, opacity: 0.8 }}>{(session.user as any).email}</span>
         <button className="btn btn-primary" onClick={() => signOut()}>
           Sign Out
         </button>

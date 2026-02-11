@@ -111,18 +111,9 @@ function SignInClient() {
           </button>
         </form>
 
-        <div className="stack">
-          <button
-            className="btn btn-outline"
-            type="button"
-            onClick={() => signIn("google", { callbackUrl })}
-          >
-            Continue with Google
-          </button>
-          <div className="row" style={{ justifyContent: "space-between", fontSize: 14 }}>
-            <Link href="/forgot-password">Forgot password?</Link>
-            <Link href="/signup">Create account</Link>
-          </div>
+        <div className="row" style={{ justifyContent: "space-between", fontSize: 14 }}>
+          <Link href="/forgot-password">Forgot password?</Link>
+          <Link href="/signup">Create account</Link>
         </div>
       </div>
     </div>

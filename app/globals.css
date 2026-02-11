@@ -359,16 +359,17 @@ button.card:disabled{ cursor:not-allowed; opacity:0.6; }
 }
 .avatar-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));
-  gap:10px;
+  grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));
+  gap:16px;
 }
 .avatar-tile{
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:6px;
-  padding:10px 8px;
-  border-radius:12px;
+  gap:8px;
+  padding:16px 12px;
+  min-height:220px;
+  border-radius:14px;
   border:2px solid transparent;
   background:transparent;
   cursor:pointer;
@@ -377,7 +378,7 @@ button.card:disabled{ cursor:not-allowed; opacity:0.6; }
 }
 .avatar-tile .avatar{
   width:100%;
-  max-width:140px;
+  max-width:260px;
   aspect-ratio:1 / 1;
   height:auto;
   border:none;
@@ -418,8 +419,17 @@ button.card:disabled{ cursor:not-allowed; opacity:0.6; }
   overflow:hidden;
 }
 .avatar-label{
-  font-size:12px;
+  font-size:14px;
+  line-height:1.35;
+  text-align:center;
+  max-width:22ch;
+  text-wrap:balance;
   color:var(--text-muted);
+}
+.avatar-tile:focus-visible{
+  outline:3px solid rgba(34,197,94,0.45);
+  outline-offset:2px;
+  border-color:rgba(34,197,94,0.85);
 }
 
 .join-party .paladin-sunburst{
@@ -428,6 +438,523 @@ button.card:disabled{ cursor:not-allowed; opacity:0.6; }
   pointer-events:none;
   z-index:70;
   overflow:hidden;
+}
+.join-party .cinder-ember-fx{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:69;
+  overflow:hidden;
+}
+.join-party .knight-shield-fx{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:68;
+  overflow:hidden;
+}
+.join-party .spartan-dory-fx{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:67;
+  overflow:hidden;
+}
+.join-party .circe-assassin-fx{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:71;
+  overflow:hidden;
+}
+.join-party .rogue-claw-fx{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:72;
+  overflow:hidden;
+}
+.join-party .rogue-claw-fx__stroke{
+  position:absolute;
+  left:var(--origin-x);
+  top:var(--origin-y);
+  width:min(24vw, 220px);
+  height:min(14vh, 120px);
+  margin-left:calc(min(24vw, 220px) * -0.5);
+  margin-top:calc(min(14vh, 120px) * -0.5);
+  background:url("/assets/rogue-claw.png") center / contain no-repeat;
+  filter:
+    hue-rotate(-12deg)
+    saturate(1.25)
+    drop-shadow(0 0 10px rgba(255,98,98,0.88))
+    drop-shadow(0 0 20px rgba(220,38,38,0.86));
+  transform-origin:50% 50%;
+  opacity:0;
+  animation:rogueStrokeA 220ms cubic-bezier(.24,.78,.26,1) forwards;
+}
+.join-party .rogue-claw-fx__stroke--a{
+  transform:rotate(45deg) translateY(-14vw) scale(0.1);
+}
+.join-party .rogue-claw-fx__stroke--b{
+  transform:rotate(-45deg) translateY(-14vw) scale(0.1);
+  animation:rogueStrokeB 220ms cubic-bezier(.24,.78,.26,1) 120ms forwards;
+}
+
+@keyframes rogueStrokeA{
+  0%{
+    opacity:0;
+    transform:rotate(45deg) translateY(-14vw) scale(0.1);
+  }
+  20%{
+    opacity:1;
+    transform:rotate(45deg) translateY(0) scale(1);
+  }
+  100%{
+    opacity:0;
+    transform:rotate(45deg) translateY(14vw) scale(1.04);
+  }
+}
+
+@keyframes rogueStrokeB{
+  0%{
+    opacity:0;
+    transform:rotate(-45deg) translateY(-14vw) scale(0.1);
+  }
+  20%{
+    opacity:1;
+    transform:rotate(-45deg) translateY(0) scale(1);
+  }
+  100%{
+    opacity:0;
+    transform:rotate(-45deg) translateY(14vw) scale(1.04);
+  }
+}
+.join-party .circe-assassin-fx__rune{
+  position:absolute;
+  left:var(--origin-x);
+  top:var(--origin-y);
+  width:340px;
+  height:340px;
+  margin-left:-170px;
+  margin-top:-170px;
+  opacity:0;
+  background:url("/assets/circe-rune.png") center / contain no-repeat;
+  filter:drop-shadow(0 0 20px rgba(122,214,168,0.72)) hue-rotate(16deg) saturate(1.2);
+  animation:circeRuneCast 520ms ease-out forwards;
+  z-index:1;
+}
+.join-party .circe-assassin-fx__rune--echo{
+  width:420px;
+  height:420px;
+  margin-left:-210px;
+  margin-top:-210px;
+  opacity:0;
+  filter:drop-shadow(0 0 26px rgba(126,227,183,0.6)) hue-rotate(20deg) saturate(1.35);
+  mix-blend-mode:screen;
+  animation:circeRuneEcho 520ms ease-out forwards;
+  z-index:1;
+}
+.join-party .circe-assassin-fx__aura{
+  position:absolute;
+  left:var(--origin-x);
+  top:var(--origin-y);
+  width:210px;
+  height:210px;
+  margin-left:-105px;
+  margin-top:-105px;
+  border-radius:999px;
+  opacity:0;
+  background:
+    radial-gradient(circle, rgba(216,255,241,0.72) 0%, rgba(93,210,169,0.38) 46%, rgba(93,210,169,0) 74%),
+    conic-gradient(from 0deg, rgba(93,210,169,0.12), rgba(203,255,236,0.45), rgba(93,210,169,0.12));
+  filter:blur(1px);
+  animation:circeAuraWave 520ms ease-out forwards;
+  z-index:0;
+}
+.join-party .circe-assassin-fx__blade{
+  position:absolute;
+  left:var(--origin-x);
+  top:var(--origin-y);
+  width:min(20vw, 220px);
+  height:min(10vh, 96px);
+  margin-left:calc(min(20vw, 220px) * -0.1);
+  margin-top:calc(min(10vh, 96px) * -0.5);
+  opacity:0;
+  background:url("/assets/circe-dagger.png") center / contain no-repeat;
+  transform-origin:0 50%;
+  --mirror: 1;
+  transform:rotate(var(--angle)) translateX(var(--start-distance)) scaleX(var(--mirror)) scaleY(1) scale(var(--scale));
+  filter:drop-shadow(0 0 12px rgba(136,239,192,0.62));
+  animation:circeBladeBurst 460ms cubic-bezier(.2,.76,.24,1) var(--delay) forwards;
+  z-index:4;
+}
+.join-party .circe-assassin-fx__blade--mirrored{
+  --mirror: -1;
+}
+
+@keyframes circeRuneCast{
+  0%{
+    opacity:0;
+    transform:scale(0.54) rotate(-20deg);
+  }
+  22%{
+    opacity:1;
+    transform:scale(1.02) rotate(-4deg);
+  }
+  100%{
+    opacity:0;
+    transform:scale(1.34) rotate(20deg);
+  }
+}
+
+@keyframes circeRuneEcho{
+  0%{
+    opacity:0;
+    transform:scale(0.58) rotate(10deg);
+  }
+  18%{
+    opacity:0.8;
+    transform:scale(1.02) rotate(18deg);
+  }
+  100%{
+    opacity:0;
+    transform:scale(1.28) rotate(44deg);
+  }
+}
+
+@keyframes circeAuraWave{
+  0%{
+    opacity:0;
+    transform:scale(0.66);
+  }
+  20%{
+    opacity:0.9;
+    transform:scale(1.02);
+  }
+  100%{
+    opacity:0;
+    transform:scale(1.4);
+  }
+}
+
+@keyframes circeBladeBurst{
+  0%{
+    opacity:0;
+    transform:rotate(var(--angle)) translateX(calc(var(--start-distance) - 4px)) scaleX(var(--mirror)) scaleY(1) scale(calc(var(--scale) * 0.74));
+  }
+  22%{
+    opacity:1;
+    transform:rotate(var(--angle)) translateX(calc(var(--start-distance) + 8px)) scaleX(var(--mirror)) scaleY(1) scale(var(--scale));
+  }
+  100%{
+    opacity:0;
+    transform:rotate(var(--angle)) translateX(calc(var(--start-distance) + var(--distance))) scaleX(var(--mirror)) scaleY(1) scale(calc(var(--scale) * 1.08));
+  }
+}
+
+@keyframes circeShardBurst{
+  0%{
+    opacity:0;
+    transform:rotate(var(--angle)) translateX(8px) scale(calc(var(--scale) * 0.7));
+  }
+  24%{
+    opacity:0.88;
+    transform:rotate(var(--angle)) translateX(18px) scale(var(--scale));
+  }
+  100%{
+    opacity:0;
+    transform:rotate(calc(var(--angle) + 24deg)) translateX(var(--distance)) scale(calc(var(--scale) * 1.08));
+  }
+}
+.join-party .spartan-dory-fx__spear{
+  position:absolute;
+  left:var(--origin-x);
+  top:var(--origin-y);
+  width:min(26vw, 360px);
+  height:min(12vh, 110px);
+  margin-left:-8px;
+  margin-top:calc(min(12vh, 110px) * -0.5);
+  opacity:0;
+  background:url("/assets/spartan-spear.png") center / contain no-repeat;
+  transform-origin:0 50%;
+  transform:rotate(var(--angle)) translateX(16px) scale(var(--scale));
+  filter:drop-shadow(0 0 12px rgba(182,126,66,0.55));
+  animation:spartanDorySpear 520ms cubic-bezier(.18,.74,.22,1) var(--delay) forwards;
+}
+.join-party .spartan-dory-fx__burst{
+  position:absolute;
+  left:var(--origin-x);
+  top:var(--origin-y);
+  width:220px;
+  height:220px;
+  margin-left:-110px;
+  margin-top:-110px;
+  opacity:0;
+  border-radius:999px;
+  background:
+    radial-gradient(circle, rgba(255,244,217,0.8) 0%, rgba(230,172,91,0.45) 35%, rgba(230,172,91,0) 70%),
+    url("/assets/spartan-trail.png") center / contain no-repeat;
+  filter:blur(0.8px) saturate(0.95);
+  mix-blend-mode:screen;
+  animation:spartanDoryBurst 520ms ease-out forwards;
+}
+
+.join-party .spartan-dory-fx__dust{
+  position:absolute;
+  left:var(--origin-x);
+  top:var(--origin-y);
+  width:74px;
+  height:74px;
+  opacity:0;
+  background:url("/assets/spartan-dust.png") center / contain no-repeat;
+  filter:blur(0.2px) sepia(0.28) saturate(1.2) hue-rotate(-10deg);
+  animation:spartanDoryDust 460ms ease-out forwards;
+}
+.join-party .spartan-dory-fx__dust--a{
+  margin-left:-48px;
+  margin-top:16px;
+}
+.join-party .spartan-dory-fx__dust--b{
+  margin-left:-26px;
+  margin-top:30px;
+  animation-delay:50ms;
+}
+
+@keyframes spartanDorySpear{
+  0%{
+    opacity:0;
+    transform:rotate(var(--angle)) translateX(10px) scale(calc(var(--scale) * 0.82));
+  }
+  18%{
+    opacity:1;
+    transform:rotate(var(--angle)) translateX(28px) scale(var(--scale));
+  }
+  100%{
+    opacity:0;
+    transform:rotate(var(--angle)) translateX(var(--distance)) scale(calc(var(--scale) * 1.08));
+  }
+}
+
+@keyframes spartanDoryBurst{
+  0%{
+    opacity:0;
+    transform:scale(0.7);
+  }
+  18%{
+    opacity:0.92;
+    transform:scale(1.06);
+  }
+  100%{
+    opacity:0;
+    transform:scale(1.4);
+  }
+}
+
+@keyframes spartanDoryDust{
+  0%{
+    opacity:0;
+    transform:translateX(0) scale(0.7);
+  }
+  18%{
+    opacity:0.74;
+    transform:translateX(2vw) scale(0.95);
+  }
+  100%{
+    opacity:0;
+    transform:translateX(12vw) translateY(-6px) scale(1.15);
+  }
+}
+
+@media (max-width: 640px){
+  .join-party .circe-assassin-fx__rune{
+    width:270px;
+    height:270px;
+    margin-left:-135px;
+    margin-top:-135px;
+  }
+  .join-party .circe-assassin-fx__rune--echo{
+    width:320px;
+    height:320px;
+    margin-left:-160px;
+    margin-top:-160px;
+  }
+  .join-party .spartan-dory-fx__spear{
+    width:min(34vw, 220px);
+    height:min(9vh, 72px);
+    margin-top:calc(min(9vh, 72px) * -0.5);
+  }
+  .join-party .spartan-dory-fx__burst{
+    width:170px;
+    height:170px;
+    margin-left:-85px;
+    margin-top:-85px;
+  }
+  .join-party .water-mage-fx__sigil{
+    width:260px;
+    height:260px;
+    margin-left:-130px;
+    margin-top:-130px;
+  }
+}
+.join-party .knight-shield-fx__slam{
+  position:absolute;
+  left:var(--origin-x);
+  top:var(--origin-y);
+  width:88px;
+  height:110px;
+  margin-left:-44px;
+  margin-top:-55px;
+  opacity:0;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(248,250,252,0.98) 0 16px, rgba(248,250,252,0) 18px),
+    linear-gradient(180deg, rgba(246,248,251,0.95) 0%, rgba(192,202,217,0.95) 56%, rgba(115,129,149,0.95) 100%);
+  clip-path:polygon(50% 0%, 92% 20%, 92% 58%, 50% 100%, 8% 58%, 8% 20%);
+  border:2px solid rgba(223,231,241,0.92);
+  box-shadow:
+    0 0 0 2px rgba(81,98,124,0.35),
+    0 0 24px rgba(195,210,228,0.75);
+  filter:drop-shadow(0 0 12px rgba(203,219,239,0.85));
+  animation:knightShieldSlam 470ms cubic-bezier(.2,.78,.25,1) forwards;
+}
+.join-party .knight-shield-fx__ring{
+  position:absolute;
+  left:var(--origin-x);
+  top:var(--origin-y);
+  width:80px;
+  height:80px;
+  margin-left:-40px;
+  margin-top:-40px;
+  border-radius:999px;
+  border:3px solid rgba(228,236,246,0.95);
+  box-shadow:
+    0 0 0 2px rgba(150,169,194,0.3),
+    0 0 20px rgba(203,219,239,0.75);
+  opacity:0;
+  animation:knightShieldRing 470ms ease-out forwards;
+}
+.join-party .knight-shield-fx__ring--late{
+  animation-delay:60ms;
+}
+
+@keyframes knightShieldSlam{
+  0%{
+    opacity:0;
+    transform:translateY(-18px) scale(0.78);
+  }
+  24%{
+    opacity:1;
+    transform:translateY(0) scale(1.03);
+  }
+  100%{
+    opacity:0;
+    transform:translateY(4px) scale(1.18);
+  }
+}
+
+@keyframes knightShieldRing{
+  0%{
+    opacity:0;
+    transform:scale(0.72);
+  }
+  16%{
+    opacity:0.98;
+    transform:scale(0.95);
+  }
+  100%{
+    opacity:0;
+    transform:scale(3.8);
+  }
+}
+.join-party .cinder-ember-fx__core{
+  position:absolute;
+  left:var(--origin-x);
+  top:var(--origin-y);
+  width:72px;
+  height:72px;
+  margin-left:-36px;
+  margin-top:-36px;
+  border-radius:999px;
+  opacity:0;
+  background:radial-gradient(circle, rgba(255,248,212,0.95) 0%, rgba(255,181,70,0.6) 34%, rgba(255,110,18,0.2) 60%, rgba(255,110,18,0) 100%);
+  animation:cinderCorePulse 560ms ease-out forwards;
+}
+.join-party .cinder-ember-fx::before{
+  content:"";
+  position:absolute;
+  left:var(--origin-x);
+  top:var(--origin-y);
+  width:calc(var(--start-distance) * 2.1);
+  height:calc(var(--start-distance) * 2.1);
+  margin-left:calc(var(--start-distance) * -1.05);
+  margin-top:calc(var(--start-distance) * -1.05);
+  border-radius:18px;
+  border:2px solid rgba(255,187,94,0.7);
+  box-shadow:
+    0 0 0 2px rgba(255,120,35,0.28),
+    0 0 18px rgba(255,133,43,0.4);
+  opacity:0;
+  animation:cinderOutlineFlash 560ms ease-out forwards;
+}
+.join-party .cinder-ember-fx__ember{
+  position:absolute;
+  left:var(--origin-x);
+  top:var(--origin-y);
+  width:var(--size);
+  height:var(--size);
+  margin-left:calc(var(--size) * -0.5);
+  margin-top:calc(var(--size) * -0.5);
+  border-radius:999px;
+  opacity:0;
+  transform:rotate(var(--angle)) translateX(var(--start-distance)) scale(0.72);
+  transform-origin:center;
+  background:radial-gradient(circle, rgba(255,253,237,0.98) 0%, rgba(255,198,87,0.9) 38%, rgba(255,110,22,0.9) 70%, rgba(255,110,22,0) 100%);
+  filter:drop-shadow(0 0 8px rgba(255,144,31,0.75));
+  animation:cinderEmberBurst var(--duration) cubic-bezier(.19,.72,.22,1) var(--delay) forwards;
+}
+
+@keyframes cinderEmberBurst{
+  0%{
+    opacity:0;
+    transform:rotate(var(--angle)) translateX(calc(var(--start-distance) - 8px)) scale(0.6);
+  }
+  28%{
+    opacity:1;
+    transform:rotate(calc(var(--angle) + 30deg)) translateX(calc(var(--start-distance) + 12px)) scale(1);
+  }
+  100%{
+    opacity:0;
+    transform:rotate(calc(var(--angle) + 66deg)) translateX(calc(var(--start-distance) + var(--distance))) scale(0.86);
+  }
+}
+
+@keyframes cinderCorePulse{
+  0%{
+    opacity:0;
+    transform:scale(0.6);
+  }
+  22%{
+    opacity:0.95;
+    transform:scale(1.05);
+  }
+  100%{
+    opacity:0;
+    transform:scale(1.5);
+  }
+}
+
+@keyframes cinderOutlineFlash{
+  0%{
+    opacity:0;
+    transform:scale(0.9);
+  }
+  20%{
+    opacity:0.95;
+    transform:scale(1.02);
+  }
+  100%{
+    opacity:0;
+    transform:scale(1.1);
+  }
 }
 .join-party .paladin-sunburst__beam{
   position:absolute;
@@ -537,6 +1064,20 @@ button.card:disabled{ cursor:not-allowed; opacity:0.6; }
   z-index:60;
   overflow:hidden;
 }
+.join-party .water-mage-fx__sigil{
+  position:absolute;
+  left:var(--origin-x);
+  top:var(--origin-y);
+  width:340px;
+  height:340px;
+  margin-left:-170px;
+  margin-top:-170px;
+  opacity:0;
+  background:url("/assets/circe-rune.png") center / contain no-repeat;
+  filter:hue-rotate(188deg) saturate(1.45) brightness(1.08) drop-shadow(0 0 24px rgba(90,182,255,0.95));
+  mix-blend-mode:screen;
+  animation:waterSigilCast 650ms ease-out forwards;
+}
 .join-party .water-mage-fx__sprite{
   position:absolute;
   top:-14%;
@@ -552,6 +1093,21 @@ button.card:disabled{ cursor:not-allowed; opacity:0.6; }
   image-rendering:pixelated;
   filter:drop-shadow(0 1px 1px rgba(3, 62, 99, 0.28));
   animation:mageDropFall var(--duration) linear var(--delay) forwards;
+}
+
+@keyframes waterSigilCast{
+  0%{
+    opacity:0;
+    transform:scale(0.62) rotate(-16deg);
+  }
+  20%{
+    opacity:0.9;
+    transform:scale(1.04) rotate(-4deg);
+  }
+  100%{
+    opacity:0;
+    transform:scale(1.24) rotate(20deg);
+  }
 }
 
 @keyframes mageDropFall{
@@ -572,6 +1128,127 @@ button.card:disabled{ cursor:not-allowed; opacity:0.6; }
 }
 
 @media (max-width: 640px){
+  .page{
+    padding:18px 0 36px;
+  }
+  .stack{
+    gap:14px;
+  }
+  .row{
+    gap:10px;
+  }
+  .card-title{
+    font-size:clamp(20px, 5.6vw, 24px);
+    line-height:1.2;
+  }
+  .card-sub{
+    font-size:14px;
+    line-height:1.5;
+  }
+  .input,
+  .textarea,
+  .select,
+  .btn{
+    min-height:44px;
+    font-size:16px;
+  }
+  .btn-small{
+    min-height:40px;
+    font-size:14px;
+  }
+  .page-header .row{
+    width:100%;
+    align-items:stretch;
+  }
+  .page-header .row .btn{
+    width:100%;
+  }
+  .party-quiz-layout{
+    gap:14px;
+  }
+  .party-question-card,
+  .party-host-card,
+  .party-scoreboard-card,
+  .lobby-shell{
+    box-shadow:4px 4px 0 rgba(42,22,61,0.14);
+  }
+  .party-meta{
+    gap:8px;
+  }
+  .party-question-text{
+    font-size:clamp(20px, 6vw, 24px);
+    line-height:1.35;
+  }
+  .party-options{
+    gap:10px;
+    margin-top:12px;
+  }
+  .party-option{
+    padding:14px 14px;
+    font-size:16px;
+    line-height:1.45;
+    gap:12px;
+  }
+  .party-option-letter{
+    width:32px;
+    height:32px;
+  }
+  .score-row{
+    padding:10px;
+  }
+  .lobby-header{
+    align-items:flex-start;
+  }
+  .lobby-actions{
+    width:100%;
+  }
+  .lobby-actions .btn{
+    width:100%;
+  }
+  .lobby-panel.lobby-invite{
+    padding:18px;
+  }
+  .lobby-panel-head{
+    margin-bottom:12px;
+  }
+  .lobby-timer{
+    min-width:0;
+    width:100%;
+  }
+  .lobby-timer .select{
+    width:100%;
+  }
+  .lobby-link{
+    align-items:stretch;
+  }
+  .lobby-link .input{
+    flex:1 1 100%;
+  }
+  .lobby-link .btn{
+    width:100%;
+  }
+  .party-code-banner{
+    width:100%;
+    justify-content:space-between;
+  }
+  .party-code-value{
+    font-size:16px;
+    letter-spacing:0.12em;
+  }
+  .avatar-grid{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:12px;
+  }
+  .avatar-tile{
+    padding:12px 10px;
+    min-height:176px;
+  }
+  .avatar-tile .avatar{
+    max-width:180px;
+  }
+  .avatar-label{
+    font-size:13px;
+  }
   .join-party .join-code-row{
     align-items:stretch;
   }
@@ -580,6 +1257,57 @@ button.card:disabled{ cursor:not-allowed; opacity:0.6; }
   }
   .join-party .water-mage-fx__sprite{
     image-rendering:auto;
+  }
+}
+@media (max-width: 420px){
+  .page{
+    padding:14px 0 30px;
+  }
+  .card{
+    padding:14px;
+  }
+  .badge{
+    font-size:10px;
+    padding:4px 8px;
+  }
+  .party-option{
+    padding:12px;
+    font-size:15px;
+  }
+  .party-code-value{
+    font-size:14px;
+  }
+  .avatar-grid{
+    gap:10px;
+  }
+  .avatar-tile{
+    padding:10px 8px;
+    min-height:160px;
+  }
+}
+@media (hover: none){
+  .avatar-tile:not(:disabled):hover{
+    transform:none;
+    box-shadow:none;
+  }
+  .dashboard .avatar-tile:not(:disabled):hover,
+  .join-party .avatar-tile:not(:disabled):hover{
+    border-color:transparent;
+    box-shadow:none;
+  }
+  .dashboard .avatar-tile:not(:disabled):hover .avatar,
+  .join-party .avatar-tile:not(:disabled):hover .avatar{
+    filter:none;
+  }
+}
+@media (prefers-reduced-motion: reduce){
+  .join-party .water-mage-fx,
+  .join-party .paladin-sunburst,
+  .join-party .cinder-ember-fx,
+  .join-party .knight-shield-fx,
+  .join-party .spartan-dory-fx,
+  .join-party .circe-assassin-fx{
+    display:none;
   }
 }
 
