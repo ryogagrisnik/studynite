@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { cookies } from "next/headers";
 
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
@@ -11,14 +12,26 @@ import {
 import { resolveAvatarId } from "@/lib/studyhall/avatars";
 import { markPartyEvent } from "@/lib/studyhall/partyEvents";
 import { generateJoinCode, generateShareId } from "@/lib/studyhall/utils";
+import { resolvePracticeUser } from "@/lib/server/practiceAccess";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  const userId = (session?.user as any)?.id as string | undefined;
+  const cookieStore = cookies();
+  const resolved = resolvePracticeUser(session, cookieStore);
+  const sessionUserId = (session?.user as any)?.id as string | undefined;
+  const userId = sessionUserId ?? resolved.userId;
+  const isGuest = !sessionUserId;
   if (!userId) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+  if (isGuest) {
+    await prisma.user.upsert({
+      where: { id: userId },
+      update: {},
+      create: { id: userId },
+    });
   }
 
   let payload: {

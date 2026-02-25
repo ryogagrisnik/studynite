@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
+import { cookies } from "next/headers";
 
 import { withApi } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 import { env } from "@/lib/env";
 import prisma from "@/lib/prisma";
+import { redis } from "@/lib/redis";
 import { hasActiveProSession } from "@/lib/server/membership";
+import { resolvePracticeUser } from "@/lib/server/practiceAccess";
 import { getCachedDeck, setCachedDeck } from "@/lib/studyhall/deckCache";
 import { checkDeckLimits, recordDeckCreate } from "@/lib/studyhall/deckLimits";
 import { extractStudyText } from "@/lib/studyhall/ingest";
@@ -26,6 +29,53 @@ import {
 } from "@/lib/studyhall/constants";
 
 export const dynamic = "force-dynamic";
+
+const GUEST_DAILY_LIMIT = 1;
+const GUEST_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+type GuestQuotaState = {
+  count: number;
+  resetAt: number;
+};
+
+function parseGuestQuota(raw: unknown, now: number): GuestQuotaState {
+  if (!raw) return { count: 0, resetAt: now + GUEST_WINDOW_MS };
+  try {
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : (raw as GuestQuotaState);
+    if (typeof parsed?.count === "number" && typeof parsed?.resetAt === "number") {
+      if (now >= parsed.resetAt) {
+        return { count: 0, resetAt: now + GUEST_WINDOW_MS };
+      }
+      return { count: Math.max(0, parsed.count), resetAt: parsed.resetAt };
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return { count: 0, resetAt: now + GUEST_WINDOW_MS };
+}
+
+async function checkGuestDeckLimit(userId: string) {
+  const key = `studyhall:guest:deck:${userId}`;
+  const now = Date.now();
+  const raw = await redis.get(key);
+  const state = parseGuestQuota(raw, now);
+  if (state.count >= GUEST_DAILY_LIMIT) {
+    return {
+      ok: false as const,
+      retryAfterMs: state.resetAt - now,
+    };
+  }
+  return { ok: true as const, state };
+}
+
+async function recordGuestDeckCreate(userId: string, state: GuestQuotaState) {
+  const key = `studyhall:guest:deck:${userId}`;
+  const next: GuestQuotaState = {
+    count: state.count + 1,
+    resetAt: state.resetAt,
+  };
+  await redis.set(key, JSON.stringify(next));
+}
 
 const optionalString = z.preprocess(
   (value) => (value === null || value === undefined ? undefined : value),
@@ -109,7 +159,11 @@ export const GET = withApi(async () => {
 export const POST = withApi(async (req: Request) => {
   const session = await getServerSession(authOptions);
   const testUserId = getTestUserId(req);
-  const userId = ((session?.user as any)?.id as string | undefined) ?? testUserId;
+  const cookieStore = cookies();
+  const resolved = resolvePracticeUser(session, cookieStore);
+  const sessionUserId = (session?.user as any)?.id as string | undefined;
+  const userId = sessionUserId ?? testUserId ?? resolved.userId;
+  const isGuest = !sessionUserId && !testUserId;
   if (!userId) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
@@ -118,17 +172,35 @@ export const POST = withApi(async (req: Request) => {
   const isPro = hasActiveProSession(session);
   const cacheUserId = isPro ? userId : "free";
 
-  const maxCreates = Math.max(1, Number(env.RATE_LIMIT_DECK_CREATE_MAX ?? "8"));
-  if (!isTestMode) {
-    const limitCheck = await checkDeckLimits(userId, isPro, maxCreates);
-    if (!limitCheck.ok) {
-      const retryAfter = Math.max(1, Math.ceil(limitCheck.retryAfterMs / 1000));
+  if (isGuest && !isTestMode) {
+    const guestLimit = await checkGuestDeckLimit(userId);
+    if (!guestLimit.ok) {
+      const retryAfter = Math.max(1, Math.ceil(guestLimit.retryAfterMs / 1000));
       const res = NextResponse.json(
-        { ok: false, error: limitCheck.error, retryAfter },
+        { ok: false, error: "GUEST_LIMIT_REACHED", retryAfter },
         { status: 429 }
       );
       res.headers.set("Retry-After", String(retryAfter));
       return res;
+    }
+    await prisma.user.upsert({
+      where: { id: userId },
+      update: {},
+      create: { id: userId },
+    });
+  } else {
+    const maxCreates = Math.max(1, Number(env.RATE_LIMIT_DECK_CREATE_MAX ?? "8"));
+    if (!isTestMode) {
+      const limitCheck = await checkDeckLimits(userId, isPro, maxCreates);
+      if (!limitCheck.ok) {
+        const retryAfter = Math.max(1, Math.ceil(limitCheck.retryAfterMs / 1000));
+        const res = NextResponse.json(
+          { ok: false, error: limitCheck.error, retryAfter },
+          { status: 429 }
+        );
+        res.headers.set("Retry-After", String(retryAfter));
+        return res;
+      }
     }
   }
 
@@ -276,7 +348,13 @@ export const POST = withApi(async (req: Request) => {
     });
 
     if (!isTestMode) {
-      await recordDeckCreate(userId, isPro, maxCreates);
+      if (isGuest) {
+        const guestState = parseGuestQuota(await redis.get(`studyhall:guest:deck:${userId}`), Date.now());
+        await recordGuestDeckCreate(userId, guestState);
+      } else {
+        const maxCreates = Math.max(1, Number(env.RATE_LIMIT_DECK_CREATE_MAX ?? "8"));
+        await recordDeckCreate(userId, isPro, maxCreates);
+      }
     }
 
     return NextResponse.json({ ok: true, deckId: deck.id, shareId: deck.shareId });

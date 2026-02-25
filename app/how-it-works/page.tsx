@@ -169,25 +169,26 @@ export default async function HowItWorksPage({
     userId ? getUserRank(range, userId) : Promise.resolve(0),
   ]);
   return (
-    <div className="page stack">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Global leaderboard</h1>
+    <div className="page forge-bleed leaderboard-page">
+      <div className="forge-page stack">
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Global leaderboard</h1>
+          </div>
+          <div className="row">
+            <Link className={`btn ${range === "all" ? "btn-primary" : "btn-outline"}`} href="/how-it-works">
+              All time
+            </Link>
+            <Link
+              className={`btn ${range === "weekly" ? "btn-primary" : "btn-outline"}`}
+              href="/how-it-works?range=weekly"
+            >
+              Weekly
+            </Link>
+          </div>
         </div>
-        <div className="row">
-          <Link className={`btn ${range === "all" ? "btn-primary" : "btn-outline"}`} href="/how-it-works">
-            All time
-          </Link>
-          <Link
-            className={`btn ${range === "weekly" ? "btn-primary" : "btn-outline"}`}
-            href="/how-it-works?range=weekly"
-          >
-            Weekly
-          </Link>
-        </div>
-      </div>
 
-      <section className="card leaderboard-card leaderboard-altar rpg-reveal">
+        <section className="card leaderboard-card leaderboard-altar rpg-reveal">
         <div className="leaderboard-head">
           <div>
             <h2 className="card-title">Top adventurers</h2>
@@ -259,7 +260,8 @@ export default async function HowItWorksPage({
             </p>
           ) : null}
         </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

@@ -10,10 +10,10 @@ export default function Header() {
   return (
     <header className="site-header">
       <div className="inner">
-        <Link href="/" className="logo" aria-label="BlobPrep home">
+        <Link href="/" className="logo" aria-label="RunePrep home">
           <Image
             src="/assets/logo.png"
-            alt="BlobPrep logo"
+            alt="RunePrep logo"
             width={120}
             height={64}
             priority

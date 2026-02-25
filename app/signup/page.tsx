@@ -1,19 +1,38 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { signIn } from "next-auth/react";
+import { FormEvent, useEffect, useState, Suspense } from "react";
+import { signIn, getProviders, type ClientSafeProvider } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type MessageState = { type: "success" | "error"; text: string } | null;
 
-export default function SignUp() {
+function normalizeCallbackUrl(value: string | null) {
+  if (!value) return "/dashboard";
+  if (value.startsWith("/")) return value;
+  try {
+    const parsed = new URL(value);
+    const path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    return path.startsWith("/") ? path : "/dashboard";
+  } catch {
+    return "/dashboard";
+  }
+}
+
+function SignUpClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = normalizeCallbackUrl(searchParams?.get("callbackUrl") ?? null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<MessageState>(null);
+  const [providers, setProviders] = useState<Record<string, ClientSafeProvider> | null>(null);
+
+  useEffect(() => {
+    void getProviders().then((data) => setProviders(data ?? null));
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,7 +64,7 @@ export default function SignUp() {
       email: email.trim().toLowerCase(),
       password,
       redirect: false,
-      callbackUrl: "/dashboard",
+      callbackUrl,
     });
 
     if (login?.error) {
@@ -77,6 +96,21 @@ export default function SignUp() {
             }}
           >
             {message.text}
+          </div>
+        ) : null}
+
+        {providers?.google ? (
+          <div className="stack" style={{ gap: 10 }}>
+            <button
+              className="btn btn-outline"
+              type="button"
+              onClick={() => signIn("google", { callbackUrl })}
+            >
+              Continue with Google
+            </button>
+            <div className="muted" style={{ fontSize: 12, textAlign: "center" }}>
+              or create an account with email
+            </div>
           </div>
         ) : null}
 
@@ -115,5 +149,13 @@ export default function SignUp() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignUp() {
+  return (
+    <Suspense fallback={<div className="page">Loading...</div>}>
+      <SignUpClient />
+    </Suspense>
   );
 }

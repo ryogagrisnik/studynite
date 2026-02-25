@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 import { avatars, resolveAvatarId } from "@/lib/studyhall/avatars";
 
 export default function JoinPartyPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [avatarId, setAvatarId] = useState(resolveAvatarId(null));
@@ -52,7 +53,22 @@ export default function JoinPartyPage() {
       setLastPartyId(stored);
       setLastPartyHasSeat(Boolean(window.localStorage.getItem(`studyhall:party:${stored}`)));
     }
-  }, []);
+    const storedName = window.localStorage.getItem("studyhall:lastPartyName");
+    if (storedName && !name) {
+      setName(storedName);
+    }
+    const storedAvatarId = window.localStorage.getItem("studyhall:lastPartyAvatarId");
+    if (storedAvatarId && avatarId !== storedAvatarId) {
+      setAvatarId(resolveAvatarId(storedAvatarId));
+    }
+  }, [avatarId, name]);
+
+  useEffect(() => {
+    const queryCode = searchParams?.get("code");
+    if (queryCode) {
+      setCode(queryCode.trim().toUpperCase());
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     return () => {
@@ -290,6 +306,8 @@ export default function JoinPartyPage() {
           })
         );
         window.localStorage.setItem("studyhall:lastPartyId", data.partyId);
+        window.localStorage.setItem("studyhall:lastPartyName", name.trim());
+        window.localStorage.setItem("studyhall:lastPartyAvatarId", data.player.avatarId);
       }
       await fetch("/api/events/studyhall", {
         method: "POST",
@@ -317,7 +335,9 @@ export default function JoinPartyPage() {
 
 
   return (
-    <div className="page stack join-party">
+    <>
+      <div className="join-quizizz-bleed join-party">
+      <div className="join-quizizz-shell">
       {rogueFxActive ? (
         <div
           className="rogue-claw-fx"
@@ -487,17 +507,120 @@ export default function JoinPartyPage() {
           ))}
         </div>
       ) : null}
+      <Link className="join-quizizz-logo" href="/" aria-label="RunePrep home">
+        RunePrep
+      </Link>
+      <div className="join-quizizz-card">
+        <h1 className="join-quizizz-title">Enter Game Code</h1>
+        <input
+          id="code"
+          className="join-quizizz-input"
+          value={code}
+          onChange={(event) => setCode(event.target.value.toUpperCase())}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !loading && code.trim() && name.trim()) {
+              handleJoin();
+            }
+          }}
+          placeholder="GAME CODE"
+        />
+        <input
+          id="name"
+          className="join-quizizz-input join-quizizz-input--name"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !loading && code.trim() && name.trim()) {
+              handleJoin();
+            }
+          }}
+          placeholder="Your name"
+        />
+        <button
+          className="join-quizizz-btn"
+          onClick={handleJoin}
+          disabled={loading || !code.trim() || !name.trim()}
+        >
+          {loading ? "Joining..." : "Proceed"}
+        </button>
+        <div className="join-quizizz-divider" />
+        <div className="join-quizizz-avatar-title">Choose your character</div>
+        <div className="join-quizizz-avatars">
+          {avatars.map((avatar) => (
+            <button
+              key={avatar.id}
+              className={`join-quizizz-avatar ${avatarId === avatar.id ? "is-selected" : ""}`}
+              ref={
+                avatar.id === "wizard"
+                  ? wizardTileRef
+                  : avatar.id === "paladin"
+                  ? paladinTileRef
+                  : avatar.id === "pepe"
+                    ? cinderTileRef
+                    : avatar.id === "knight"
+                      ? knightTileRef
+                      : avatar.id === "rider"
+                        ? riderTileRef
+                        : avatar.id === "archer"
+                          ? circeTileRef
+                          : avatar.id === "rogue"
+                            ? rogueTileRef
+                          : undefined
+              }
+              type="button"
+              onClick={(event) => {
+                setAvatarId(avatar.id);
+                if (avatar.id === "wizard" && avatarId !== "wizard") {
+                  triggerWaterFx(event.currentTarget);
+                }
+                if (avatar.id === "paladin" && avatarId !== "paladin") {
+                  triggerLightFx(event.currentTarget);
+                }
+                if (avatar.id === "pepe" && avatarId !== "pepe") {
+                  triggerEmberFx(event.currentTarget);
+                }
+                if (avatar.id === "knight" && avatarId !== "knight") {
+                  triggerKnightFx(event.currentTarget);
+                }
+                if (avatar.id === "rider" && avatarId !== "rider") {
+                  triggerSpartanFx(event.currentTarget);
+                }
+                if (avatar.id === "archer" && avatarId !== "archer") {
+                  triggerCirceFx(event.currentTarget);
+                }
+                if (avatar.id === "rogue" && avatarId !== "rogue") {
+                  triggerRogueFx(event.currentTarget);
+                }
+              }}
+            >
+              <img className="avatar avatar-lg" src={avatar.src} alt={avatar.label} />
+              <span className="avatar-label">{avatar.label}</span>
+            </button>
+          ))}
+        </div>
+        <button type="button" className="join-quizizz-paste" onClick={handlePasteCode}>
+          Paste code
+        </button>
+        {error ? (
+          <div className="join-quizizz-error" role="alert">
+            <strong>Couldn't join the party.</strong>
+            <span>{error}</span>
+          </div>
+        ) : null}
+      </div>
       {lastPartyId ? (
-        <div className="card stack">
-          <h2 className="card-title">Resume your last party</h2>
-          <p className="card-sub">
-            {lastPartyHasSeat
-              ? "Your seat is saved. Jump back in with one click."
-              : "Rejoin your last party with your name and avatar."}
-          </p>
-          <div className="row cta-row">
+        <div className="join-quizizz-resume">
+          <div>
+            <div className="join-quizizz-resume-title">Resume your last party</div>
+            <div className="join-quizizz-resume-sub">
+              {lastPartyHasSeat
+                ? "Your seat is saved. Jump back in with one click."
+                : "Rejoin your last party with your name and avatar."}
+            </div>
+          </div>
+          <div className="join-quizizz-resume-actions">
             <button className="btn btn-primary" onClick={() => router.push(`/party/${lastPartyId}`)}>
-              Resume party
+              Resume
             </button>
             <button
               className="btn btn-outline"
@@ -514,132 +637,11 @@ export default function JoinPartyPage() {
           </div>
         </div>
       ) : null}
-      <div className="card stack join-panel join-panel--glow">
-        <h1 className="page-title">Join a quiz party</h1>
-        <p className="page-sub">Bring your name and avatar, then join with a party code.</p>
-        <div className="field">
-          <label className="field-label" htmlFor="name">Your name</label>
-          <input
-            id="name"
-            className="input"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Name"
-          />
-        </div>
-        <div className="field">
-          <label className="field-label">Choose an avatar</label>
-          <div className="avatar-grid">
-            {avatars.map((avatar) => (
-              <button
-                key={avatar.id}
-                className={`avatar-tile ${avatarId === avatar.id ? "is-selected" : ""}`}
-                ref={
-                  avatar.id === "wizard"
-                    ? wizardTileRef
-                    : avatar.id === "paladin"
-                    ? paladinTileRef
-                    : avatar.id === "pepe"
-                      ? cinderTileRef
-                      : avatar.id === "knight"
-                        ? knightTileRef
-                        : avatar.id === "rider"
-                          ? riderTileRef
-                          : avatar.id === "archer"
-                            ? circeTileRef
-                            : avatar.id === "rogue"
-                              ? rogueTileRef
-                            : undefined
-                }
-                type="button"
-                onClick={(event) => {
-                  setAvatarId(avatar.id);
-                  if (avatar.id === "wizard" && avatarId !== "wizard") {
-                    triggerWaterFx(event.currentTarget);
-                  }
-                  if (avatar.id === "paladin" && avatarId !== "paladin") {
-                    triggerLightFx(event.currentTarget);
-                  }
-                  if (avatar.id === "pepe" && avatarId !== "pepe") {
-                    triggerEmberFx(event.currentTarget);
-                  }
-                  if (avatar.id === "knight" && avatarId !== "knight") {
-                    triggerKnightFx(event.currentTarget);
-                  }
-                  if (avatar.id === "rider" && avatarId !== "rider") {
-                    triggerSpartanFx(event.currentTarget);
-                  }
-                  if (avatar.id === "archer" && avatarId !== "archer") {
-                    triggerCirceFx(event.currentTarget);
-                  }
-                  if (avatar.id === "rogue" && avatarId !== "rogue") {
-                    triggerRogueFx(event.currentTarget);
-                  }
-                }}
-              >
-                <img className="avatar avatar-lg" src={avatar.src} alt={avatar.label} />
-                <span className="avatar-label">{avatar.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+      <Link className="join-quizizz-back" href="/">
+        Back to home
+      </Link>
       </div>
-
-      <div className="card stack join-panel join-panel--glow">
-        <h2 className="card-title">Join with a code</h2>
-        <p className="card-sub">Have a quiz party code? Enter it below.</p>
-        <div className="field">
-          <label className="field-label" htmlFor="code">Party code</label>
-          <div className="join-code-row">
-            <input
-              id="code"
-              className="input join-code-input"
-              value={code}
-              onChange={(event) => setCode(event.target.value.toUpperCase())}
-              placeholder="ABC123"
-            />
-            <button
-              type="button"
-              className="btn btn-outline btn-small join-code-paste"
-              onClick={handlePasteCode}
-            >
-              Paste code
-            </button>
-          </div>
-          <span className="field-help join-code-hint">Uppercase letters and numbers.</span>
-        </div>
-        {error ? (
-          <div className="card card--error stack" role="alert">
-            <strong>Couldn't join the party.</strong>
-            <span>{error}</span>
-            <div className="row cta-row">
-              <button
-                className="btn btn-outline btn-small"
-                onClick={handleJoin}
-                disabled={loading || !code.trim() || !name.trim()}
-              >
-                Try again
-              </button>
-              <button className="btn btn-outline btn-small" onClick={() => setError(null)}>
-                Dismiss
-              </button>
-            </div>
-          </div>
-        ) : null}
-        <div className="row cta-row">
-          <button
-            className="btn btn-primary"
-            onClick={handleJoin}
-            disabled={loading || !code.trim() || !name.trim()}
-          >
-            {loading ? "Joining..." : "Join party"}
-          </button>
-          <Link className="btn btn-outline" href="/">
-            Back to home
-          </Link>
-        </div>
       </div>
-
-    </div>
+    </>
   );
 }

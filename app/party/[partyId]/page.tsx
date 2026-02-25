@@ -123,6 +123,7 @@ type JoinResponse = {
 export default function PartyPage({ params }: { params: { partyId: string } }) {
   const { data: session, status: sessionStatus } = useSession();
   const userId = sessionStatus === "authenticated" ? ((session?.user as any)?.id as string) : null;
+  const isGuestUser = sessionStatus !== "authenticated";
   const userEmail =
     sessionStatus === "authenticated" ? ((session?.user as any)?.email as string | undefined) : undefined;
   const [playerToken, setPlayerToken] = useState<string | null>(null);
@@ -153,11 +154,12 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
 
   const progressKey = useMemo(() => getProgressKey(userId ?? null), [userId]);
 
-  const shareLink = useMemo(() => {
+  const joinCode = state?.party.joinCode;
+  const joinLink = useMemo(() => {
+    if (!joinCode) return "";
     if (typeof window === "undefined") return "";
-    return `${window.location.origin}/party/${params.partyId}`;
-  }, [params.partyId]);
-  const inviteLink = shareLink || `https://runeprep.com/party/${params.partyId}`;
+    return `${window.location.origin}/party/join?code=${encodeURIComponent(joinCode)}`;
+  }, [joinCode]);
 
   const inviteMessage = useMemo(() => {
     if (!state) return "";
@@ -167,9 +169,9 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
     if (topPlayers.length) {
       lines.push(`Top players: ${topPlayers.map((player) => player.name).join(", ")}.`);
     }
-    lines.push(`Join the next round with code ${state.party.joinCode} or jump in: ${inviteLink}`);
+    lines.push(`Join the next round with code ${state.party.joinCode}.`);
     return lines.join(" ");
-  }, [state, inviteLink]);
+  }, [state]);
 
   useEffect(() => {
     setSelectedAnswerIndex(null);
@@ -410,7 +412,11 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
   };
 
   const handleAdvance = async () => {
-    if (!playerToken) return;
+    if (!playerToken || !state) return;
+    if (state.party.mode === "QUIZ" && !state.party.answerRevealedAt) {
+      await handleReveal();
+      return;
+    }
     await fetch(`/api/studyhall/parties/${params.partyId}/advance`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -570,11 +576,6 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
     }
   };
 
-  const handleCopy = async () => {
-    if (!inviteLink) return;
-    await navigator.clipboard.writeText(inviteLink);
-  };
-
   const handleCopyCode = async () => {
     if (!state?.party.joinCode) return;
     await navigator.clipboard.writeText(state.party.joinCode);
@@ -698,20 +699,30 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
         return { overallAccuracy, hardestQuiz: hardest };
       })()
     : null;
+  const accuracyPct = recap ? Math.round(recap.overallAccuracy * 100) : 0;
+  const overallAvgTimeMs = state.results
+    ? state.results.players.reduce((sum, player) => sum + (player.avgTimeMs ?? 0), 0) /
+      Math.max(1, state.results.players.filter((player) => player.avgTimeMs).length)
+    : 0;
+  const needsHelp = state.results
+    ? [...state.results.players].sort((a, b) => a.accuracy - b.accuracy).slice(0, 3)
+    : [];
+  const didntFinish = state.results
+    ? state.results.players.filter((player) => player.totalAnswered < (state.results?.totalItems ?? totalItems)).slice(0, 3)
+    : [];
+
+  const pageClass = state?.party.status === "LOBBY" ? "page stack lobby-bleed" : "page stack";
 
   return (
-    <div className="page stack">
+    <div className={pageClass}>
       <div className="page-header">
         <div>
-          {state.party.status === "LOBBY" ? null : (
+          {state.party.status === "LOBBY" || state.party.status === "COMPLETE" ? null : (
             <h1 className="page-title">{state.deck.title}</h1>
           )}
         </div>
-        {state.party.status === "LOBBY" ? null : (
+        {state.party.status === "LOBBY" || state.party.status === "COMPLETE" ? null : (
           <div className="row">
-            <button className="btn btn-outline" onClick={handleCopy}>
-              Copy party link
-            </button>
             <Link className="btn btn-outline" href="/dashboard">
               Exit
             </Link>
@@ -722,11 +733,11 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
       {error ? <div className="card" style={{ borderColor: "#FCA5A5" }}>{error}</div> : null}
       {actionError ? <div className="card" style={{ borderColor: "#FCA5A5" }}>{actionError}</div> : null}
       {state.party.status === "LOBBY" ? (
-        <div className="card stack lobby-shell rpg-reveal">
-          <div className="lobby-header">
+        <div className="card stack lobby-shell lobby-shell--live rpg-reveal">
+          <div className="lobby-topbar">
             <div>
-              <h2 className="card-title">Lobby</h2>
-              <p className="card-sub">Waiting for the host to start.</p>
+              <div className="lobby-kicker">Lobby</div>
+              <div className="lobby-sub">Waiting for the host to start.</div>
             </div>
             <div className="lobby-actions">
               {isHost ? (
@@ -747,90 +758,74 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
               )}
             </div>
           </div>
-          <div className="lobby-meta">
-            <span className="badge">{state.party.questionDurationSec}s timer</span>
-            {state.party.joinLocked ? <span className="badge badge-soft">Join locked</span> : null}
-          </div>
 
-          <div className="lobby-grid">
-            <div className="card card--plain lobby-panel">
-              <div className="lobby-panel-head">
-                <h3 className="card-title">Players</h3>
-                {isHost ? (
-                  <div className="field lobby-timer">
-                    <label className="field-label">Question timer</label>
-                    <select
-                      className="select"
-                      value={state.party.questionDurationSec}
-                      onChange={(event) => handleUpdateTimer(Number(event.target.value))}
-                      disabled={updatingTimer}
-                    >
-                      {timerOptions.map((option) => (
-                        <option key={option} value={option}>{option}s</option>
-                      ))}
-                    </select>
-                  </div>
-                ) : null}
-              </div>
-              <div className="scoreboard">
-                {state.players.map((player) => {
-                  const avatar = getAvatarById(player.avatarId) ?? getAvatarById(DEFAULT_AVATAR_ID);
-                  const rowClass = `score-row${player.isHost ? " is-host" : ""}${player.isActive ? "" : " is-inactive"}`;
-                  return (
-                    <div key={player.id} className={rowClass}>
-                      <span className="row" style={{ gap: 10 }}>
-                        {avatar ? <img className="avatar" src={avatar.src} alt={avatar.label} /> : null}
-                        {player.name}
-                        {!player.isActive ? <span className="badge badge-soft">Offline</span> : null}
-                      </span>
-                      <span className="row" style={{ gap: 6 }}>
-                        <span className="badge">{player.totalScore}</span>
-                        {player.bonusScore > 0 ? (
-                          <span className="badge badge-soft">+{player.bonusScore}</span>
-                        ) : null}
-                        {isHost && !player.isHost ? (
-                          <button
-                            className="btn btn-outline btn-small"
-                            onClick={() => handleKick(player.id)}
-                            disabled={kickingPlayerId === player.id}
-                          >
-                            {kickingPlayerId === player.id ? "Removing..." : "Kick"}
-                          </button>
-                        ) : null}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="card card--plain lobby-panel lobby-invite">
-              <div className="lobby-panel-head">
-                <h3 className="card-title">Invite your party</h3>
-                <button className="btn btn-outline btn-small" onClick={() => setShowInviteModal(true)}>
-                  Open invite
-                </button>
-              </div>
-              <p className="card-sub">Share the link or code to bring others in.</p>
-              <div className="lobby-code-row">
-                <div className="party-code-banner lobby-code-banner">
-                  <span className="party-code-label">Party code</span>
-                  <span className="party-code-value">{state.party.joinCode}</span>
-                </div>
+          <div className="lobby-body">
+            <aside className="lobby-sidebar">
+              <div className="lobby-brand">RunePrep Live</div>
+              <div className="lobby-code-card">
+                <span className="lobby-code-label">Enter game code</span>
+                <div className="lobby-code-value">{state.party.joinCode}</div>
                 <button className="btn btn-outline btn-small" onClick={handleCopyCode}>
                   Copy code
                 </button>
               </div>
-              <div className="lobby-link">
-                <input className="input" value={shareLink} readOnly />
-                <button className="btn btn-primary" onClick={handleCopy}>
-                  Copy link
+              <div className="lobby-qr-card">
+                <div className="lobby-qr">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
+                      joinLink
+                    )}`}
+                    alt="Party QR code"
+                  />
+                </div>
+                <span className="lobby-qr-caption">Scan to join</span>
+              </div>
+              <div className="lobby-side-actions">
+                <button className="btn btn-outline" onClick={handleCopyCode}>
+                  Copy code
                 </button>
               </div>
-              <div className="lobby-note">
-                {state.party.joinLocked ? "Join is locked by the host." : "Anyone with the link can join."}
+              {isHost ? (
+                <div className="field lobby-timer">
+                  <label className="field-label">Question timer</label>
+                  <select
+                    className="select"
+                    value={state.party.questionDurationSec}
+                    onChange={(event) => handleUpdateTimer(Number(event.target.value))}
+                    disabled={updatingTimer}
+                  >
+                    {timerOptions.map((option) => (
+                      <option key={option} value={option}>{option}s</option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+              {state.party.joinLocked ? (
+                <span className="badge badge-soft">Join locked</span>
+              ) : (
+                <span className="muted">Join with QR or game code.</span>
+              )}
+            </aside>
+
+            <section className="lobby-stage">
+              <div className="lobby-stage-title">Players</div>
+              <div className="lobby-player-orbit">
+                {state.players.map((player, index) => {
+                  const avatar = getAvatarById(player.avatarId) ?? getAvatarById(DEFAULT_AVATAR_ID);
+                  const angle = (360 / Math.max(1, state.players.length)) * index;
+                  return (
+                    <div
+                      key={player.id}
+                      className={`lobby-player${player.isHost ? " is-host" : ""}${player.isActive ? "" : " is-inactive"}`}
+                      style={{ ["--angle" as any]: `${angle}deg` }}
+                    >
+                      {avatar ? <img className="lobby-player-avatar" src={avatar.src} alt={avatar.label} /> : null}
+                      <span className="lobby-player-name">{player.name}</span>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            </section>
           </div>
         </div>
       ) : null}
@@ -883,52 +878,55 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
               </span>
             </div>
           ) : null}
-          <div className="card stack party-question-card rpg-reveal">
-            <div className="party-meta">
-              <span className="badge">
-                Q {state.party.currentQuestionIndex + 1} / {totalItems}
-              </span>
-              <span className="badge">{timeRemaining}s</span>
-              {state.party.isPaused ? <span className="badge badge-soft">Paused</span> : null}
+          {state.question ? (
+            <div className="card stack party-question-card rpg-reveal">
+              <div className="party-meta">
+                <span className="badge">
+                  Q {state.party.currentQuestionIndex + 1} / {totalItems}
+                </span>
+                <span className="badge">{timeRemaining}s</span>
+                {state.party.isPaused ? <span className="badge badge-soft">Paused</span> : null}
+              </div>
+              <h2 className="party-question-text">{state.question.prompt}</h2>
+              <div className="party-options">
+                {state.question.choices.map((choice, index) => {
+                  const submittedIndex = state.player?.submission?.answerIndex ?? selectedAnswerIndex;
+                  const isSelected = submittedIndex === index;
+                  const isCorrect = answerRevealed && state.revealedCorrectIndex === index;
+                  const isWrong = answerRevealed && isSelected && !isCorrect;
+                  return (
+                    <button
+                      key={`${state.question?.id}-${index}`}
+                      className={`party-option${isSelected ? " is-selected" : ""}${isCorrect ? " is-correct" : ""}${isWrong ? " is-wrong" : ""}`}
+                      onClick={() => handleSubmitAnswer(index)}
+                      disabled={
+                        submitting ||
+                        !state.player ||
+                        submittedIndex !== null ||
+                        timeRemaining <= 0 ||
+                        answerRevealed ||
+                        state.party.isPaused
+                      }
+                    >
+                      <span className="party-option-letter">{String.fromCharCode(65 + index)}</span>
+                      <span className="party-option-text">{choice}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {state.player?.hasSubmitted || selectedAnswerIndex !== null ? (
+                <span className="muted answer-locked-text">
+                  {answerRevealed
+                    ? "Answer revealed."
+                    : "Answer locked. Waiting for the reveal."}
+                </span>
+              ) : state.party.isPaused ? (
+                <span className="muted">Timer paused.</span>
+              ) : timeRemaining <= 0 ? (
+                <span className="muted">Time is up. Waiting for the reveal.</span>
+              ) : null}
             </div>
-            <h2 className="party-question-text">{state.question.prompt}</h2>
-            <div className="party-options">
-              {state.question.choices.map((choice, index) => {
-                const submittedIndex = state.player?.submission?.answerIndex ?? selectedAnswerIndex;
-                const isSelected = submittedIndex === index;
-                const isCorrect = answerRevealed && state.revealedCorrectIndex === index;
-                return (
-                  <button
-                    key={`${state.question?.id}-${index}`}
-                    className={`party-option${isSelected ? " is-selected" : ""}${isCorrect ? " is-correct" : ""}`}
-                    onClick={() => handleSubmitAnswer(index)}
-                    disabled={
-                      submitting ||
-                      !state.player ||
-                      submittedIndex !== null ||
-                      timeRemaining <= 0 ||
-                      answerRevealed ||
-                      state.party.isPaused
-                    }
-                  >
-                    <span className="party-option-letter">{String.fromCharCode(65 + index)}</span>
-                    <span className="party-option-text">{choice}</span>
-                  </button>
-                );
-              })}
-            </div>
-            {state.player?.hasSubmitted || selectedAnswerIndex !== null ? (
-              <span className="muted answer-locked-text">
-                {answerRevealed
-                  ? "Answer revealed."
-                  : "Answer locked. Waiting for the reveal."}
-              </span>
-            ) : state.party.isPaused ? (
-              <span className="muted">Timer paused.</span>
-            ) : timeRemaining <= 0 ? (
-              <span className="muted">Time is up. Waiting for the reveal.</span>
-            ) : null}
-          </div>
+          ) : null}
 
           {isHost ? (
             <div className="card stack party-host-card rpg-reveal">
@@ -944,13 +942,6 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
                     onClick={state.party.isPaused ? handleResume : handlePause}
                   >
                     {state.party.isPaused ? "Resume timer" : "Pause timer"}
-                  </button>
-                  <button
-                    className="btn btn-outline"
-                    onClick={handleReveal}
-                    disabled={answerRevealed}
-                  >
-                    {answerRevealed ? "Answer revealed" : "Reveal answer"}
                   </button>
                 </div>
                 <div className="field" style={{ maxWidth: 240 }}>
@@ -986,7 +977,7 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
                   </div>
                 ) : null}
                 <button className="btn btn-primary" onClick={handleAdvance}>
-                  Next / skip question
+                  {answerRevealed ? "Next question" : "Reveal answer"}
                 </button>
               </div>
             </div>
@@ -999,199 +990,169 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
       ) : null}
 
       {state.party.status === "COMPLETE" ? (
-        <div className="card stack rpg-reveal">
-          <h2 className="card-title">Results</h2>
-          <div className="row" style={{ flexWrap: "wrap", gap: 10 }}>
-            <span className="badge">
-              Winner: {topPlayers[0]?.name ?? "—"}
-            </span>
-            <span className="badge">Players: {state.players.length}</span>
-            <span className="badge">
-              Questions: {state.results?.totalItems ?? totalItems}
-            </span>
-            {recap ? (
-              <span className="badge badge-soft">
-                {Math.round(recap.overallAccuracy * 100)}% overall accuracy
-              </span>
-            ) : null}
-          </div>
-
-          <div className="card stack">
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <h3 className="card-title">Share summary + invite friends</h3>
-              <button className="btn btn-outline btn-small" onClick={handleCopyInviteMessage}>
-                Copy invite message
-              </button>
+        <div className="report-bleed">
+          <div className="report-page rpg-reveal">
+          <div className="report-head">
+            <div>
+              <div className="report-kicker">Report</div>
+              <h1 className="report-title">{state.deck.title || "Untitled deck"}</h1>
             </div>
-            <p className="card-sub">Send your recap and invite others to the next round.</p>
-            <div className="stack" style={{ gap: 12 }}>
-              <div className="row">
-                <input className="input" value={inviteLink} readOnly />
-                <button className="btn btn-outline" onClick={handleCopy}>
-                  Copy link
-                </button>
-              </div>
-              <div className="row">
-                <span className="badge">Code: {state.party.joinCode}</span>
-                <button className="btn btn-outline btn-small" onClick={handleCopyCode}>
-                  Copy code
-                </button>
-              </div>
-              <div className="field">
-                <label className="field-label">Prefilled message</label>
-                <textarea className="input" rows={3} value={inviteMessage} readOnly />
-              </div>
-            </div>
-          </div>
-
-          <div className="card stack">
-            <h3 className="card-title">Leaderboard</h3>
-            <div className="scoreboard results">
-              {state.players.map((player, index) => {
-                const avatar = getAvatarById(player.avatarId) ?? getAvatarById(DEFAULT_AVATAR_ID);
-                const rowClass = `score-row ${player.isHost ? "is-host" : ""}${index < 3 ? " score-row--tier" : ""}`;
-                return (
-                  <div key={player.id} className={rowClass}>
-                    <span className="row" style={{ gap: 10 }}>
-                      {avatar ? <img className="avatar" src={avatar.src} alt={avatar.label} /> : null}
-                      {index + 1}. {player.name}
-                    </span>
-                    <span className="row" style={{ gap: 6 }}>
-                      <span className="badge">{player.totalScore}</span>
-                      {player.bonusScore > 0 ? (
-                        <span className="badge badge-soft">+{player.bonusScore}</span>
-                      ) : null}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {state.results ? (
-            <div className="stack">
-              {recap ? (
-                <div className="card stack">
-                  <h3 className="card-title">Most missed questions</h3>
-                  {recap.hardestQuiz.length === 0 ? (
-                    <span className="muted">No misses yet.</span>
-                  ) : (
-                    <div className="stack">
-                      {recap.hardestQuiz.map((question) => (
-                        <div key={question.id} className="row" style={{ justifyContent: "space-between", gap: 12 }}>
-                          <span className="muted">
-                            Q{question.order}. {question.prompt}
-                          </span>
-                          <span className="badge">
-                            {Math.round(question.accuracy * 100)}% correct
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : null}
-
-              <div className="card stack">
-                <div className="row" style={{ justifyContent: "space-between" }}>
-                  <h3 className="card-title">Detailed breakdown</h3>
-                  <button
-                    className="btn btn-outline btn-small"
-                    onClick={() => setShowResultsDetails((prev) => !prev)}
-                  >
-                    {showResultsDetails ? "Hide details" : "Show details"}
-                  </button>
-                </div>
-                {showResultsDetails ? (
-                  <div className="stack">
-                    <div className="stack">
-                      <strong>Player stats</strong>
-                      {state.results.players.map((player) => {
-                        const avatar = getAvatarById(player.avatarId) ?? getAvatarById(DEFAULT_AVATAR_ID);
-                        const accuracy = `${Math.round(player.accuracy * 100)}%`;
-                        const avgTime = player.avgTimeMs ? `${(player.avgTimeMs / 1000).toFixed(1)}s avg` : "— avg";
-                        return (
-                          <div key={player.id} className="card card--plain stack">
-                            <div className="row" style={{ justifyContent: "space-between" }}>
-                              <span className="row" style={{ gap: 10 }}>
-                                {avatar ? <img className="avatar" src={avatar.src} alt={avatar.label} /> : null}
-                                <strong>{player.name}</strong>
-                              </span>
-                              <span className="badge">{player.totalScore}</span>
-                            </div>
-                            <div className="row muted" style={{ gap: 12 }}>
-                              <span>{accuracy} accuracy</span>
-                              <span>{avgTime}</span>
-                              <span>Fastest x{player.fastestCount}</span>
-                              {player.bonusScore > 0 ? <span>Bonus +{player.bonusScore}</span> : null}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="stack">
-                      <strong>Questions</strong>
-                      {state.results.questions.map((question) => {
-                        const total = question.totalCount ?? 0;
-                        const accuracy = total > 0 ? question.correctCount / total : 0;
-                        const fastest = question.fastestPlayerId && resultPlayerLookup
-                          ? resultPlayerLookup.get(question.fastestPlayerId)
-                          : null;
-                        return (
-                          <div key={question.id} className="card card--plain stack">
-                            <div className="row" style={{ justifyContent: "space-between" }}>
-                              <span className="badge">Q{question.order}</span>
-                              <span className="badge">
-                                {Math.round(accuracy * 100)}% correct
-                              </span>
-                            </div>
-                            <p className="muted">{question.prompt}</p>
-                            <div className="row muted" style={{ gap: 12 }}>
-                              <span>Correct: {String.fromCharCode(65 + question.correctIndex)}</span>
-                              <span>
-                                Fastest: {fastest ? fastest.name : "—"}
-                              </span>
-                              <span>
-                                {question.fastestTimeMs ? `${(question.fastestTimeMs / 1000).toFixed(1)}s` : ""}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="muted">
-                    Expand to view per-player stats and question-level accuracy.
-                  </p>
-                )}
-              </div>
-            </div>
-          ) : null}
-          {partyOutcome && progress ? (
-            <ProgressSummary
-              progress={progress}
-              outcome={partyOutcome}
-              headline="Party Bonus Unlocked"
-              modeLabel="Quiz party"
-            />
-          ) : null}
-          <div className="row">
-            <Link className="btn btn-primary" href="/dashboard">
-              Back to dashboard
-            </Link>
-            {state.deck.deckId ? (
-              <Link className="btn btn-outline" href={`/decks/${state.deck.deckId}`}>
-                Open quiz
+            <div className="report-head-actions">
+              <Link className="btn btn-outline btn-small" href="/dashboard">
+                Exit
               </Link>
-            ) : null}
-            <button className="btn btn-outline" onClick={handleCopyResults}>
-              Share results
-            </button>
-            <button className="btn btn-outline" onClick={handleCopy}>
-              Copy party link
-            </button>
+            </div>
           </div>
+
+          <div className="report-tabs">
+            <span className="report-tab is-active">Summary</span>
+            <span className="report-tab">Players</span>
+            <span className="report-tab">Questions</span>
+            <span className="report-tab">Feedback</span>
+          </div>
+
+          <div className="report-grid">
+            <div className="report-card report-card--wide">
+              <div className="report-ring" style={{ ["--report-accuracy" as any]: accuracyPct }}>
+                <div className="report-ring-value">
+                  {accuracyPct}%
+                  <span>correct</span>
+                </div>
+              </div>
+              <div className="report-summary">
+                <h2>Well played!</h2>
+                <p className="muted">
+                  Play again and let the same group improve their score or see if new players can beat this result.
+                </p>
+                <div className="row report-actions">
+                  <Link className="btn btn-primary" href="/decks/new">
+                    Play again
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="report-card report-card--stats">
+              <div className="report-stat">
+                <span>Players</span>
+                <strong>{state.players.length}</strong>
+              </div>
+              <div className="report-stat">
+                <span>Questions</span>
+                <strong>{state.results?.totalItems ?? totalItems}</strong>
+              </div>
+              <div className="report-stat">
+                <span>Avg. time</span>
+                <strong>{overallAvgTimeMs ? `${(overallAvgTimeMs / 1000).toFixed(1)}s` : "—"}</strong>
+              </div>
+            </div>
+
+            <div className="report-card report-card--cta">
+              <div>
+                <h3>Share the podium</h3>
+                <p className="muted">Celebrate success by sharing the results with players.</p>
+              </div>
+              <div className="row report-actions">
+                <button className="btn btn-primary" onClick={handleCopyResults}>
+                  Share results
+                </button>
+                <button className="btn btn-outline" onClick={handleCopyCode}>
+                  Copy game code
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="report-lower">
+            <div className="report-card report-card--difficult">
+              <div className="report-card-head">
+                <h3>Difficult questions</h3>
+                <span className="badge">{recap?.hardestQuiz.length ?? 0}</span>
+              </div>
+              {recap?.hardestQuiz.length ? (
+                <div className="stack">
+                  {recap.hardestQuiz.map((question) => (
+                    <div key={question.id} className="report-row">
+                      <div>
+                        <strong>Q{question.order} ·</strong> {question.prompt}
+                      </div>
+                      <span className="badge">{Math.round(question.accuracy * 100)}% correct</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="muted">No misses yet.</p>
+              )}
+            </div>
+
+            <div className="report-card report-card--help">
+              <div className="report-card-head">
+                <h3>Need help</h3>
+                <span className="badge">{needsHelp.length}</span>
+              </div>
+              {needsHelp.length ? (
+                <div className="stack">
+                  {needsHelp.map((player) => (
+                    <div key={player.id} className="report-row">
+                      <span>{player.name}</span>
+                      <span className="badge">{Math.round(player.accuracy * 100)}%</span>
+                    </div>
+                  ))}
+                  <button className="btn btn-outline btn-small">View missed questions</button>
+                </div>
+              ) : (
+                <p className="muted">Everyone crushed it.</p>
+              )}
+            </div>
+
+            <div className="report-card report-card--finish">
+              <div className="report-card-head">
+                <h3>Didn't finish</h3>
+                <span className="badge">{didntFinish.length}</span>
+              </div>
+              {didntFinish.length ? (
+                <div className="stack">
+                  {didntFinish.map((player) => (
+                    <div key={player.id} className="report-row">
+                      <span>{player.name}</span>
+                      <span className="muted">
+                        {Math.max(0, (state.results?.totalItems ?? totalItems) - player.totalAnswered)} unanswered
+                      </span>
+                    </div>
+                  ))}
+                  <button className="btn btn-outline btn-small">Review unanswered</button>
+                </div>
+              ) : (
+                <p className="muted">All players finished.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="report-footer">
+            {isGuestUser ? (
+              <div className="report-card report-card--cta">
+                <h3>Keep making quizzes</h3>
+                <p className="muted">Create an account to keep forging new quizzes and hosting parties.</p>
+                <div className="row">
+                  <Link className="btn btn-primary" href="/signup?callbackUrl=/decks/new">
+                    Create free account
+                  </Link>
+                  <Link className="btn btn-outline" href="/signin?callbackUrl=/decks/new">
+                    Sign in
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="report-card report-card--cta">
+                <h3>Make more in the Forge Quiz tab</h3>
+                <p className="muted">Keep building new quizzes and launch another party whenever you are ready.</p>
+                <Link className="btn btn-primary" href="/decks/new">
+                  Open Forge Quiz
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
         </div>
       ) : null}
       {showInviteModal ? (
@@ -1203,14 +1164,8 @@ export default function PartyPage({ params }: { params: { partyId: string } }) {
                 Close
               </button>
             </div>
-            <p className="card-sub">Send this link or code so others can join instantly.</p>
+            <p className="card-sub">Send this code so others can join instantly.</p>
             <div className="stack" style={{ gap: 12 }}>
-              <div className="row">
-                <input className="input" value={shareLink} readOnly />
-                <button className="btn btn-outline" onClick={handleCopy}>
-                  Copy link
-                </button>
-              </div>
               <div className="row">
                 <span className="badge">Code: {state.party.joinCode}</span>
                 <button className="btn btn-outline btn-small" onClick={handleCopyCode}>

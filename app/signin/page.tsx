@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState, Suspense } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getProviders, type ClientSafeProvider } from "next-auth/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -29,6 +29,11 @@ function SignInClient() {
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<MessageState>(null);
+  const [providers, setProviders] = useState<Record<string, ClientSafeProvider> | null>(null);
+
+  useEffect(() => {
+    void getProviders().then((data) => setProviders(data ?? null));
+  }, []);
 
   useEffect(() => {
     if (errorParam) {
@@ -86,6 +91,21 @@ function SignInClient() {
             }}
           >
             {message.text}
+          </div>
+        ) : null}
+
+        {providers?.google ? (
+          <div className="stack" style={{ gap: 10 }}>
+            <button
+              className="btn btn-outline"
+              type="button"
+              onClick={() => signIn("google", { callbackUrl })}
+            >
+              Continue with Google
+            </button>
+            <div className="muted" style={{ fontSize: 12, textAlign: "center" }}>
+              or sign in with email
+            </div>
           </div>
         ) : null}
 

@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_LINKS = [
+  { href: "/home", label: "Home" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/decks/new", label: "Forge Quiz" },
   { href: "/party/join", label: "Join Party" },
   { href: "/how-it-works", label: "Leaderboard" },
-  { href: "/pricing", label: "Pricing" },
   { href: "/achievements", label: "Guild Achievements" },
 ];
 

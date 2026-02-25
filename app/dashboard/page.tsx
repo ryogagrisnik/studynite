@@ -11,22 +11,26 @@ export default async function Dashboard() {
 
   if (!userId) {
     return (
-      <div className="page">
-        <div className="card stack">
-          <h1 className="page-title">Your RunePrep quizzes</h1>
-          <p className="page-sub">
-            Sign in to save quizzes, track accuracy, and host multiplayer parties.
-          </p>
-          <div className="row">
-            <Link className="btn btn-primary" href="/signup?callbackUrl=/dashboard">
-              Create free account
-            </Link>
-            <Link className="btn btn-outline" href="/signin?callbackUrl=/dashboard">
-              Sign in
-            </Link>
+      <>
+        <div className="page forge-bleed">
+          <div className="forge-page stack">
+            <div className="card stack forge-card">
+              <h1 className="page-title">Your RunePrep quizzes</h1>
+              <p className="page-sub">
+                Sign in to save quizzes, track accuracy, and host multiplayer parties.
+              </p>
+              <div className="row">
+                <Link className="btn btn-primary" href="/signup?callbackUrl=/dashboard">
+                  Create free account
+                </Link>
+                <Link className="btn btn-outline" href="/signin?callbackUrl=/dashboard">
+                  Sign in
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 

@@ -7,7 +7,6 @@ import Providers from "./providers";
 import Script from "next/script";
 import AuthNav from "../components/AuthNav";
 import NavLinks from "../components/NavLinks";
-import PrizePromoModal from "../components/PrizePromoModal";
 import CosmeticSync from "../components/CosmeticSync";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
@@ -132,13 +131,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
               <label htmlFor="nav-toggle" className="nav-scrim" aria-hidden="true" />
             </div>
+            <div className="nav-divider" aria-hidden="true">
+              <div className="section-divider" />
+            </div>
           </div>
 
           {/* MAIN CONTENT */}
           <main>
             <div className="container">{children}</div>
           </main>
-          <PrizePromoModal />
           <CosmeticSync />
           <Analytics />
 
@@ -160,7 +161,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/dashboard">Dashboard</Link>
                 <Link href="/achievements">Guild Achievements</Link>
                 <Link href="/how-it-works">How it works</Link>
-                <Link href="/pricing">Pricing</Link>
                 <Link href="/privacy">Privacy</Link>
                 <Link href="/terms">Terms</Link>
               </div>

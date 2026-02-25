@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useSession } from "next-auth/react";
 
 import {
@@ -24,8 +23,9 @@ export default function CreateDeckPage() {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const [forgeTab, setForgeTab] = useState<"files" | "text">("files");
   const includeQuestions = true;
-  const [questionCountInput, setQuestionCountInput] = useState(String(DEFAULT_QUESTION_COUNT));
+  const [questionCountInput, setQuestionCountInput] = useState("20");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [loading, setLoading] = useState(false);
   const [loadingMode, setLoadingMode] = useState<"deck" | "party" | "edit" | null>(null);
@@ -44,6 +44,14 @@ export default function CreateDeckPage() {
     Boolean(userAny?.isPro) ||
     (userAny?.proExpiresAt ? new Date(userAny.proExpiresAt).getTime() > Date.now() : false);
   const maxQuestionCount = isPro ? PRO_MAX_QUESTION_COUNT : FREE_MAX_QUESTION_COUNT;
+  const lengthOptions = Array.from(
+    new Set([10, 20, Math.min(30, maxQuestionCount)].filter((count) => count <= maxQuestionCount))
+  );
+  const difficultyOptions: Array<{ label: string; value: "easy" | "medium" | "hard" }> = [
+    { label: "Easy", value: "easy" },
+    { label: "Medium", value: "medium" },
+    { label: "Hard", value: "hard" },
+  ];
 
   const parseCount = (value: string, fallback: number) => {
     if (!value.trim()) return fallback;
@@ -100,29 +108,6 @@ export default function CreateDeckPage() {
     );
   }
 
-  if (!session?.user) {
-    return (
-      <div className="page">
-        <div className="card stack">
-          <h1 className="page-title">Create a RunePrep quiz</h1>
-          <p className="page-sub">
-            Create an account to generate quizzes and host RunePrep parties.
-          </p>
-          <div className="row cta-row">
-            <Link className="btn btn-primary" href="/signup?callbackUrl=/decks/new">
-              Create free account
-            </Link>
-            <Link className="btn btn-outline" href="/signin?callbackUrl=/decks/new">
-              Sign in
-            </Link>
-            <Link className="btn btn-outline" href="/party/join">
-              Join a quiz party
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const uploadDeck = (formData: FormData) =>
     new Promise<{ deckId: string; shareId: string }>((resolve, reject) => {
@@ -230,7 +215,12 @@ export default function CreateDeckPage() {
         router.push(`/decks/${data.deckId}`);
       }
     } catch (err: any) {
-      setError(err?.message || "Unable to create quiz.");
+      const message = err?.message || "Unable to create quiz.";
+      if (message === "GUEST_LIMIT_REACHED") {
+        setError("Create an account or sign in to generate more quizzes.");
+      } else {
+        setError(message);
+      }
       setLoading(false);
       setLoadingMode(null);
       setUploadProgress(null);
@@ -243,17 +233,127 @@ export default function CreateDeckPage() {
   };
 
   return (
-    <div className="page stack">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Create a RunePrep quiz</h1>
-          <p className="page-sub">
-            Paste text or upload PDFs/images. Choose exactly how many items to generate.
-          </p>
+    <>
+      <div className="page forge-bleed">
+        <div className="forge-page stack">
+        <div className="forge-head">
+          <div>
+            <h1 className="page-title">Generate a practice test</h1>
+            <p className="page-sub">
+              Choose or upload materials to generate practice questions designed for you.
+            </p>
+          </div>
+          <div className="forge-controls">
+            <div className="forge-control-group">
+              <span className="forge-control-label">Difficulty</span>
+              <div className="forge-button-row">
+                {difficultyOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`forge-pill${difficulty === option.value ? " is-active" : ""}`}
+                    onClick={() => setDifficulty(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="forge-control-group">
+              <span className="forge-control-label">Length</span>
+              <div className="forge-button-row">
+                {lengthOptions.map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    className={`forge-pill${Number(questionCountInput) === count ? " is-active" : ""}`}
+                    onClick={() => setQuestionCountInput(String(count))}
+                  >
+                    {count} Q
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <form className="card stack" onSubmit={handleSubmit}>
+        <form className="forge-form stack" onSubmit={handleSubmit}>
+        <div className="forge-tabs">
+          <button
+            className={`forge-tab${forgeTab === "files" ? " is-active" : ""}`}
+            type="button"
+            onClick={() => setForgeTab("files")}
+          >
+            Upload files
+          </button>
+          <button
+            className={`forge-tab${forgeTab === "text" ? " is-active" : ""}`}
+            type="button"
+            onClick={() => setForgeTab("text")}
+          >
+            Paste text
+          </button>
+        </div>
+
+        {forgeTab === "files" ? (
+          <div className="forge-upload">
+            <input
+              id="files"
+              type="file"
+              className="forge-file-input"
+              accept="application/pdf,image/*"
+              multiple
+              onChange={(event) => {
+                const nextFiles = Array.from(event.target.files || []);
+                const validation = validateFiles(nextFiles);
+                if (validation) {
+                  setError(validation);
+                  return;
+                }
+                setError(null);
+                setFiles(nextFiles);
+              }}
+            />
+            <label className="forge-upload-inner" htmlFor="files">
+              <div className="forge-upload-icons">
+                <span className="forge-file-badge">PDF</span>
+                <span className="forge-file-badge">IMG</span>
+              </div>
+              <div className="forge-upload-title">
+                Drag and drop notes, readings, lecture slides, etc.
+              </div>
+              <div className="forge-upload-sub">Supported file types: PDF, images.</div>
+              <span className="forge-upload-btn">Browse files</span>
+            </label>
+          </div>
+        ) : null}
+
+        {files.length > 0 ? (
+          <div className="forge-file-list">
+            {files.map((file, index) => (
+              <div key={`${file.name}-${index}`} className="forge-file-row">
+                <span className="muted">
+                  {file.name || "Untitled file"} · {formatBytes(file.size)}
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-small"
+                  onClick={() => {
+                    const nextFiles = files.filter((_, fileIndex) => fileIndex !== index);
+                    setFiles(nextFiles);
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <span className="muted">
+              Total {formatBytes(files.reduce((sum, file) => sum + file.size, 0))} /
+              {MAX_TOTAL_FILE_SIZE_MB}MB
+            </span>
+          </div>
+        ) : null}
+
         <div className="field">
           <label className="field-label" htmlFor="title">
             Quiz title (optional)
@@ -267,136 +367,41 @@ export default function CreateDeckPage() {
           />
         </div>
 
-        <div className="field">
-          <label className="field-label" htmlFor="questionCount">Question count</label>
-          <input
-            id="questionCount"
-            type="number"
-            className="input"
-            min={MIN_QUESTION_COUNT}
-            max={maxQuestionCount}
-            value={questionCountInput}
-            onChange={(event) => {
-              setQuestionCountInput(event.target.value);
-            }}
-          />
-          <div className="field-help">
-            {MIN_QUESTION_COUNT}-{maxQuestionCount} questions
+        {forgeTab === "text" ? (
+          <div className="forge-text">
+            <label className="field-label" htmlFor="text">
+              Paste text
+            </label>
+            <textarea
+              id="text"
+              className="textarea"
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+              placeholder="Paste lecture notes, summaries, or study guides here..."
+            />
+            <div className="field-help">
+              {text.trim().length}/{MAX_INPUT_CHARS} characters
+            </div>
           </div>
-        </div>
+        ) : null}
 
-        <div className="field">
-          <label className="field-label" htmlFor="difficulty">Difficulty</label>
-          <select
-            id="difficulty"
-            className="select"
-            value={difficulty}
-            onChange={(event) =>
-              setDifficulty(event.target.value as "easy" | "medium" | "hard")
-            }
-          >
-            <option value="easy">Easy — direct recall</option>
-            <option value="medium">Medium — 1-2 steps</option>
-            <option value="hard">Hard — multi-step reasoning</option>
-          </select>
-          <div className="field-help">
-            Difficulty guides how challenging the generated questions are.
-          </div>
-        </div>
-
-        <div className="field">
-          <label className="field-label" htmlFor="files">
-            Upload PDFs or images
-          </label>
-          <input
-            id="files"
-            type="file"
-            className="input"
-            accept="application/pdf,image/*"
-            multiple
-            onChange={(event) => {
-              const nextFiles = Array.from(event.target.files || []);
-              const validation = validateFiles(nextFiles);
-              if (validation) {
-                setError(validation);
-                return;
-              }
-              setError(null);
-              setFiles(nextFiles);
-            }}
-          />
-          <div className="field-help">
-            OCR is currently unavailable. Use text-based PDFs or paste text. Max {MAX_FILE_COUNT}{" "}
-            files, {MAX_FILE_SIZE_MB}MB each.
-          </div>
-          {files.length > 0 ? (
-            <div className="stack" style={{ gap: 8 }}>
-              {files.map((file, index) => (
-                <div key={`${file.name}-${index}`} className="row" style={{ justifyContent: "space-between" }}>
-                  <span className="muted">
-                    {file.name || "Untitled file"} · {formatBytes(file.size)}
-                  </span>
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-small"
-                    onClick={() => {
-                      const nextFiles = files.filter((_, fileIndex) => fileIndex !== index);
-                      setFiles(nextFiles);
-                    }}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
+        {quota ? (
+          <div className="card forge-card">
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <strong>Daily quiz limit</strong>
               <span className="muted">
-                Total {formatBytes(files.reduce((sum, file) => sum + file.size, 0))} /
-                {MAX_TOTAL_FILE_SIZE_MB}MB
+                {Math.max(0, quota.dailyLimit - quota.dailyUsed)} of {quota.dailyLimit} remaining
               </span>
             </div>
-          ) : null}
-        </div>
-
-        <div className="field">
-          <label className="field-label" htmlFor="text">
-            Paste text
-          </label>
-          <textarea
-            id="text"
-            className="textarea"
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            placeholder="Paste lecture notes, summaries, or study guides here..."
-          />
-        <div className="field-help">
-          {text.trim().length}/{MAX_INPUT_CHARS} characters
-        </div>
-      </div>
-
-      {quota ? (
-        <div className="card">
-          <div className="row" style={{ justifyContent: "space-between" }}>
-            <strong>Daily quiz limit</strong>
-            <span className="muted">
-              {Math.max(0, quota.dailyLimit - quota.dailyUsed)} of {quota.dailyLimit} remaining
-            </span>
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <span className="muted">Resets</span>
+              <span className="muted">{new Date(quota.dailyResetAt).toLocaleString()}</span>
+            </div>
           </div>
-          <div className="row" style={{ justifyContent: "space-between" }}>
-            <span className="muted">Resets</span>
-            <span className="muted">{new Date(quota.dailyResetAt).toLocaleString()}</span>
-          </div>
-          <div className="row" style={{ justifyContent: "space-between" }}>
-            <span className="muted">Cooldown</span>
-            <span className="muted">
-              {quota.cooldownMs > 0
-                ? `${Math.ceil(quota.cooldownMs / 1000)}s remaining`
-                : "Ready"}
-            </span>
-          </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      {error ? (
-        <div className="card stack" style={{ borderColor: "#FCA5A5" }}>
+        {error ? (
+          <div className="card stack forge-card card--error" role="alert">
             <div>{error}</div>
             {lastAction ? (
               <button
@@ -421,25 +426,14 @@ export default function CreateDeckPage() {
           </div>
         ) : null}
 
-        <div className="row deck-cta-row">
+        <div className="row deck-cta-row deck-cta-row--center">
           <button className="btn btn-primary" type="submit" disabled={loading}>
-            {loading && loadingMode === "party" ? "Starting..." : "Generate & start quiz party"}
+            {loading && loadingMode === "party" ? "Starting..." : "Generate"}
           </button>
-          <button
-            className="btn btn-outline"
-            type="button"
-            disabled={loading}
-            onClick={() => submitDeck("edit")}
-          >
-            {loading && loadingMode === "edit" ? "Preparing..." : "Generate & edit"}
-          </button>
-          <span className="muted">
-            {canStartParty
-              ? "Source files are processed and discarded."
-              : "Quiz parties require quiz questions."}
-          </span>
         </div>
-      </form>
-    </div>
+        </form>
+        </div>
+      </div>
+    </>
   );
 }

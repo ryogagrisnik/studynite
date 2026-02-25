@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { avatars, resolveAvatarId } from "@/lib/studyhall/avatars";
 import {
-  BADGES,
-  COSMETICS,
   getLevelProgress,
   getProgressKey,
   grantFullAccess,
@@ -415,8 +413,43 @@ export default function DashboardClient({
     }
   };
 
+  const activeAvatar = avatars.find((avatar) => avatar.id === avatarId) ?? avatars[0];
+
   return (
-    <div className="page stack dashboard join-party">
+    <div className="dashboard-ka join-party dashboard-castle">
+      <div className="ka-streak-bar">
+        <div className="ka-streak-left">
+          Start leveling up and building your weekly streak!
+        </div>
+        <div className="ka-streak-right">
+          <div className="ka-streak-chip">
+            <span className="ka-streak-icon">●</span>
+            {progress ? progress.streak.days : 0} week streak
+          </div>
+          <div className="ka-streak-level">
+            <span>Level {levelProgress?.levelAfter ?? progress?.level ?? 1}</span>
+            <div className="ka-streak-progress">
+              <span
+                style={{
+                  width: `${
+                    progress && levelProgress
+                      ? Math.min(
+                          100,
+                          Math.round((levelProgress.xpInLevel / levelProgress.xpForLevel) * 100)
+                        )
+                      : 0
+                  }%`,
+                }}
+              />
+            </div>
+            <span className="ka-streak-skill">
+              {progress && levelProgress
+                ? `${levelProgress.xpInLevel} / ${levelProgress.xpForLevel} XP`
+                : "0 / 1 skill"}
+            </span>
+          </div>
+        </div>
+      </div>
       {rogueFxActive ? (
         <div
           className="rogue-claw-fx"
@@ -561,22 +594,6 @@ export default function DashboardClient({
           ))}
         </div>
       ) : null}
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Your RunePrep quizzes</h1>
-          <p className="page-sub">Create quizzes, edit questions, and launch parties.</p>
-        </div>
-      </div>
-
-      {error ? (
-        <div className="card card--error stack" role="alert">
-          <span>{error}</span>
-          <button className="btn btn-outline btn-small" type="button" onClick={handleRetry}>
-            Try again
-          </button>
-        </div>
-      ) : null}
-
       {cancelNotice ? (
         <div className="modal-backdrop" role="dialog" aria-modal="true">
           <div className="modal-card">
@@ -589,293 +606,168 @@ export default function DashboardClient({
         </div>
       ) : null}
 
-      <div className="grid-2">
-        <div className="card vegas-panel meta-panel">
-          <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div className="stack" style={{ gap: 6 }}>
-              <span className="reward-kicker">Meta progress</span>
-              <h2 className="card-title">Level {levelProgress?.levelAfter ?? progress?.level ?? 1}</h2>
-            </div>
-            {progress ? <span className="reward-chip">+{progress.xp} XP</span> : null}
+      <header className="ka-header">
+        <div className="ka-profile">
+          {activeAvatar ? (
+            <img className="ka-profile-avatar" src={activeAvatar.src} alt={activeAvatar.label} />
+          ) : null}
+          <div>
+            <div className="ka-profile-name">{userName || "RunePrep Adventurer"}</div>
+            <div className="ka-profile-sub">Pick a username · Add your bio</div>
           </div>
-          {progress && levelProgress ? (
-            <>
-              <div className="progress-bar neon-progress">
-                <span
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      Math.round((levelProgress.xpInLevel / levelProgress.xpForLevel) * 100)
-                    )}%`,
-                  }}
-                />
-              </div>
-              <div className="row muted" style={{ justifyContent: "space-between" }}>
-                <span>
-                  {levelProgress.xpInLevel} / {levelProgress.xpForLevel} XP
-                </span>
-                <span>
-                  {Math.round((levelProgress.xpInLevel / levelProgress.xpForLevel) * 100)}% to next level
-                </span>
-              </div>
-              <div className="streak-card">
-                <div className="row" style={{ justifyContent: "space-between" }}>
-                  <span className="streak-label">Study streak</span>
-                  <span className="reward-chip reward-chip--small">
-                    {progress.streak.days} day{progress.streak.days === 1 ? "" : "s"}
-                  </span>
+        </div>
+        <div className="ka-header-actions">
+          <div className="ka-level">
+            <span className="ka-level-chip">Level {levelProgress?.levelAfter ?? progress?.level ?? 1}</span>
+            <div className="ka-progress">
+              <span
+                style={{
+                  width: `${
+                    progress && levelProgress
+                      ? Math.min(
+                          100,
+                          Math.round((levelProgress.xpInLevel / levelProgress.xpForLevel) * 100)
+                        )
+                      : 0
+                  }%`,
+                }}
+              />
+            </div>
+            <span className="ka-progress-text">
+              {progress && levelProgress
+                ? `${levelProgress.xpInLevel} / ${levelProgress.xpForLevel} XP`
+                : "Complete a session to start tracking progress."}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <div className="ka-body">
+        <aside className="ka-sidebar">
+          <div className="ka-sidebar-section">
+            <div className="ka-sidebar-title">My Stuff</div>
+            <div className="ka-nav is-active">Quizzes</div>
+          </div>
+          <div className="ka-sidebar-section">
+            <div className="ka-sidebar-title">My Account</div>
+            <div className="ka-nav">Select character</div>
+          </div>
+        </aside>
+
+        <main className="ka-main">
+          {error ? (
+            <div className="card card--error stack" role="alert">
+              <span>{error}</span>
+              <button className="btn btn-outline btn-small" type="button" onClick={handleRetry}>
+                Try again
+              </button>
+            </div>
+          ) : null}
+
+          <section className="ka-section">
+            <div className="ka-section-head">
+              <h2 className="ka-section-title">My quizzes</h2>
+              <Link className="ka-edit-btn" href="/decks/new">Create quiz</Link>
+            </div>
+            {deckList.length === 0 ? (
+              <div className="ka-empty">
+                <p>Upload notes, edit the quiz, then host a live party.</p>
+                <div className="ka-empty-actions">
+                  <Link className="btn btn-primary" href="/decks/new">
+                    Create a quiz
+                  </Link>
                 </div>
-                <strong>{progress.streak.multiplier.toFixed(2)}x rewards active</strong>
+                {sampleError ? <div className="card card--plain">{sampleError}</div> : null}
               </div>
-            </>
-          ) : (
-            <div className="muted">Complete a session to start tracking progress.</div>
-          )}
-        </div>
-        <div className="card vegas-panel meta-panel">
-          <span className="reward-kicker">Collections</span>
-          <h2 className="card-title">Cosmetics & badges</h2>
-          <p className="card-sub">Equip a cosmetic to show off your wins.</p>
-          {progress ? (
-            <div className="stack" style={{ gap: 12 }}>
-              <div className="cosmetic-grid">
-                {COSMETICS.map((cosmetic) => {
-                  const isUnlocked = progress.cosmetics.includes(cosmetic);
-                  const isEquipped = progress.equippedCosmetic === cosmetic;
-                  return (
-                    <button
-                      key={cosmetic}
-                      className={`cosmetic-tile ${isEquipped ? "is-selected" : ""} ${
-                        isUnlocked ? "" : "is-locked"
-                      }`}
-                      type="button"
-                      onClick={() => (isUnlocked ? handleEquipCosmetic(cosmetic) : null)}
-                      disabled={!isUnlocked}
-                    >
-                      <span>{cosmetic}</span>
-                      {isEquipped ? (
-                        <span className="badge badge-soft">Equipped</span>
-                      ) : isUnlocked ? (
-                        <span className="badge">Equip</span>
-                      ) : (
-                        <span className="badge badge-soft">Locked</span>
-                      )}
-                    </button>
-                  );
-                })}
-                {progress.equippedCosmetic ? (
-                  <button
-                    className="btn btn-outline btn-small"
-                    type="button"
-                    onClick={() => handleEquipCosmetic(null)}
-                  >
-                    Clear equip
-                  </button>
-                ) : null}
+            ) : (
+              <div className="ka-course-grid">
+                {[0, 1].map((column) => (
+                  <div key={column} className="ka-course-col">
+                    {deckList
+                      .filter((_, index) => index % 2 === column)
+                      .map((deck) => (
+                        <div key={deck.id} className="ka-course-row">
+                          <Link className="ka-course-title" href={`/decks/${deck.id}`}>
+                            {deck.title}
+                          </Link>
+                          <div className="ka-course-meta">
+                            <span>{deck.questionCount} questions</span>
+                            <span>Updated {new Date(deck.updatedAt).toLocaleDateString()}</span>
+                          </div>
+                          <div className="ka-course-actions">
+                            <button
+                              className="ka-start-btn"
+                              onClick={() => handleStartParty(deck.id)}
+                              disabled={startingId === deck.id}
+                            >
+                              {startingId === deck.id ? "Starting..." : "Start"}
+                            </button>
+                            <Link className="ka-link" href={`/decks/${deck.id}/edit`}>
+                              Edit
+                            </Link>
+                            <button
+                              className="ka-link"
+                              onClick={() => handleDeleteDeck(deck.id)}
+                              disabled={deletingId === deck.id}
+                            >
+                              {deletingId === deck.id ? "Deleting..." : "Delete"}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                ))}
               </div>
-              <div className="row" style={{ flexWrap: "wrap" }}>
-                {BADGES.map((badge) => {
-                  const isUnlocked = progress.badges.includes(badge);
-                  const isEquipped = progress.equippedBadge === badge;
-                  return (
-                    <button
-                      key={badge}
-                      className={`loot-chip loot-chip--badge ${isUnlocked ? "" : "is-locked"} ${
-                        isEquipped ? "is-selected" : ""
-                      }`}
-                      type="button"
-                      onClick={() => (isUnlocked ? handleEquipBadge(badge) : null)}
-                      disabled={!isUnlocked}
-                    >
-                      {badge}
-                    </button>
-                  );
-                })}
-                {progress.equippedBadge ? (
-                  <button
-                    className="btn btn-outline btn-small"
-                    type="button"
-                    onClick={() => handleEquipBadge(null)}
-                  >
-                    Clear badge
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          ) : (
-            <div className="muted">Loading cosmetics and badges...</div>
-          )}
-        </div>
-      </div>
+            )}
+          </section>
 
-      <div className="card stack">
-        <h2 className="card-title">Your avatar</h2>
-        <p className="card-sub">Shown to friends in parties you host.</p>
-        <div className="avatar-grid">
-          {avatars.map((avatar) => (
-            <button
-              key={avatar.id}
-              className={`avatar-tile ${avatarId === avatar.id ? "is-selected" : ""}`}
-              type="button"
-              ref={
-                avatar.id === "wizard"
-                  ? wizardTileRef
-                  : avatar.id === "paladin"
-                  ? paladinTileRef
-                  : avatar.id === "pepe"
-                    ? cinderTileRef
-                    : avatar.id === "knight"
-                      ? knightTileRef
-                      : avatar.id === "rider"
-                        ? riderTileRef
-                        : avatar.id === "archer"
-                          ? circeTileRef
-                          : avatar.id === "rogue"
-                            ? rogueTileRef
-                          : undefined
-              }
-              onClick={(event) => {
-                handleAvatarSelect(avatar.id);
-                if (avatar.id === "wizard" && avatarId !== "wizard") triggerWaterFx(event.currentTarget);
-                if (avatar.id === "paladin" && avatarId !== "paladin") triggerLightFx(event.currentTarget);
-                if (avatar.id === "pepe" && avatarId !== "pepe") triggerEmberFx(event.currentTarget);
-                if (avatar.id === "knight" && avatarId !== "knight") triggerKnightFx(event.currentTarget);
-                if (avatar.id === "rider" && avatarId !== "rider") triggerSpartanFx(event.currentTarget);
-                if (avatar.id === "archer" && avatarId !== "archer") triggerCirceFx(event.currentTarget);
-                if (avatar.id === "rogue" && avatarId !== "rogue") triggerRogueFx(event.currentTarget);
-              }}
-              disabled={savingAvatar}
-            >
-              <img className="avatar avatar-lg" src={avatar.src} alt={avatar.label} />
-              <span className="avatar-label">{avatar.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {deckList.length === 0 ? (
-        <div className="card stack">
-          <h2 className="card-title">Quick start</h2>
-          <p className="card-sub">Upload notes, edit the quiz, then host a live party.</p>
-          <div className="stack">
-            <div className="row">
-              <span className="badge">1</span>
-              <span>Upload notes or PDFs.</span>
+          <section className="ka-section">
+            <div className="ka-section-head">
+              <h2 className="ka-section-title">Select your character</h2>
             </div>
-            <div className="row">
-              <span className="badge">2</span>
-              <span>Review and edit the questions.</span>
-            </div>
-            <div className="row">
-              <span className="badge">3</span>
-              <span>Start a party and share the link.</span>
-            </div>
-          </div>
-          {sampleError ? <div className="card card--plain">{sampleError}</div> : null}
-          <div className="row">
-            <Link className="btn btn-primary" href="/decks/new">
-              Create a quiz
-            </Link>
-            <button className="btn btn-outline" onClick={handleCreateSample} disabled={creatingSample}>
-              {creatingSample ? "Building sample..." : "Try a sample quiz"}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="grid-2">
-          {deckList.map((deck) => (
-            <div key={deck.id} className="card stack">
-              <div>
-                <h2 className="card-title">{deck.title}</h2>
-                <p className="card-sub">{deck.description || "Study quiz"}</p>
-              </div>
-              <div className="row">
-                <span className="badge">{deck.questionCount} questions</span>
-              </div>
-              <div className="row">
-                <Link className="btn btn-outline" href={`/decks/${deck.id}`}>
-                  Open quiz
-                </Link>
-                <Link className="btn btn-outline" href={`/decks/${deck.id}/edit`}>
-                  Edit quiz
-                </Link>
+            <div className="avatar-grid">
+              {avatars.map((avatar) => (
                 <button
-                  className="btn btn-primary"
-                  onClick={() => handleStartParty(deck.id)}
-                  disabled={startingId === deck.id}
+                  key={avatar.id}
+                  className={`avatar-tile ${avatarId === avatar.id ? "is-selected" : ""}`}
+                  type="button"
+                  ref={
+                    avatar.id === "wizard"
+                      ? wizardTileRef
+                      : avatar.id === "paladin"
+                      ? paladinTileRef
+                      : avatar.id === "pepe"
+                        ? cinderTileRef
+                        : avatar.id === "knight"
+                          ? knightTileRef
+                          : avatar.id === "rider"
+                            ? riderTileRef
+                            : avatar.id === "archer"
+                              ? circeTileRef
+                              : avatar.id === "rogue"
+                                ? rogueTileRef
+                              : undefined
+                  }
+                  onClick={(event) => {
+                    handleAvatarSelect(avatar.id);
+                    if (avatar.id === "wizard" && avatarId !== "wizard") triggerWaterFx(event.currentTarget);
+                    if (avatar.id === "paladin" && avatarId !== "paladin") triggerLightFx(event.currentTarget);
+                    if (avatar.id === "pepe" && avatarId !== "pepe") triggerEmberFx(event.currentTarget);
+                    if (avatar.id === "knight" && avatarId !== "knight") triggerKnightFx(event.currentTarget);
+                    if (avatar.id === "rider" && avatarId !== "rider") triggerSpartanFx(event.currentTarget);
+                    if (avatar.id === "archer" && avatarId !== "archer") triggerCirceFx(event.currentTarget);
+                    if (avatar.id === "rogue" && avatarId !== "rogue") triggerRogueFx(event.currentTarget);
+                  }}
+                  disabled={savingAvatar}
                 >
-                  {startingId === deck.id ? "Starting..." : "Start Party"}
+                  <img className="avatar avatar-lg" src={avatar.src} alt={avatar.label} />
+                  <span className="avatar-label">{avatar.label}</span>
                 </button>
-                <button
-                  className="btn btn-outline btn-small"
-                  onClick={() => handleDeleteDeck(deck.id)}
-                  disabled={deletingId === deck.id}
-                >
-                  {deletingId === deck.id ? "Deleting..." : "Delete"}
-                </button>
-              </div>
-              <span className="muted" style={{ fontSize: 12 }}>
-                Updated {new Date(deck.updatedAt).toLocaleString()}
-              </span>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
-
-      {isPro ? (
-        <div className="card stack">
-          <h2 className="card-title">Pro status</h2>
-          <p className="card-sub">
-            {proExpiresAt
-              ? `Active through ${new Date(proExpiresAt).toLocaleDateString()}.`
-              : "Your subscription is active."}
-          </p>
-          <div className="row">
-            <form action="/api/billing/portal" method="POST">
-              <button className="btn btn-outline" type="submit">
-                Manage billing
-              </button>
-            </form>
-            <Link className="btn btn-outline" href="/pricing">
-              View plan
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <div className="card stack">
-          <h2 className="card-title">Free tier limits</h2>
-          <p className="card-sub">
-            Free accounts can create a few quizzes and host small parties. Upgrade for unlimited access.
-          </p>
-          <div className="row">
-            <span className="badge">Up to 5 quizzes</span>
-            <span className="badge">Up to 200 questions</span>
-            <span className="badge">Up to 20 parties / month</span>
-          </div>
-          <div className="row">
-            <form action="/api/checkout" method="POST">
-              <input type="hidden" name="plan" value="monthly" />
-              <button className="btn btn-primary" type="submit">
-                Upgrade to Pro
-              </button>
-            </form>
-            <Link className="btn btn-outline" href="/pricing">
-              See pricing
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {isPro ? (
-        <button
-          className="btn btn-outline btn-small cancel-premium-fab"
-          type="button"
-          onClick={handleCancelPremium}
-          disabled={cancelingPremium}
-        >
-          {cancelingPremium ? "Canceling..." : "Cancel premium"}
-        </button>
-      ) : null}
+          </section>
+        </main>
+      </div>
     </div>
   );
 }
