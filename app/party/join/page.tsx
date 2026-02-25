@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { avatars, resolveAvatarId } from "@/lib/studyhall/avatars";
 
 export default function JoinPartyPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [avatarId, setAvatarId] = useState(resolveAvatarId(null));
@@ -64,11 +63,12 @@ export default function JoinPartyPage() {
   }, [avatarId, name]);
 
   useEffect(() => {
-    const queryCode = searchParams?.get("code");
+    if (typeof window === "undefined") return;
+    const queryCode = new URLSearchParams(window.location.search).get("code");
     if (queryCode) {
       setCode(queryCode.trim().toUpperCase());
     }
-  }, [searchParams]);
+  }, []);
 
   useEffect(() => {
     return () => {
